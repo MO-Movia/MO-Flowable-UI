@@ -27,6 +27,11 @@ import org.junit.jupiter.api.Test;
  */
 public class WebServiceSimplisticTest extends AbstractWebServiceTaskTest {
 
+    @Override
+    protected boolean isValidating() {
+        return false;
+    }
+
     @Test
     @Deployment
     public void testAsyncInvocationWithSimplisticDataFlow() throws Exception {

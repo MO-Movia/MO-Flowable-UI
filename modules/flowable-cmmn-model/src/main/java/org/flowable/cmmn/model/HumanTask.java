@@ -29,7 +29,6 @@ public class HumanTask extends Task {
     protected String dueDate;
     protected String category;
     protected String taskIdVariableName;
-    protected String taskCompleterVariableName;
     protected List<String> candidateUsers = new ArrayList<>();
     protected List<String> candidateGroups = new ArrayList<>();
     protected List<FlowableListener> taskListeners = new ArrayList<>();
@@ -106,14 +105,6 @@ public class HumanTask extends Task {
         this.taskIdVariableName = taskIdVariableName;
     }
 
-    public String getTaskCompleterVariableName() {
-        return taskCompleterVariableName;
-    }
-
-    public void setTaskCompleterVariableName(String taskCompleterVariableName) {
-        this.taskCompleterVariableName = taskCompleterVariableName;
-    }
-
     public List<String> getCandidateUsers() {
         return candidateUsers;
     }
@@ -156,7 +147,6 @@ public class HumanTask extends Task {
         setPriority(otherElement.getPriority());
         setCategory(otherElement.getCategory());
         setTaskIdVariableName(otherElement.getTaskIdVariableName());
-        setTaskCompleterVariableName(otherElement.getTaskCompleterVariableName());
 
         setCandidateGroups(new ArrayList<>(otherElement.getCandidateGroups()));
         setCandidateUsers(new ArrayList<>(otherElement.getCandidateUsers()));

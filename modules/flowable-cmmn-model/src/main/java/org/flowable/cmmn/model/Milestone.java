@@ -20,7 +20,6 @@ public class Milestone extends PlanItemDefinition {
     protected Integer displayOrder;
     protected String includeInStageOverview;
     protected String milestoneVariable;
-    protected String businessStatus;
     
     public Integer getDisplayOrder() {
         return displayOrder;
@@ -44,14 +43,6 @@ public class Milestone extends PlanItemDefinition {
 
     public void setMilestoneVariable(String milestoneVariable) {
         this.milestoneVariable = milestoneVariable;
-    }
-
-    public String getBusinessStatus() {
-        return businessStatus;
-    }
-
-    public void setBusinessStatus(String businessStatus) {
-        this.businessStatus = businessStatus;
     }
 
 }

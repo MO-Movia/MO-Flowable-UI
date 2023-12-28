@@ -13,6 +13,7 @@
 package org.flowable.engine.impl.persistence.entity.data.impl;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -222,7 +223,6 @@ public class MybatisExecutionDataManager extends AbstractProcessDataManager<Exec
 
     @Override
     public long findExecutionCountByQueryCriteria(ExecutionQueryImpl executionQuery) {
-        setSafeInValueLists(executionQuery);
         return (Long) getDbSqlSession().selectOne("selectExecutionCountByQueryCriteria", executionQuery);
     }
 
@@ -231,7 +231,6 @@ public class MybatisExecutionDataManager extends AbstractProcessDataManager<Exec
     public List<ExecutionEntity> findExecutionsByQueryCriteria(ExecutionQueryImpl executionQuery) {
         // False -> executions should not be cached if using executionTreeFetching
         boolean useCache = !performanceSettings.isEnableEagerExecutionTreeFetching();
-        setSafeInValueLists(executionQuery);
         if (useCache) {
             return getDbSqlSession().selectList("selectExecutionsByQueryCriteria", executionQuery, getManagedEntityClass());
         } else {
@@ -240,29 +239,56 @@ public class MybatisExecutionDataManager extends AbstractProcessDataManager<Exec
     }
 
     @Override
-    public long findProcessInstanceCountByQueryCriteria(ProcessInstanceQueryImpl processInstanceQuery) {
-        setSafeInValueLists(processInstanceQuery);
-        return (Long) getDbSqlSession().selectOne("selectProcessInstanceCountByQueryCriteria", processInstanceQuery);
+    public long findProcessInstanceCountByQueryCriteria(ProcessInstanceQueryImpl executionQuery) {
+        return (Long) getDbSqlSession().selectOne("selectProcessInstanceCountByQueryCriteria", executionQuery);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<ProcessInstance> findProcessInstanceByQueryCriteria(ProcessInstanceQueryImpl processInstanceQuery) {
+    public List<ProcessInstance> findProcessInstanceByQueryCriteria(ProcessInstanceQueryImpl executionQuery) {
         // False -> executions should not be cached if using executionTreeFetching
         boolean useCache = !performanceSettings.isEnableEagerExecutionTreeFetching();
-        setSafeInValueLists(processInstanceQuery);
         if (useCache) {
-            return getDbSqlSession().selectList("selectProcessInstanceByQueryCriteria", processInstanceQuery, getManagedEntityClass());
+            return getDbSqlSession().selectList("selectProcessInstanceByQueryCriteria", executionQuery, getManagedEntityClass());
         } else {
-            return getDbSqlSession().selectListNoCacheLoadAndStore("selectProcessInstanceByQueryCriteria", processInstanceQuery, getManagedEntityClass());
+            return getDbSqlSession().selectListNoCacheLoadAndStore("selectProcessInstanceByQueryCriteria", executionQuery, getManagedEntityClass());
         }
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<ProcessInstance> findProcessInstanceAndVariablesByQueryCriteria(ProcessInstanceQueryImpl processInstanceQuery) {
-        setSafeInValueLists(processInstanceQuery);
-        return getDbSqlSession().selectListNoCacheLoadAndStore("selectProcessInstanceWithVariablesByQueryCriteria", processInstanceQuery, getManagedEntityClass());
+    public List<ProcessInstance> findProcessInstanceAndVariablesByQueryCriteria(ProcessInstanceQueryImpl executionQuery) {
+        // paging doesn't work for combining process instances and variables due
+        // to an outer join, so doing it in-memory
+
+        int firstResult = executionQuery.getFirstResult();
+        int maxResults = executionQuery.getMaxResults();
+
+        // setting max results, limit to 20000 results for performance reasons
+        if (executionQuery.getProcessInstanceVariablesLimit() != null) {
+            executionQuery.setMaxResults(executionQuery.getProcessInstanceVariablesLimit());
+        } else {
+            executionQuery.setMaxResults(getProcessEngineConfiguration().getExecutionQueryLimit());
+        }
+        executionQuery.setFirstResult(0);
+
+        List<ProcessInstance> instanceList = getDbSqlSession().selectListWithRawParameterNoCacheLoadAndStore(
+                        "selectProcessInstanceWithVariablesByQueryCriteria", executionQuery, getManagedEntityClass());
+
+        if (instanceList != null && !instanceList.isEmpty()) {
+            if (firstResult > 0) {
+                if (firstResult <= instanceList.size()) {
+                    int toIndex = firstResult + Math.min(maxResults, instanceList.size() - firstResult);
+                    return instanceList.subList(firstResult, toIndex);
+                } else {
+                    return Collections.EMPTY_LIST;
+                }
+            } else {
+                int toIndex = maxResults > 0 ?  Math.min(maxResults, instanceList.size()) : instanceList.size();
+                return instanceList.subList(0, toIndex);
+            }
+        }
+        return Collections.EMPTY_LIST;
     }
 
     @Override
@@ -283,19 +309,11 @@ public class MybatisExecutionDataManager extends AbstractProcessDataManager<Exec
     }
 
     @Override
-    public long countActiveExecutionsByParentId(String parentId) {
-        Map<String, Object> parameterMap = new HashMap<>(2);
-        parameterMap.put("parentId", parentId);
-        parameterMap.put("isActive", true);
-        return (Long) getDbSqlSession().selectOne("countActiveExecutionsByParentId", parameterMap);
-    }
-
-    @Override
     public void updateExecutionTenantIdForDeployment(String deploymentId, String newTenantId) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateExecutionTenantIdForDeployment", params);
+        getDbSqlSession().update("updateExecutionTenantIdForDeployment", params);
     }
 
     @Override
@@ -306,7 +324,7 @@ public class MybatisExecutionDataManager extends AbstractProcessDataManager<Exec
         params.put("expirationTime", expirationTime);
         params.put("lockOwner", lockOwner);
 
-        int result = getDbSqlSession().directUpdate("updateProcessInstanceLockTime", params);
+        int result = getDbSqlSession().update("updateProcessInstanceLockTime", params);
         if (result == 0) {
             throw new FlowableOptimisticLockingException("Could not lock process instance");
         }
@@ -314,44 +332,21 @@ public class MybatisExecutionDataManager extends AbstractProcessDataManager<Exec
 
     @Override
     public void updateAllExecutionRelatedEntityCountFlags(boolean newValue) {
-        getDbSqlSession().directUpdate("updateExecutionRelatedEntityCountEnabled", newValue);
+        getDbSqlSession().update("updateExecutionRelatedEntityCountEnabled", newValue);
     }
 
     @Override
     public void clearProcessInstanceLockTime(String processInstanceId) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("id", processInstanceId);
-        getDbSqlSession().directUpdate("clearProcessInstanceLockTime", params);
+        getDbSqlSession().update("clearProcessInstanceLockTime", params);
     }
 
     @Override
     public void clearAllProcessInstanceLockTimes(String lockOwner) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("lockOwner", lockOwner);
-        getDbSqlSession().directUpdate("clearAllProcessInstanceLockTimes", params);
+        getDbSqlSession().update("clearAllProcessInstanceLockTimes", params);
     }
 
-    protected void setSafeInValueLists(ExecutionQueryImpl executionQuery) {
-        if (executionQuery.getInvolvedGroups() != null) {
-            executionQuery.setSafeInvolvedGroups(createSafeInValuesList(executionQuery.getInvolvedGroups()));
-        }
-        
-        if (executionQuery.getOrQueryObjects() != null && !executionQuery.getOrQueryObjects().isEmpty()) {
-            for (ExecutionQueryImpl orExecutionQuery : executionQuery.getOrQueryObjects()) {
-                setSafeInValueLists(orExecutionQuery);
-            }
-        }
-    }
-    
-    protected void setSafeInValueLists(ProcessInstanceQueryImpl processInstanceQuery) {
-        if (processInstanceQuery.getInvolvedGroups() != null) {
-            processInstanceQuery.setSafeInvolvedGroups(createSafeInValuesList(processInstanceQuery.getInvolvedGroups()));
-        }
-        
-        if (processInstanceQuery.getOrQueryObjects() != null && !processInstanceQuery.getOrQueryObjects().isEmpty()) {
-            for (ProcessInstanceQueryImpl orProcessInstanceQuery : processInstanceQuery.getOrQueryObjects()) {
-                setSafeInValueLists(orProcessInstanceQuery);
-            }
-        }
-    }
 }

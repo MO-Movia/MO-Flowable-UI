@@ -12,7 +12,6 @@
  */
 package org.flowable.dmn.engine.impl.el.util;
 
-import java.time.ZoneId;
 import java.util.Date;
 
 import org.joda.time.LocalDate;
@@ -24,27 +23,20 @@ import org.joda.time.format.DateTimeFormatter;
  */
 public class DateUtil {
 
-    public static Date toDate(Object dateObject) {
-        if (dateObject == null) {
-            throw new IllegalArgumentException("date object cannot be empty");
+    public static Date toDate(Object dateString) {
+
+        if (dateString == null) {
+            throw new IllegalArgumentException("date string cannot be empty");
         }
 
-        if (dateObject instanceof Date) {
-            return (Date) dateObject;
-        } else if (dateObject instanceof LocalDate) {
-            return ((LocalDate) dateObject).toDate();
-        } else if (dateObject instanceof java.time.LocalDate) {
-            return Date.from(((java.time.LocalDate) dateObject).atStartOfDay()
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant());
-        } else {
-            DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy-MM-dd");
-            LocalDate dateTime = dtf.parseLocalDate((String) dateObject);
-            return dateTime.toDate();
-        }
+        DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy-MM-dd");
+        LocalDate dateTime = dtf.parseLocalDate((String) dateString);
+
+        return dateTime.toDate();
     }
 
     public static Date addDate(Object startDate, Object years, Object months, Object days) {
+
         LocalDate currentDate = new LocalDate(startDate);
         
         currentDate = currentDate.plusYears(intValue(years));
@@ -55,6 +47,7 @@ public class DateUtil {
     }
 
     public static Date subtractDate(Object startDate, Object years, Object months, Object days) {
+
         LocalDate currentDate = new LocalDate(startDate);
 
         currentDate = currentDate.minusYears(intValue(years));
@@ -65,6 +58,7 @@ public class DateUtil {
     }
 
     public static Date now() {
+
         return new LocalDate().toDate();
     }
     

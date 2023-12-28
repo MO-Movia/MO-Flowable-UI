@@ -21,13 +21,25 @@ import org.flowable.engine.repository.ProcessDefinition;
 
 public class StartProcessInstanceAfterContext extends AbstractStartProcessInstanceAfterContext {
 
+    protected Map<String, Object> transientVariables;
+    
     public StartProcessInstanceAfterContext() {
         
     }
     
     public StartProcessInstanceAfterContext(ExecutionEntity processInstance, ExecutionEntity childExecution, Map<String, Object> variables, 
                     Map<String, Object> transientVariables, FlowElement initialFlowElement, Process process, ProcessDefinition processDefinition) {
-        super(processInstance, childExecution, variables, transientVariables, initialFlowElement, process, processDefinition);
+        
+        super(processInstance, childExecution, variables, initialFlowElement, process, processDefinition);
+        
+        this.transientVariables = transientVariables;
     }
 
+    public Map<String, Object> getTransientVariables() {
+        return transientVariables;
+    }
+
+    public void setTransientVariables(Map<String, Object> transientVariables) {
+        this.transientVariables = transientVariables;
+    }
 }

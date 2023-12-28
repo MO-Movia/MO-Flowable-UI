@@ -12,11 +12,8 @@
  */
 package org.flowable.engine.impl.jobexecutor;
 
-import org.flowable.batch.api.BatchQuery;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.history.HistoricProcessInstanceQuery;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.delete.DeleteProcessInstanceBatchConstants;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.job.service.JobHandler;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
@@ -25,8 +22,6 @@ import org.flowable.variable.api.delegate.VariableScope;
 public class BpmnHistoryCleanupJobHandler implements JobHandler {
 
     public static final String TYPE = "bpmn-history-cleanup";
-
-    private static final String DEFAULT_BATCH_NAME = "Flowable BPMN History Cleanup";
 
     @Override
     public String getType() {
@@ -37,24 +32,7 @@ public class BpmnHistoryCleanupJobHandler implements JobHandler {
     public void execute(JobEntity job, String configuration, VariableScope variableScope, CommandContext commandContext) {
         ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
 
-        long inProgressDeletions = processEngineConfiguration.getManagementService()
-                .createBatchQuery()
-                .searchKey(DEFAULT_BATCH_NAME)
-                .status(DeleteProcessInstanceBatchConstants.STATUS_IN_PROGRESS)
-                .count();
-        if (inProgressDeletions > 0) {
-            return;
-        }
-
-        int batchSize = processEngineConfiguration.getCleanInstancesBatchSize();
-
-        HistoricProcessInstanceQuery query = processEngineConfiguration.getHistoryCleaningManager().createHistoricProcessInstanceCleaningQuery();
-        query.deleteSequentiallyUsingBatch(batchSize, DEFAULT_BATCH_NAME);
-
-        BatchQuery batchCleaningQuery = processEngineConfiguration.getHistoryCleaningManager().createBatchCleaningQuery();
-        if (batchCleaningQuery != null) {
-            batchCleaningQuery.deleteWithRelatedData();
-        }
+        processEngineConfiguration.getHistoryCleaningManager().createHistoricProcessInstanceCleaningQuery().deleteWithRelatedData();
     }
     
 }

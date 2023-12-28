@@ -12,42 +12,40 @@
  */
 package org.flowable.app.rest.conf.common;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 
-@Configuration(proxyBeanMethods = false)
+@Configuration
 @EnableWebSecurity
-public class SecurityConfiguration {
+@EnableGlobalMethodSecurity(prePostEnabled = true, jsr250Enabled = true)
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(CsrfConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests-> authorizeRequests.anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults());
-        return http.build();
+    @Override
+    public AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
     }
 
-    @Bean
-    public InMemoryUserDetailsManager inMemoryUserDetailsManager() {
-        return new InMemoryUserDetailsManager(
-                User.withUsername("kermit")
-                        .password("kermit")
-                        .roles("USER")
-                        .build()
-        );
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().csrf().disable().authorizeRequests().anyRequest().authenticated().and().httpBasic();
+    }
+
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication().withUser("kermit").password("kermit").roles("USER");
     }
 
     @Bean
@@ -63,8 +61,9 @@ public class SecurityConfiguration {
         return firewall;
     }
     
-    @Bean
-    public WebSecurityCustomizer fireWallCustomizer(HttpFirewall defaultFireWall) {
-        return web -> web.httpFirewall(defaultFireWall);
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.httpFirewall(defaultFireWall());
+        super.configure(web);
     }
 }

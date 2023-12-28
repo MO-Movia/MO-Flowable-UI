@@ -16,8 +16,8 @@ import java.util.Map;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
-import org.apache.camel.support.DefaultComponent;
-import org.apache.camel.util.PropertiesHelper;
+import org.apache.camel.impl.DefaultComponent;
+import org.apache.camel.util.IntrospectionSupport;
 import org.flowable.engine.IdentityService;
 import org.flowable.engine.ManagementService;
 import org.flowable.engine.RepositoryService;
@@ -70,7 +70,6 @@ public class FlowableComponent extends DefaultComponent {
     @Override
     protected Endpoint createEndpoint(String s, String s1, Map<String, Object> parameters) throws Exception {
         FlowableEndpoint ae = new FlowableEndpoint(s, getCamelContext());
-        ae.setComponent(this);
         ae.setIdentityService(identityService);
         ae.setRuntimeService(runtimeService);
         ae.setRepositoryService(repositoryService);
@@ -80,7 +79,7 @@ public class FlowableComponent extends DefaultComponent {
         ae.setCopyVariablesToBodyAsMap(this.copyVariablesToBodyAsMap);
         ae.setCopyCamelBodyToBody(this.copyCamelBodyToBody);
 
-        Map<String, Object> returnVars = PropertiesHelper.extractProperties(parameters, "var.return.");
+        Map<String, Object> returnVars = IntrospectionSupport.extractProperties(parameters, "var.return.");
         if (returnVars != null && returnVars.size() > 0) {
             ae.getReturnVarMap().putAll(returnVars);
         }

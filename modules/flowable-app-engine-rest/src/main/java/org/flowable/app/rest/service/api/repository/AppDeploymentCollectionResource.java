@@ -14,15 +14,15 @@ package org.flowable.app.rest.service.api.repository;
 
 import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 
-import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.app.api.AppRepositoryService;
@@ -41,7 +41,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -132,8 +131,7 @@ public class AppDeploymentCollectionResource {
     }
 
     @ApiOperation(value = "Create a new app deployment", tags = {
-            "App Deployments" }, consumes = "multipart/form-data", produces = "application/json", notes = "The request body should contain data of type multipart/form-data. There should be exactly one file in the request, any additional files will be ignored. The deployment name is the name of the file-field passed in. Make sure the file-name ends with .app, .zip or .bar.",
-            code = 201)
+            "App Deployments" }, consumes = "multipart/form-data", produces = "application/json", notes = "The request body should contain data of type multipart/form-data. There should be exactly one file in the request, any additional files will be ignored. The deployment name is the name of the file-field passed in. Make sure the file-name ends with .app, .zip or .bar.")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Indicates the app deployment was created."),
             @ApiResponse(code = 400, message = "Indicates there was no content present in the request body or the content mime-type is not supported for app deployment. The status-description contains additional information.")
@@ -142,8 +140,7 @@ public class AppDeploymentCollectionResource {
         @ApiImplicitParam(name="file", paramType = "form", dataType = "java.io.File")
     })
     @PostMapping(value = "/app-repository/deployments", produces = "application/json", consumes = "multipart/form-data")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AppDeploymentResponse uploadDeployment(@ApiParam(name = "tenantId") @RequestParam(value = "tenantId", required = false) String tenantId, HttpServletRequest request) {
+    public AppDeploymentResponse uploadDeployment(@ApiParam(name = "tenantId") @RequestParam(value = "tenantId", required = false) String tenantId, HttpServletRequest request, HttpServletResponse response) {
 
         if (restApiInterceptor != null) {
             restApiInterceptor.executeNewDeploymentForTenantId(tenantId);
@@ -172,17 +169,9 @@ public class AppDeploymentCollectionResource {
             }
 
             if (fileName.endsWith(".app")) {
-                try (final InputStream fileInputStream = file.getInputStream()) {
-                    deploymentBuilder.addInputStream(fileName, fileInputStream);
-                }
-
+                deploymentBuilder.addInputStream(fileName, file.getInputStream());
             } else if (fileName.toLowerCase().endsWith(".bar") || fileName.toLowerCase().endsWith(".zip")) {
-                try (InputStream fileInputStream = file.getInputStream();
-                        ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
-                    
-                    deploymentBuilder.addZipInputStream(zipInputStream);
-                }
-
+                deploymentBuilder.addZipInputStream(new ZipInputStream(file.getInputStream()));
             } else {
                 throw new FlowableIllegalArgumentException("File must be of type .app");
             }
@@ -218,6 +207,7 @@ public class AppDeploymentCollectionResource {
             }
 
             AppDeployment deployment = deploymentBuilder.deploy();
+            response.setStatus(HttpStatus.CREATED.value());
 
             return appRestResponseFactory.createAppDeploymentResponse(deployment);
 
@@ -242,7 +232,11 @@ public class AppDeploymentCollectionResource {
     
     protected String decode(String string) {
         if (string != null) {
-            return URLDecoder.decode(string, StandardCharsets.UTF_8);
+            try {
+                return URLDecoder.decode(string, "UTF-8");
+            } catch (UnsupportedEncodingException uee) {
+                throw new IllegalStateException("JVM does not support UTF-8 encoding.", uee);
+            }
         }
         return null;
     }

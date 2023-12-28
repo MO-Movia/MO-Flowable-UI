@@ -18,6 +18,9 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.query.QueryProperty;
 import org.flowable.common.rest.api.DataResponse;
@@ -34,7 +37,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -84,7 +86,7 @@ public class GroupCollectionResource {
             @ApiResponse(code = 200, message = "Indicates the requested groups were returned.")
     })
     @GetMapping(value = "/identity/groups", produces = "application/json")
-    public DataResponse<GroupResponse> getGroups(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<GroupResponse> getGroups(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         GroupQuery query = identityService.createGroupQuery();
 
         if (allRequestParams.containsKey("id")) {
@@ -110,14 +112,13 @@ public class GroupCollectionResource {
         return paginateList(allRequestParams, query, "id", properties, restResponseFactory::createGroupResponseList);
     }
 
-    @ApiOperation(value = "Create a group", tags = { "Groups" }, code = 201)
+    @ApiOperation(value = "Create a group", tags = { "Groups" })
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Indicates the group was created."),
             @ApiResponse(code = 400, message = "Indicates the id of the group was missing.")
     })
     @PostMapping(value = "/identity/groups", produces = "application/json")
-    @ResponseStatus(HttpStatus.CREATED)
-    public GroupResponse createGroup(@RequestBody GroupRequest groupRequest) {
+    public GroupResponse createGroup(@RequestBody GroupRequest groupRequest, HttpServletRequest httpRequest, HttpServletResponse response) {
         if (groupRequest.getId() == null) {
             throw new FlowableIllegalArgumentException("Id cannot be null.");
         }
@@ -136,6 +137,8 @@ public class GroupCollectionResource {
         created.setName(groupRequest.getName());
         created.setType(groupRequest.getType());
         identityService.saveGroup(created);
+
+        response.setStatus(HttpStatus.CREATED.value());
 
         return restResponseFactory.createGroupResponse(created);
     }

@@ -13,8 +13,8 @@
 
 package org.flowable.variable.service.impl.types;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.interceptor.Session;

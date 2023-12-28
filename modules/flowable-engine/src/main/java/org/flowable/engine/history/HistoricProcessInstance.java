@@ -34,9 +34,6 @@ public interface HistoricProcessInstance {
 
     /** The user provided unique reference to this process instance. */
     String getBusinessKey();
-    
-    /** The user provided business status for this process instance. */
-    String getBusinessStatus();
 
     /** The process definition reference. */
     String getProcessDefinitionId();
@@ -49,11 +46,6 @@ public interface HistoricProcessInstance {
 
     /** The version of the process definition of the process instance. */
     Integer getProcessDefinitionVersion();
-
-    /**
-     * The category of the process definition of the process instance.
-     */
-    String getProcessDefinitionCategory();
 
     /**
      * The deployment id of the process definition of the process instance.

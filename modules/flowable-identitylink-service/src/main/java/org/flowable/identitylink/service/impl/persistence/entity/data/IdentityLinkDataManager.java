@@ -12,18 +12,15 @@
  */
 package org.flowable.identitylink.service.impl.persistence.entity.data;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
-import org.flowable.identitylink.api.history.HistoricIdentityLink;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
 
 /**
  * @author Joram Barrez
  */
 public interface IdentityLinkDataManager extends DataManager<IdentityLinkEntity> {
-    IdentityLinkEntity createIdentityLinkFromHistoricIdentityLink(HistoricIdentityLink historicIdentityLink);
 
     List<IdentityLinkEntity> findIdentityLinksByTaskId(String taskId);
 
@@ -56,7 +53,5 @@ public interface IdentityLinkDataManager extends DataManager<IdentityLinkEntity>
     void deleteIdentityLinksByScopeIdAndScopeType(String scopeId, String scopeType);
     
     void deleteIdentityLinksByScopeDefinitionIdAndScopeType(String scopeDefinitionId, String scopeType);
-    
-    void bulkDeleteIdentityLinksForScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType);
 
 }

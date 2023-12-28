@@ -28,8 +28,6 @@ public interface CmmnListenerFactory {
 
     TaskListener createDelegateExpressionTaskListener(FlowableListener listener);
 
-    TaskListener createScriptTypeTaskListener(FlowableListener listener);
-
     PlanItemInstanceLifecycleListener createClassDelegateLifeCycleListener(FlowableListener listener);
 
     PlanItemInstanceLifecycleListener createExpressionLifeCycleListener(FlowableListener listener);

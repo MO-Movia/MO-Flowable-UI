@@ -13,7 +13,6 @@
 
 package org.flowable.engine.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.common.engine.api.FlowableException;
@@ -87,11 +86,6 @@ public class AttachmentEntityManagerImpl
                         engineConfiguration.getEngineCfgKey());
             }
         }
-    }
-    
-    @Override
-    public void bulkDeleteAttachmentsByTaskId(Collection<String> taskIds) {
-        dataManager.bulkDeleteAttachmentsByTaskId(taskIds);
     }
 
     protected void checkHistoryEnabled() {

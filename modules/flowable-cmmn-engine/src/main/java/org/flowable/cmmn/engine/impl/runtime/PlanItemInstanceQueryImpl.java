@@ -83,12 +83,9 @@ public class PlanItemInstanceQueryImpl extends AbstractVariableQueryImpl<PlanIte
     protected String extraValue;
     protected String involvedUser;
     protected Collection<String> involvedGroups;
-    private List<List<String>> safeInvolvedGroups;
     protected String tenantId;
     protected boolean withoutTenantId;
-    protected String locale;
-    protected boolean withLocalizationFallback;
-
+    
     public PlanItemInstanceQueryImpl() {
         
     }
@@ -229,12 +226,7 @@ public class PlanItemInstanceQueryImpl extends AbstractVariableQueryImpl<PlanIte
     public PlanItemInstanceQuery planItemInstanceStateAsyncActive() {
         return planItemInstanceState(PlanItemInstanceState.ASYNC_ACTIVE);
     }
-
-    @Override
-    public PlanItemInstanceQuery planItemInstanceStateAsyncActiveLeave() {
-        return planItemInstanceState(PlanItemInstanceState.ASYNC_ACTIVE_LEAVE);
-    }
-
+    
     @Override
     public PlanItemInstanceQuery planItemInstanceStateAvailable() {
         return planItemInstanceState(PlanItemInstanceState.AVAILABLE);
@@ -650,18 +642,6 @@ public class PlanItemInstanceQueryImpl extends AbstractVariableQueryImpl<PlanIte
     }
 
     @Override
-    public PlanItemInstanceQuery locale(String locale) {
-        this.locale = locale;
-        return this;
-    }
-
-    @Override
-    public PlanItemInstanceQuery withLocalizationFallback() {
-        this.withLocalizationFallback = true;
-        return this;
-    }
-
-    @Override
     public long executeCount(CommandContext commandContext) {
         ensureVariablesInitialized();
         return cmmnEngineConfiguration.getPlanItemInstanceEntityManager().countByCriteria(this);
@@ -670,15 +650,7 @@ public class PlanItemInstanceQueryImpl extends AbstractVariableQueryImpl<PlanIte
     @Override
     public List<PlanItemInstance> executeList(CommandContext commandContext) {
         ensureVariablesInitialized();
-        List<PlanItemInstance> planItems = cmmnEngineConfiguration.getPlanItemInstanceEntityManager().findByCriteria(this);
-      
-        if (cmmnEngineConfiguration.getPlanItemLocalizationManager() != null) {
-            for (PlanItemInstance planItemInstance : planItems) {
-                cmmnEngineConfiguration.getPlanItemLocalizationManager().localize(planItemInstance, locale, withLocalizationFallback);
-            }
-        }
-
-        return planItems;
+        return cmmnEngineConfiguration.getPlanItemInstanceEntityManager().findByCriteria(this);
     }
     
     @Override
@@ -852,13 +824,5 @@ public class PlanItemInstanceQueryImpl extends AbstractVariableQueryImpl<PlanIte
     }
     public boolean isWithoutTenantId() {
         return withoutTenantId;
-    }
-
-    public List<List<String>> getSafeInvolvedGroups() {
-        return safeInvolvedGroups;
-    }
-
-    public void setSafeInvolvedGroups(List<List<String>> safeInvolvedGroups) {
-        this.safeInvolvedGroups = safeInvolvedGroups;
     }
 }

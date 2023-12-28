@@ -13,6 +13,9 @@
 
 package org.flowable.eventregistry.rest.service.api.runtime;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
@@ -29,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -61,15 +63,13 @@ public class EventInstanceCollectionResource {
     protected EventRegistryRestApiInterceptor restApiInterceptor;
 
     @ApiOperation(value = "Send an event instance", tags = { "Event Instances" },
-            notes = "Only one of *eventDefinitionId* or *eventDefinitionKey* an be used in the request body. \n\n",
-            code = 204)
+            notes = "Only one of *eventDefinitionId* or *eventDefinitionKey* an be used in the request body. \n\n")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Indicates the event instance was created."),
+            @ApiResponse(code = 201, message = "Indicates the event instance was created."),
             @ApiResponse(code = 400, message = "Indicates either the event definition was not found (based on id or key), no event was send. Status description contains additional information about the error.")
     })
     @PostMapping(value = "/event-registry-runtime/event-instances")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void createEventInstance(@RequestBody EventInstanceCreateRequest request) {
+    public void createEventInstance(@RequestBody EventInstanceCreateRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
 
         if (restApiInterceptor != null) {
             restApiInterceptor.createEventInstance(request);
@@ -86,7 +86,7 @@ public class EventInstanceCollectionResource {
                 eventDefinitionQuery.tenantId(request.getTenantId());
             }
             
-            eventDefinition = eventDefinitionQuery.latestVersion().singleResult();
+            eventDefinition = eventDefinitionQuery.singleResult();
         }
         
         if (eventDefinition == null) {
@@ -103,6 +103,7 @@ public class EventInstanceCollectionResource {
         }
 
         eventRegistry.eventReceived((InboundChannelModel) channelModel, request.getEventPayload().toString());
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
     protected void validateRequestParameters(@RequestBody EventInstanceCreateRequest request) {

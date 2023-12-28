@@ -13,6 +13,9 @@
 
 package org.flowable.rest.service.api.identity;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.idm.api.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +23,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -44,7 +46,7 @@ public class UserResource extends BaseUserResource {
             @ApiResponse(code = 404, message = "Indicates the requested user does not exist.")
     })
     @GetMapping(value = "/identity/users/{userId}", produces = "application/json")
-    public UserResponse getUser(@ApiParam(name = "userId") @PathVariable String userId) {
+    public UserResponse getUser(@ApiParam(name = "userId") @PathVariable String userId, HttpServletRequest request) {
         return restResponseFactory.createUserResponse(getUserFromRequest(userId), false);
     }
 
@@ -58,7 +60,7 @@ public class UserResource extends BaseUserResource {
             @ApiResponse(code = 409, message = "Indicates the requested user was updated simultaneously.")
     })
     @PutMapping(value = "/identity/users/{userId}", produces = "application/json")
-    public UserResponse updateUser(@ApiParam(name = "userId") @PathVariable String userId, @RequestBody UserRequest userRequest) {
+    public UserResponse updateUser(@ApiParam(name = "userId") @PathVariable String userId, @RequestBody UserRequest userRequest, HttpServletRequest request) {
         User user = getUserFromRequest(userId);
         if (userRequest.isEmailChanged()) {
             user.setEmail(userRequest.getEmail());
@@ -82,14 +84,13 @@ public class UserResource extends BaseUserResource {
         return restResponseFactory.createUserResponse(user, false);
     }
 
-    @ApiOperation(value = "Delete a user", tags = { "Users" }, code = 204)
+    @ApiOperation(value = "Delete a user", tags = { "Users" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the user was found and  has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested user was not found.")
     })
     @DeleteMapping("/identity/users/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@ApiParam(name = "userId") @PathVariable String userId) {
+    public void deleteUser(@ApiParam(name = "userId") @PathVariable String userId, HttpServletResponse response) {
         User user = getUserFromRequest(userId);
         
         if (restApiInterceptor != null) {
@@ -97,5 +98,6 @@ public class UserResource extends BaseUserResource {
         }
         
         identityService.deleteUser(user.getId());
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 }

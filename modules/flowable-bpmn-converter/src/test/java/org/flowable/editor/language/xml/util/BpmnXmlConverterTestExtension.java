@@ -12,6 +12,9 @@
  */
 package org.flowable.editor.language.xml.util;
 
+import static org.flowable.editor.language.xml.util.XmlTestUtils.readXMLFile;
+import static org.flowable.editor.language.xml.util.XmlTestUtils.readXmlExportAndReadAgain;
+
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,22 +35,17 @@ public class BpmnXmlConverterTestExtension implements TestTemplateInvocationCont
 
     @Override
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
-        BpmnXmlConverterTest annotation = AnnotationSupport.findAnnotation(
+        String resource = AnnotationSupport.findAnnotation(
                 context.getTestMethod(),
                 BpmnXmlConverterTest.class
-        ).orElseThrow(() -> new IllegalArgumentException("No annotation been provided"));
-        String resource = annotation.value();
-        if (StringUtils.isBlank(resource)) {
-            throw new IllegalArgumentException("No resource has been provided");
-        }
-
-        ConversionDirection[] directions = annotation.directions();
-        if (directions.length == 0) {
-            directions = ConversionDirection.values();
-        }
-
-        return Stream.of(directions)
-                .map(direction -> new ConvertBpmnModelTestInvocationContext(direction.name(), direction.supplyBpmnModel(resource)));
+        )
+                .map(BpmnXmlConverterTest::value)
+                .filter(StringUtils::isNotBlank)
+                .orElseThrow(() -> new IllegalArgumentException("No resource has been provided"));
+        return Stream.of(
+                new ConvertBpmnModelTestInvocationContext("xmlToModel", () -> readXMLFile(resource)),
+                new ConvertBpmnModelTestInvocationContext("xmlToModelAndBack", () -> readXmlExportAndReadAgain(resource))
+        );
     }
 
 }

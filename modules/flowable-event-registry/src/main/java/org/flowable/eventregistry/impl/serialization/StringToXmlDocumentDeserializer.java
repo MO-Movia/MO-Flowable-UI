@@ -29,22 +29,16 @@ import org.w3c.dom.Document;
 public class StringToXmlDocumentDeserializer implements InboundEventDeserializer<Document> {
 
     @Override
-    public Document deserialize(Object rawEvent) {
+    public Document deserialize(String rawEvent) {
         try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            try (InputStream inputStream = new ByteArrayInputStream(convertEventToBytes(rawEvent))) {
-                Document document = documentBuilder.parse(inputStream);
-                return document;
+            try (InputStream inputStream = new ByteArrayInputStream(rawEvent.getBytes(StandardCharsets.UTF_8))) {
+                return documentBuilder.parse(inputStream);
             }
-            
         } catch (Exception e) {
             throw new FlowableException("Could not deserialize event to xml", e);
         }
     }
 
-    public byte[] convertEventToBytes(Object rawEvent) {
-        return rawEvent.toString().getBytes(StandardCharsets.UTF_8);
-    }
-    
 }

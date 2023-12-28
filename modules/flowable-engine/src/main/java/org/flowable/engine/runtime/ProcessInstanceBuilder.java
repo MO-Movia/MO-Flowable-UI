@@ -56,11 +56,6 @@ public interface ProcessInstanceBuilder {
      * Set the message name that needs to be used to look up the process definition that needs to be used to start the process instance.
      */
     ProcessInstanceBuilder messageName(String messageName);
-    
-    /**
-     * Set the start event in case of an event registry start event that is triggered to start the process instance.
-     */
-    ProcessInstanceBuilder startEventId(String startEventId);
 
     /**
      * Set the name of process instance
@@ -71,12 +66,7 @@ public interface ProcessInstanceBuilder {
      * Set the businessKey of process instance
      **/
     ProcessInstanceBuilder businessKey(String businessKey);
-
-    /**
-     * Set the businessStatus of process instance
-     **/
-    ProcessInstanceBuilder businessStatus(String businessStatus);
-
+    
     /**
      * Sets the callback identifier of the process instance.
      */
@@ -118,20 +108,6 @@ public interface ProcessInstanceBuilder {
      * to store entity links and callback references before the process instance is started.
      */
     ProcessInstanceBuilder predefineProcessInstanceId(String processInstanceId);
-
-    /**
-     * Set the owner of the process instance to be created to the given user id.
-     * @param userId the id of the user to become the owner of the process instance
-     * @return the process instance builder for method chaining
-     */
-    ProcessInstanceBuilder owner(String userId);
-
-    /**
-     * Set the assignee of the process instance to be created to the given user id.
-     * @param userId the id of the user to become the owner of the process instance
-     * @return the process instance builder for method chaining
-     */
-    ProcessInstanceBuilder assignee(String userId);
 
     /**
      * Sets the process variables

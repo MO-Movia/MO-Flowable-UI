@@ -31,13 +31,11 @@ import org.flowable.dmn.engine.impl.cmd.ExecuteDecisionWithAuditTrailCmd;
 import org.flowable.dmn.engine.impl.cmd.PersistHistoricDecisionExecutionCmd;
 import org.flowable.dmn.model.Decision;
 import org.flowable.dmn.model.DecisionService;
-import org.flowable.dmn.model.DmnElementReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Yvo Swillens
- * @author Valentin Zickner
  */
 public class DmnDecisionServiceImpl extends CommonEngineServiceImpl<DmnEngineConfiguration> implements DmnDecisionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DmnDecisionServiceImpl.class);
@@ -218,18 +216,15 @@ public class DmnDecisionServiceImpl extends CommonEngineServiceImpl<DmnEngineCon
             DecisionService decisionService = (DecisionService) executeDecisionContext.getDmnElement();
             DecisionServiceExecutionAuditContainer decisionServiceExecutionAuditContainer = (DecisionServiceExecutionAuditContainer) executeDecisionContext.getDecisionExecution();
 
-            boolean multipleResults = decisionService.getOutputDecisions().size() > 1;
-            for (DmnElementReference elementReference : decisionService.getOutputDecisions()) {
-                DecisionExecutionAuditContainer childDecisionExecution = decisionServiceExecutionAuditContainer
-                        .getChildDecisionExecution(elementReference.getParsedId());
-                if (childDecisionExecution.getDecisionResult() != null && !childDecisionExecution.getDecisionResult().isEmpty()) {
-                    decisionServiceResult.put(elementReference.getParsedId(), childDecisionExecution.getDecisionResult());
-                }
-                multipleResults = multipleResults || childDecisionExecution.isMultipleResults();
-            }
+            decisionService.getOutputDecisions()
+                .forEach(elementReference ->
+                    decisionServiceResult.put(
+                        elementReference.getParsedId(),
+                        decisionServiceExecutionAuditContainer.getChildDecisionExecution(elementReference.getParsedId()).getDecisionResult()
+                    )
+                );
 
             decisionServiceExecutionAuditContainer.setDecisionServiceResult(decisionServiceResult);
-            decisionServiceExecutionAuditContainer.setMultipleResults(multipleResults);
             return decisionServiceResult;
         } else {
             throw new FlowableException("Main execution was a not a decision service");
@@ -239,7 +234,7 @@ public class DmnDecisionServiceImpl extends CommonEngineServiceImpl<DmnEngineCon
     protected DecisionExecutionAuditContainer persistDecisionAudit(ExecuteDecisionContext executeDecisionContext) {
         DecisionExecutionAuditContainer decisionExecution = executeDecisionContext.getDecisionExecution();
 
-        decisionExecution.stopAudit(configuration.getClock().getCurrentTime());
+        decisionExecution.stopAudit();
 
         commandExecutor.execute(new PersistHistoricDecisionExecutionCmd(executeDecisionContext));
 

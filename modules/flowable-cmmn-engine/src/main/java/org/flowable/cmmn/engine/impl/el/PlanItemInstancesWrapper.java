@@ -186,10 +186,6 @@ public class PlanItemInstancesWrapper {
         return getPlanItemInstancesWithState(PlanItemInstanceState.ASYNC_ACTIVE);
     }
 
-    public PlanItemInstancesWrapper asyncActiveLeave() {
-        return getPlanItemInstancesWithState(PlanItemInstanceState.ASYNC_ACTIVE_LEAVE);
-    }
-
     public PlanItemInstancesWrapper onlyTerminal() {
         ensurePlanItemInstanceInitialized();
 
@@ -254,7 +250,7 @@ public class PlanItemInstancesWrapper {
                 childPlanItemInstances.add(childPlanItemInstance);
             }
 
-            if (childPlanItemInstance.getPlanItem() != null && childPlanItemInstance.getPlanItem().getPlanItemDefinition() instanceof Stage) {
+            if (childPlanItemInstance.getPlanItem().getPlanItemDefinition() instanceof Stage) {
                 collectAllChildPlanItemInstances(commandContext, childPlanItemInstance, childPlanItemInstances);
             }
         }

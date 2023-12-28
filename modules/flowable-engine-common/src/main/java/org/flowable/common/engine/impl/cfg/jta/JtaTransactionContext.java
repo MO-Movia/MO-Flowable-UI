@@ -13,12 +13,12 @@
 
 package org.flowable.common.engine.impl.cfg.jta;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Status;
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.cfg.TransactionContext;

@@ -108,12 +108,6 @@ public class BaseProcessInstanceResource {
         if (queryRequest.getProcessDefinitionEngineVersion() != null) {
             query.processDefinitionEngineVersion(queryRequest.getProcessDefinitionEngineVersion());
         }
-        if (queryRequest.getRootScopeId() != null) {
-            query.processInstanceRootScopeId(queryRequest.getRootScopeId());
-        }
-        if (queryRequest.getParentScopeId() != null) {
-            query.processInstanceParentScopeId(queryRequest.getParentScopeId());
-        }
         if (queryRequest.getDeploymentId() != null) {
             query.deploymentId(queryRequest.getDeploymentId());
         }
@@ -306,29 +300,16 @@ public class BaseProcessInstanceResource {
         }
     }
 
-    /**
-     * Returns the {@link ProcessInstance} that is requested and calls the access interceptor.
-     * Throws the right exceptions when bad request was made or instance was not found.
-     */
     protected ProcessInstance getProcessInstanceFromRequest(String processInstanceId) {
-        ProcessInstance processInstance = getProcessInstanceFromRequestWithoutAccessCheck(processInstanceId);
-
-        if (restApiInterceptor != null) {
-            restApiInterceptor.accessProcessInstanceInfoById(processInstance);
-        }
-
-        return processInstance;
-    }
-
-    /**
-     * Returns the {@link ProcessInstance} that is requested without calling the access interceptor
-     * Throws the right exceptions when bad request was made or instance was not found.
-     */
-    protected ProcessInstance getProcessInstanceFromRequestWithoutAccessCheck(String processInstanceId) {
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         if (processInstance == null) {
             throw new FlowableObjectNotFoundException("Could not find a process instance with id '" + processInstanceId + "'.");
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessProcessInstanceInfoById(processInstance);
+        }
+        
         return processInstance;
     }
 }

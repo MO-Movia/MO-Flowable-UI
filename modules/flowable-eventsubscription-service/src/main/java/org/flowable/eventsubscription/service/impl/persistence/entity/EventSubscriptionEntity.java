@@ -47,13 +47,7 @@ public interface EventSubscriptionEntity extends EventSubscription, Entity, HasR
     
     void setScopeDefinitionId(String scopeDefinitionId);
     
-    void setScopeDefinitionKey(String scopeDefinitionKey);
-    
     void setScopeType(String scopeType);
-
-    void setLockOwner(String lockOwner);
-
-    void setLockTime(Date lockTime);
 
     void setTenantId(String tenantId);
 }

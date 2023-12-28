@@ -4,7 +4,8 @@
              targetNamespace="http://flowable.org/cmmn">
     <case id="myCase" name="testEventListener">
         <casePlanModel id="casePlanModel">
-            <planItem id="eventListenerPlanItem" definitionRef="eventListener" />
+            <planItem id="eventListenerPlanItem" definitionRef="eventListener">
+            </planItem>
             <planItem id="planItemB" name="Task ${caseInstance.getTenantId()}" definitionRef="theTask">
                 <entryCriterion id="entryTaskB" sentryRef="sentryOnEventListener"/>
             </planItem>

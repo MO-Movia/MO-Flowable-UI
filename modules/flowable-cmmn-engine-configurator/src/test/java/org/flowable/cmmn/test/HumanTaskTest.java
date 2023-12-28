@@ -14,73 +14,40 @@ package org.flowable.cmmn.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
-import org.flowable.cmmn.engine.test.impl.CmmnHistoryTestHelper;
 import org.flowable.common.engine.api.FlowableException;
-import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
-import org.flowable.form.api.FormEngineConfigurationApi;
-import org.flowable.form.api.FormFieldHandler;
-import org.flowable.form.api.FormInfo;
 import org.flowable.form.api.FormRepositoryService;
-import org.flowable.form.api.FormService;
+import org.flowable.form.engine.FormEngineConfiguration;
 import org.flowable.task.api.Task;
-import org.flowable.task.api.history.HistoricTaskInstance;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.mockito.quality.Strictness;
 
 /**
  * @author martin.grofcik
- * @author Filip Hrisafov
  */
 public class HumanTaskTest extends AbstractProcessEngineIntegrationTest {
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
-
-    @Mock
-    protected FormEngineConfigurationApi formEngineConfiguration;
-
-    @Mock
-    protected FormService formService;
-
-    @Mock
     protected FormRepositoryService formRepositoryService;
-
-    @Mock
-    protected FormFieldHandler formFieldHandler;
-
-    protected FormFieldHandler originalFormFieldHandler;
 
     @Before
     public void setup() {
         super.setupServices();
-        originalFormFieldHandler = cmmnEngineConfiguration.getFormFieldHandler();
-        cmmnEngineConfiguration.setFormFieldHandler(formFieldHandler);
-        Map engineConfigurations = cmmnEngineConfiguration.getEngineConfigurations();
-        engineConfigurations.put(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG, formEngineConfiguration);
+        FormEngineConfiguration formEngineConfiguration = (FormEngineConfiguration) processEngine.getProcessEngineConfiguration()
+                .getEngineConfigurations().get(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG);
+        this.formRepositoryService = formEngineConfiguration.getFormRepositoryService();
+
+        formRepositoryService.createDeployment().addClasspathResource("org/flowable/cmmn/test/simple.form").deploy();
     }
 
     @After
-    public void tearDown() {
-        cmmnEngineConfiguration.setFormFieldHandler(originalFormFieldHandler);
-        cmmnEngineConfiguration.getEngineConfigurations().remove(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG);
+    public void deleteFormDeployment() {
+        this.formRepositoryService.createDeploymentQuery().list().forEach(
+                formDeployment -> formRepositoryService.deleteDeployment(formDeployment.getId(), true)
+        );
     }
 
     @Test
@@ -94,26 +61,12 @@ public class HumanTaskTest extends AbstractProcessEngineIntegrationTest {
         Task caseTask = cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).singleResult();
         assertThat(caseTask).isNotNull();
 
-        FormInfo formInfo = new FormInfo();
-        when(formEngineConfiguration.getFormRepositoryService()).thenReturn(formRepositoryService);
-        when(formEngineConfiguration.getFormService()).thenReturn(formService);
-        when(formRepositoryService.getFormModelById("formDefId")).thenReturn(formInfo);
-        when(formService.getVariablesFromFormSubmission(caseTask.getTaskDefinitionKey(), "humanTask", caseInstance.getId(),
-                caseInstance.getCaseDefinitionId(), ScopeTypes.CMMN, formInfo, null, "__COMPLETE"))
-                .thenReturn(Collections.singletonMap("completeVar2", "Testing"));
-        doNothing().when(formService)
-                .validateFormFields(caseTask.getTaskDefinitionKey(), "humanTask", caseInstance.getId(),
-                        caseInstance.getCaseDefinitionId(), ScopeTypes.CMMN, formInfo, null);
-
         cmmnTaskService
-                .completeTaskWithForm(caseTask.getId(), "formDefId",
+                .completeTaskWithForm(caseTask.getId(), formRepositoryService.createFormDefinitionQuery().formDefinitionKey("form1").singleResult().getId(),
                         "__COMPLETE", null);
 
         CaseInstance dbCaseInstance = cmmnRuntimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
         assertThat(dbCaseInstance).isNull();
-
-        verify(formFieldHandler).handleFormFieldsOnSubmit(formInfo, caseTask.getId(), null, caseInstance.getId(), ScopeTypes.CMMN,
-                Collections.singletonMap("completeVar2", "Testing"), caseInstance.getTenantId());
     }
 
     @Test
@@ -135,108 +88,10 @@ public class HumanTaskTest extends AbstractProcessEngineIntegrationTest {
         
         assertThat(cmmnRuntimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isEqualTo(1);
 
-        FormInfo formInfo = new FormInfo();
-        when(formEngineConfiguration.getFormRepositoryService()).thenReturn(formRepositoryService);
-        when(formEngineConfiguration.getFormService()).thenReturn(formService);
-        when(formRepositoryService.getFormModelById("formDefId")).thenReturn(formInfo);
-        when(formService.getVariablesFromFormSubmission(caseTask.getTaskDefinitionKey(), "humanTask", caseInstance.getId(),
-                caseInstance.getCaseDefinitionId(), ScopeTypes.CMMN, formInfo, null, "__COMPLETE"))
-                .thenReturn(Collections.singletonMap("completeVar2", "Testing"));
-        doNothing().when(formService)
-                .validateFormFields(caseTask.getTaskDefinitionKey(), "humanTask", caseInstance.getId(),
-                        caseInstance.getCaseDefinitionId(), ScopeTypes.CMMN, formInfo, null);
-
-        cmmnTaskService.completeTaskWithForm(caseTask.getId(), "formDefId", "__COMPLETE", null);
+        cmmnTaskService.completeTaskWithForm(caseTask.getId(), formRepositoryService.createFormDefinitionQuery()
+                .formDefinitionKey("form1").singleResult().getId(), "__COMPLETE", null);
 
         CaseInstance dbCaseInstance = cmmnRuntimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
         assertThat(dbCaseInstance).isNull();
-
-        verify(formFieldHandler).handleFormFieldsOnSubmit(formInfo, caseTask.getId(), null, caseInstance.getId(), ScopeTypes.CMMN,
-                Collections.singletonMap("completeVar2", "Testing"), caseInstance.getTenantId());
     }
-
-    @Test
-    @CmmnDeployment(resources = "org/flowable/cmmn/test/CaseTaskTest.testCaseTask.cmmn")
-    public void queryTasksByDeploymentId() {
-        CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
-                .caseDefinitionKey("myCase")
-                .start();
-        assertThat(caseInstance).isNotNull();
-
-        String caseDefinitionDeploymentId = caseInstance.getCaseDefinitionDeploymentId();
-        assertThat(caseDefinitionDeploymentId).isNotNull();
-
-        Task caseTask = cmmnTaskService.createTaskQuery()
-                .cmmnDeploymentId(caseDefinitionDeploymentId)
-                .singleResult();
-        assertThat(caseTask).isNotNull();
-
-        caseTask = cmmnTaskService.createTaskQuery()
-                .cmmnDeploymentId(caseDefinitionDeploymentId)
-                .deploymentId("invalid")
-                .singleResult();
-        assertThat(caseTask).isNull();
-
-        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
-            HistoricTaskInstance historicTask = cmmnHistoryService.createHistoricTaskInstanceQuery()
-                    .cmmnDeploymentId(caseDefinitionDeploymentId)
-                    .singleResult();
-            assertThat(historicTask).isNotNull();
-
-            historicTask = cmmnHistoryService.createHistoricTaskInstanceQuery()
-                    .cmmnDeploymentId(caseDefinitionDeploymentId)
-                    .deploymentId("invalid")
-                    .singleResult();
-            assertThat(historicTask).isNull();
-        }
-    }
-
-    @Test
-    @CmmnDeployment(resources = "org/flowable/cmmn/test/CaseTaskTest.testCaseTask.cmmn")
-    public void queryTasksByDeploymentIdsIn() {
-        CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder()
-                .caseDefinitionKey("myCase")
-                .start();
-        assertThat(caseInstance).isNotNull();
-
-        String caseDefinitionDeploymentId = caseInstance.getCaseDefinitionDeploymentId();
-        assertThat(caseDefinitionDeploymentId).isNotNull();
-
-        Task caseTask = cmmnTaskService.createTaskQuery()
-                .cmmnDeploymentIdIn(Arrays.asList(caseDefinitionDeploymentId, "invalid"))
-                .singleResult();
-        assertThat(caseTask).isNotNull();
-
-        caseTask = cmmnTaskService.createTaskQuery()
-                .cmmnDeploymentIdIn(Arrays.asList(caseDefinitionDeploymentId, "invalid"))
-                .deploymentId("invalid")
-                .singleResult();
-        assertThat(caseTask).isNull();
-
-        caseTask = cmmnTaskService.createTaskQuery()
-                .cmmnDeploymentIdIn(Arrays.asList(caseDefinitionDeploymentId, "invalid"))
-                .deploymentIdIn(Arrays.asList("invalid1", "invalid2"))
-                .singleResult();
-        assertThat(caseTask).isNull();
-
-        if (CmmnHistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, cmmnEngineConfiguration)) {
-            HistoricTaskInstance historicTask = cmmnHistoryService.createHistoricTaskInstanceQuery()
-                    .cmmnDeploymentIdIn(Arrays.asList(caseDefinitionDeploymentId, "invalid"))
-                    .singleResult();
-            assertThat(historicTask).isNotNull();
-
-            historicTask = cmmnHistoryService.createHistoricTaskInstanceQuery()
-                    .cmmnDeploymentIdIn(Arrays.asList(caseDefinitionDeploymentId, "invalid"))
-                    .deploymentId("invalid")
-                    .singleResult();
-            assertThat(historicTask).isNull();
-
-            historicTask = cmmnHistoryService.createHistoricTaskInstanceQuery()
-                    .cmmnDeploymentIdIn(Arrays.asList(caseDefinitionDeploymentId, "invalid"))
-                    .deploymentIdIn(Arrays.asList("invalid1", "invalid2"))
-                    .singleResult();
-            assertThat(historicTask).isNull();
-        }
-    }
-
 }

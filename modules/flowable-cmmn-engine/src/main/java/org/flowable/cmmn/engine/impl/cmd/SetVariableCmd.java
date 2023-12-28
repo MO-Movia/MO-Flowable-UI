@@ -12,7 +12,6 @@
  */
 package org.flowable.cmmn.engine.impl.cmd;
 
-import org.flowable.cmmn.engine.impl.agenda.CmmnEngineAgenda;
 import org.flowable.cmmn.engine.impl.persistence.entity.CaseInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
@@ -50,9 +49,7 @@ public class SetVariableCmd implements Command<Void> {
         }
         caseInstanceEntity.setVariable(variableName, variableValue);
         
-        CmmnEngineAgenda agenda = CommandContextUtil.getAgenda(commandContext);
-        agenda.planEvaluateVariableEventListenersOperation(caseInstanceId);
-        agenda.planEvaluateCriteriaOperation(caseInstanceId);
+        CommandContextUtil.getAgenda(commandContext).planEvaluateCriteriaOperation(caseInstanceId);
         
         return null;
     }

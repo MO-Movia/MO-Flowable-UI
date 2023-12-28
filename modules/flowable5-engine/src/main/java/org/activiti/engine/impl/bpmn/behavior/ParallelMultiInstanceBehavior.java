@@ -26,7 +26,7 @@ import org.flowable.engine.impl.delegate.ActivityBehavior;
  */
 public class ParallelMultiInstanceBehavior extends MultiInstanceActivityBehavior {
 
-    public ParallelMultiInstanceBehavior(ActivityImpl activity, ActivityBehavior originalActivityBehavior) {
+    public ParallelMultiInstanceBehavior(ActivityImpl activity, AbstractBpmnActivityBehavior originalActivityBehavior) {
         super(activity, originalActivityBehavior);
     }
 

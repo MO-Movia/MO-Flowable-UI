@@ -169,13 +169,6 @@ public class CmmnTestRunner extends BlockJUnit4ClassRunner {
             for (String resource : resources) {
                 deploymentBuilder.addClasspathResource(resource);
             }
-
-            String[] extraResources = deploymentAnnotation.extraResources();
-            if (extraResources != null && extraResources.length > 0) {
-                for (String extraResource : extraResources) {
-                    deploymentBuilder.addClasspathResource(extraResource);
-                }
-            }
             
             if (StringUtils.isNotEmpty(deploymentAnnotation.tenantId())) {
                 deploymentBuilder.tenantId(deploymentAnnotation.tenantId());

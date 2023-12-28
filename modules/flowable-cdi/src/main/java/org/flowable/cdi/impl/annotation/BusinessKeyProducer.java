@@ -12,8 +12,8 @@
  */
 package org.flowable.cdi.impl.annotation;
 
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Named;
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 
 import org.flowable.cdi.annotation.BusinessKey;
 import org.flowable.engine.runtime.ProcessInstance;

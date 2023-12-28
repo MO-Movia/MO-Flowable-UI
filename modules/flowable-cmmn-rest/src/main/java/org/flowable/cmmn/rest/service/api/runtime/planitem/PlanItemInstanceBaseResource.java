@@ -56,7 +56,7 @@ public class PlanItemInstanceBaseResource {
     @Autowired(required=false)
     protected CmmnRestApiInterceptor restApiInterceptor;
 
-    protected DataResponse<PlanItemInstanceResponse> getQueryResponse(PlanItemInstanceQueryRequest queryRequest, Map<String, String> requestParams) {
+    protected DataResponse<PlanItemInstanceResponse> getQueryResponse(PlanItemInstanceQueryRequest queryRequest, Map<String, String> requestParams, String serverRootUrl) {
 
         PlanItemInstanceQuery query = runtimeService.createPlanItemInstanceQuery();
 
@@ -105,9 +105,6 @@ public class PlanItemInstanceBaseResource {
         }
         if (queryRequest.getStartUserId() != null) {
             query.planItemInstanceStartUserId(queryRequest.getStartUserId());
-        }
-        if (queryRequest.getIncludeEnded() != null && queryRequest.getIncludeEnded()) {
-            query.includeEnded();
         }
 
         if (queryRequest.getVariables() != null) {

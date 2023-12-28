@@ -15,7 +15,6 @@ package org.flowable.engine.impl.bpmn.parser.handler;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.bpmn.constants.BpmnXMLConstants;
 import org.flowable.bpmn.model.BaseElement;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.ErrorEventDefinition;
@@ -29,7 +28,6 @@ import org.flowable.bpmn.model.Signal;
 import org.flowable.bpmn.model.SignalEventDefinition;
 import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.TimerEventDefinition;
-import org.flowable.bpmn.model.VariableListenerEventDefinition;
 import org.flowable.common.engine.impl.util.CollectionUtil;
 import org.flowable.engine.impl.bpmn.parser.BpmnParse;
 
@@ -73,17 +71,15 @@ public class StartEventParseHandler extends AbstractActivityBpmnParseHandler<Sta
                 
                 } else if (eventDefinition instanceof EscalationEventDefinition) {
                     element.setBehavior(bpmnParse.getActivityBehaviorFactory().createEventSubProcessEscalationStartEventActivityBehavior(element));
-                
-                } else if (eventDefinition instanceof VariableListenerEventDefinition) {
-                    VariableListenerEventDefinition variableListenerEventDefinition = (VariableListenerEventDefinition) eventDefinition;
-                    element.setBehavior(bpmnParse.getActivityBehaviorFactory().createEventSubProcessVariableListenerlStartEventActivityBehavior(element, variableListenerEventDefinition));
                 }
                 
-            } else if (hasEventTypeElement(element)) {
-                List<ExtensionElement> eventTypeElements = element.getExtensionElements().get(BpmnXMLConstants.ELEMENT_EVENT_TYPE);
-                String eventType = eventTypeElements.get(0).getElementText();
-                if (StringUtils.isNotEmpty(eventType)) {
-                    element.setBehavior(bpmnParse.getActivityBehaviorFactory().createEventSubProcessEventRegistryStartEventActivityBehavior(element, eventType));
+            } else {
+                List<ExtensionElement> eventTypeElements = element.getExtensionElements().get("eventType");
+                if (eventTypeElements != null && !eventTypeElements.isEmpty()) {
+                    String eventType = eventTypeElements.get(0).getElementText();
+                    if (StringUtils.isNotEmpty(eventType)) {
+                        element.setBehavior(bpmnParse.getActivityBehaviorFactory().createEventSubProcessEventRegistryStartEventActivityBehavior(element, eventType));
+                    }
                 }
             }
 
@@ -97,7 +93,7 @@ public class StartEventParseHandler extends AbstractActivityBpmnParseHandler<Sta
             }
         }
 
-        if (element.getSubProcess() == null && (hasNoEventDefinitionOrTypeElement(element) ||
+        if (element.getSubProcess() == null && (CollectionUtil.isEmpty(element.getEventDefinitions()) ||
                 bpmnParse.getCurrentProcess().getInitialFlowElement() == null)) {
             
             bpmnParse.getCurrentProcess().setInitialFlowElement(element);
@@ -116,18 +112,5 @@ public class StartEventParseHandler extends AbstractActivityBpmnParseHandler<Sta
         
         return messageDefinition;
     }
-    
-    protected boolean hasNoEventDefinitionOrTypeElement(StartEvent element) {
-        return CollectionUtil.isEmpty(element.getEventDefinitions()) && !hasEventTypeElement(element);
-    }
 
-    protected boolean hasEventTypeElement(StartEvent element) {
-        boolean foundEventTypeElement = false;
-        List<ExtensionElement> eventTypeElements = element.getExtensionElements().get(BpmnXMLConstants.ELEMENT_EVENT_TYPE);
-        if (eventTypeElements != null && !eventTypeElements.isEmpty()) {
-            foundEventTypeElement = true;
-        }
-        
-        return foundEventTypeElement;
-    }
 }

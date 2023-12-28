@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.runtime.ActivityInstance;
 
 /**
  * @author Christian Stettler
@@ -41,29 +40,6 @@ public class HistoricActivityInstanceEntityImpl extends HistoricScopeInstanceEnt
 
     public HistoricActivityInstanceEntityImpl() {
 
-    }
-
-    public HistoricActivityInstanceEntityImpl(ActivityInstance activityInstance) {
-        this.id = activityInstance.getId();
-
-        this.processDefinitionId = activityInstance.getProcessDefinitionId();
-        this.processInstanceId = activityInstance.getProcessInstanceId();
-        this.calledProcessInstanceId = activityInstance.getCalledProcessInstanceId();
-        this.executionId = activityInstance.getExecutionId();
-        this.taskId = activityInstance.getTaskId();
-        this.activityId = activityInstance.getActivityId();
-        this.activityName = activityInstance.getActivityName();
-        this.activityType = activityInstance.getActivityType();
-        this.assignee = activityInstance.getAssignee();
-        this.startTime = activityInstance.getStartTime();
-        this.endTime = activityInstance.getEndTime();
-        this.deleteReason = activityInstance.getDeleteReason();
-        this.durationInMillis = activityInstance.getDurationInMillis();
-        this.transactionOrder = activityInstance.getTransactionOrder();
-
-        if (activityInstance.getTenantId() != null) {
-            this.tenantId = activityInstance.getTenantId();
-        }
     }
 
     @Override

@@ -38,9 +38,6 @@ public class MybatisPlanItemInstanceDataManagerImpl extends AbstractCmmnDataMana
     protected PlanItemInstanceByCaseInstanceIdAndPlanItemIdCachedEntityMatcher planItemInstanceByCaseInstanceIdAndPlanItemIdCachedEntityMatcher =
         new PlanItemInstanceByCaseInstanceIdAndPlanItemIdCachedEntityMatcher();
 
-    protected PlanItemInstanceByStageInstanceIdAndPlanItemIdCachedEntityMatcher planItemInstanceByStageInstanceIdAndPlanItemIdCachedEntityMatcher =
-        new PlanItemInstanceByStageInstanceIdAndPlanItemIdCachedEntityMatcher();
-
     protected PlanItemInstanceByStagePlanItemInstanceIdCachedEntityMatcher planItemInstanceByStagePlanItemInstanceIdCachedEntityMatcher =
         new PlanItemInstanceByStagePlanItemInstanceIdCachedEntityMatcher();
     
@@ -100,23 +97,13 @@ public class MybatisPlanItemInstanceDataManagerImpl extends AbstractCmmnDataMana
     }
 
     @Override
-    public List<PlanItemInstanceEntity> findByStageInstanceIdAndPlanItemId(String stageInstanceId, String planItemId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("stageInstanceId", stageInstanceId);
-        params.put("planItemId", planItemId);
-        return getList("selectPlanItemInstancesByStageInstanceIdAndPlanItemId", params, planItemInstanceByStageInstanceIdAndPlanItemIdCachedEntityMatcher);
-    }
-
-    @Override
     public long countByCriteria(PlanItemInstanceQueryImpl planItemInstanceQuery) {
-        setSafeInValueLists(planItemInstanceQuery);
         return (Long) getDbSqlSession().selectOne("selectPlanItemInstanceCountByQueryCriteria", planItemInstanceQuery);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<PlanItemInstance> findByCriteria(PlanItemInstanceQueryImpl planItemInstanceQuery) {
-        setSafeInValueLists(planItemInstanceQuery);
         return getDbSqlSession().selectList("selectPlanItemInstancesByQueryCriteria", planItemInstanceQuery, getManagedEntityClass());
     }
     
@@ -158,19 +145,7 @@ public class MybatisPlanItemInstanceDataManagerImpl extends AbstractCmmnDataMana
             Map<String, Object> map = (Map<String, Object>) param;
             String caseInstanceId = (String) map.get("caseInstanceId");
             String planItemId = (String) map.get("planItemId");
-            return caseInstanceId.equals(entity.getCaseInstanceId()) && entity.getPlanItem() != null && planItemId.equals(entity.getPlanItem().getId());
-        }
-
-    }
-
-    public static class PlanItemInstanceByStageInstanceIdAndPlanItemIdCachedEntityMatcher extends CachedEntityMatcherAdapter<PlanItemInstanceEntity> {
-
-        @Override
-        public boolean isRetained(PlanItemInstanceEntity entity, Object param) {
-            Map<String, Object> map = (Map<String, Object>) param;
-            String stageInstanceId = (String) map.get("stageInstanceId");
-            String planItemId = (String) map.get("planItemId");
-            return stageInstanceId.equals(entity.getStageInstanceId()) && entity.getPlanItem() != null && planItemId.equals(entity.getPlanItem().getId());
+            return caseInstanceId.equals(entity.getCaseInstanceId()) && planItemId.equals(entity.getPlanItem().getId());
         }
 
     }
@@ -185,9 +160,4 @@ public class MybatisPlanItemInstanceDataManagerImpl extends AbstractCmmnDataMana
 
     }
     
-    protected void setSafeInValueLists(PlanItemInstanceQueryImpl planItemInstanceQuery) {
-        if (planItemInstanceQuery.getInvolvedGroups() != null) {
-            planItemInstanceQuery.setSafeInvolvedGroups(createSafeInValuesList(planItemInstanceQuery.getInvolvedGroups()));
-        }
-    }
 }

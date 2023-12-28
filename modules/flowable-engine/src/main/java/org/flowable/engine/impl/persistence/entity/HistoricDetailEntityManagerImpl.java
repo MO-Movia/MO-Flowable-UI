@@ -13,7 +13,6 @@
 
 package org.flowable.engine.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,7 @@ public class HistoricDetailEntityManagerImpl
         if (activityInstance != null) {
             activityInstanceId = activityInstance.getId();
         } else {
-            throw new FlowableException("ActivityInstance not found for " + execution);
+            throw new FlowableException("ActivityInstance not found for execution "+execution.getId());
         }
         historicFormPropertyEntity.setActivityInstanceId(activityInstanceId);
 
@@ -131,16 +130,6 @@ public class HistoricDetailEntityManagerImpl
         }
     }
     
-    @Override
-    public void bulkDeleteHistoricDetailsByProcessInstanceIds(Collection<String> historicProcessInstanceIds) {
-        dataManager.bulkDeleteHistoricDetailsByProcessInstanceIds(historicProcessInstanceIds);
-    }
-    
-    @Override
-    public void bulkDeleteHistoricDetailsByTaskIds(Collection<String> taskIds) {
-        dataManager.bulkDeleteHistoricDetailsByTaskIds(taskIds);
-    }
-
     @Override
     public void deleteHistoricDetailForNonExistingProcessInstances() {
         dataManager.deleteHistoricDetailForNonExistingProcessInstances();

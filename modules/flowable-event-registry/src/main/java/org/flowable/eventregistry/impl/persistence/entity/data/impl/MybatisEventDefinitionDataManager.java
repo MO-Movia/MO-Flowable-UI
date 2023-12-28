@@ -133,7 +133,7 @@ public class MybatisEventDefinitionDataManager extends AbstractEventDataManager<
         if (results.size() == 1) {
             return results.get(0);
         } else if (results.size() > 1) {
-            throw new FlowableException("There are " + results.size() + " event definitions with key = '" + eventDefinitionKey + "' and version = '" + eventVersion + "' in tenant = '" + tenantId + "'.");
+            throw new FlowableException("There are " + results.size() + " event definitions with key = '" + eventDefinitionKey + "' and version = '" + eventVersion + "'.");
         }
         return null;
     }
@@ -154,7 +154,7 @@ public class MybatisEventDefinitionDataManager extends AbstractEventDataManager<
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateEventDefinitionTenantIdForDeploymentId", params);
+        getDbSqlSession().update("updateEventDefinitionTenantIdForDeploymentId", params);
     }
 
 }

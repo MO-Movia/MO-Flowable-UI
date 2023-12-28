@@ -17,6 +17,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.rest.api.DataResponse;
 import org.flowable.idm.api.Group;
@@ -73,7 +75,7 @@ public class PrivilegeCollectionResource {
             @ApiResponse(code = 200, message = "Indicates the requested privileges were returned.")
     })
     @GetMapping(value = "/privileges")
-    public DataResponse<PrivilegeResponse> getPrivileges(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<PrivilegeResponse> getPrivileges(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         PrivilegeQuery query = identityService.createPrivilegeQuery();
         
         if (allRequestParams.containsKey("id")) {

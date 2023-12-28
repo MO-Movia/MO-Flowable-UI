@@ -14,7 +14,7 @@ package org.flowable.test.spring.boot.process;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManagerFactory;
 
 import org.flowable.common.spring.async.SpringAsyncTaskExecutor;
 import org.flowable.engine.ProcessEngine;

@@ -16,7 +16,6 @@ import java.util.Collection;
 
 import org.flowable.eventregistry.api.EventRegistry;
 import org.flowable.eventregistry.api.EventRegistryEvent;
-import org.flowable.eventregistry.api.InboundEvent;
 import org.flowable.eventregistry.api.InboundEventProcessingPipeline;
 import org.flowable.eventregistry.api.InboundEventProcessor;
 import org.flowable.eventregistry.model.InboundChannelModel;
@@ -34,9 +33,10 @@ public class DefaultInboundEventProcessor implements InboundEventProcessor {
     }
 
     @Override
-    public void eventReceived(InboundChannelModel channelModel, InboundEvent event) {
+    public void eventReceived(InboundChannelModel channelModel, String event) {
+
         InboundEventProcessingPipeline inboundEventProcessingPipeline = (InboundEventProcessingPipeline) channelModel.getInboundEventProcessingPipeline();
-        Collection<EventRegistryEvent> eventRegistryEvents = inboundEventProcessingPipeline.run(channelModel, event);
+        Collection<EventRegistryEvent> eventRegistryEvents = inboundEventProcessingPipeline.run(channelModel.getKey(), event);
 
         for (EventRegistryEvent eventRegistryEvent : eventRegistryEvents) {
             eventRegistry.sendEventToConsumers(eventRegistryEvent);

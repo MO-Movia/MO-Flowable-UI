@@ -78,13 +78,11 @@ public class MybatisProcessDefinitionDataManager extends AbstractProcessDataMana
     @Override
     @SuppressWarnings("unchecked")
     public List<ProcessDefinition> findProcessDefinitionsByQueryCriteria(ProcessDefinitionQueryImpl processDefinitionQuery) {
-        setSafeInValueLists(processDefinitionQuery);
         return getDbSqlSession().selectList("selectProcessDefinitionsByQueryCriteria", processDefinitionQuery);
     }
 
     @Override
     public long findProcessDefinitionCountByQueryCriteria(ProcessDefinitionQueryImpl processDefinitionQuery) {
-        setSafeInValueLists(processDefinitionQuery);
         return (Long) getDbSqlSession().selectOne("selectProcessDefinitionCountByQueryCriteria", processDefinitionQuery);
     }
 
@@ -147,7 +145,7 @@ public class MybatisProcessDefinitionDataManager extends AbstractProcessDataMana
         if (results.size() == 1) {
             return results.get(0);
         } else if (results.size() > 1) {
-            throw new FlowableException("There are " + results.size() + " process definitions with key = '" + processDefinitionKey + "' and version = '" + processDefinitionVersion + "' in tenant='" + tenantId + "'.");
+            throw new FlowableException("There are " + results.size() + " process definitions with key = '" + processDefinitionKey + "' and version = '" + processDefinitionVersion + "'.");
         }
         return null;
     }
@@ -168,7 +166,7 @@ public class MybatisProcessDefinitionDataManager extends AbstractProcessDataMana
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateProcessDefinitionTenantIdForDeploymentId", params);
+        getDbSqlSession().update("updateProcessDefinitionTenantIdForDeploymentId", params);
     }
 
     @Override
@@ -176,12 +174,7 @@ public class MybatisProcessDefinitionDataManager extends AbstractProcessDataMana
         HashMap<String, Object> params = new HashMap<>();
         params.put("processDefinitionId", processDefinitionId);
         params.put("version", version);
-        getDbSqlSession().directUpdate("updateProcessDefinitionVersionForProcessDefinitionId", params);
+        getDbSqlSession().update("updateProcessDefinitionVersionForProcessDefinitionId", params);
     }
 
-    protected void setSafeInValueLists(ProcessDefinitionQueryImpl processDefinitionQuery) {
-        if (processDefinitionQuery.getAuthorizationGroups() != null) {
-            processDefinitionQuery.setSafeAuthorizationGroups(createSafeInValuesList(processDefinitionQuery.getAuthorizationGroups()));
-        }
-    }
 }

@@ -74,23 +74,8 @@ public class TimerEventListenerActivityBehaviour extends CoreCmmnActivityBehavio
             removeTimerJob(commandContext, (PlanItemInstanceEntity) planItemInstance);
         }
     }
-    
-    @Override
-    public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
-        CommandContextUtil.getAgenda(commandContext).planOccurPlanItemInstanceOperation(planItemInstanceEntity);
-    }
-    
-    @Override
-    public void trigger(DelegatePlanItemInstance planItemInstance) {
-        execute(planItemInstance);
-    }
 
     protected void handleCreateTransition(CommandContext commandContext, PlanItemInstanceEntity planItemInstance) {
-
-        if (timerJobForPlanItemInstanceExists(commandContext, planItemInstance)) {
-            return;
-        }
-
         Object timerValue = resolveTimerExpression(commandContext, planItemInstance);
 
         Date timerDueDate = null;
@@ -139,25 +124,10 @@ public class TimerEventListenerActivityBehaviour extends CoreCmmnActivityBehavio
         if (timerDueDate == null) {
             throw new FlowableException("Timer expression '" + timerEventListener.getTimerExpression() + "' did not resolve to java.util.Date, org.joda.time.DateTime, "
                     + "java.time.Instant, "
-                    + "an ISO8601 date/duration/repetition string or a cron expression for " + planItemInstance);
+                    + "an ISO8601 date/duration/repetition string or a cron expression");
         }
 
         scheduleTimerJob(commandContext, planItemInstance, timerValue, timerDueDate, isRepeating);
-    }
-
-    protected boolean timerJobForPlanItemInstanceExists(CommandContext commandContext, PlanItemInstanceEntity planItemInstance) {
-
-        // For the same plan item, only one timer job can ever be active at any given time.
-        // Since the DefaultJobManager creates a new timer job on repeat, we need to make sure
-        // we're not creating duplicate timers on the create or initiate transition (which does need to happen on the first repeat).
-        //
-        // The alternative implementation would be to move the repeating timer creation to the onStateTransition on occur,
-        // but this would also require similar logic to look up the previous timer job, as the previous repeat value is needed to calculate the next.
-
-        CmmnEngineConfiguration cmmnEngineConfiguration = CommandContextUtil.getCmmnEngineConfiguration(commandContext);
-        List<TimerJobEntity> jobsByScopeIdAndSubScopeId = cmmnEngineConfiguration.getJobServiceConfiguration().getTimerJobEntityManager()
-                .findJobsByScopeIdAndSubScopeId(planItemInstance.getCaseInstanceId(), planItemInstance.getId());
-        return jobsByScopeIdAndSubScopeId != null && !jobsByScopeIdAndSubScopeId.isEmpty();
     }
 
     protected void scheduleTimerJob(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity,
@@ -211,6 +181,11 @@ public class TimerEventListenerActivityBehaviour extends CoreCmmnActivityBehavio
         }
     }
 
+    @Override
+    public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
+        CommandContextUtil.getAgenda(commandContext).planOccurPlanItemInstanceOperation(planItemInstanceEntity);
+    }
+
     protected Object resolveTimerExpression(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
         ExpressionManager expressionManager = CommandContextUtil.getExpressionManager(commandContext);
         Expression expression = expressionManager.createExpression(timerEventListener.getTimerExpression());
@@ -232,4 +207,10 @@ public class TimerEventListenerActivityBehaviour extends CoreCmmnActivityBehavio
         }
         return dueDate;
     }
+    
+    @Override
+    public void trigger(DelegatePlanItemInstance planItemInstance) {
+        execute(planItemInstance);
+    }
+    
 }

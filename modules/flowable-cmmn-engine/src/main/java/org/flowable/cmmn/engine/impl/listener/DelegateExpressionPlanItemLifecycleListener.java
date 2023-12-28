@@ -18,6 +18,7 @@ import org.flowable.cmmn.api.delegate.DelegatePlanItemInstance;
 import org.flowable.cmmn.api.listener.PlanItemInstanceLifecycleListener;
 import org.flowable.cmmn.engine.impl.util.DelegateExpressionUtil;
 import org.flowable.cmmn.model.FieldExtension;
+import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.delegate.Expression;
 
@@ -51,13 +52,22 @@ public class DelegateExpressionPlanItemLifecycleListener implements PlanItemInst
 
     @Override
     public void stateChanged(DelegatePlanItemInstance planItemInstance, String oldState, String newState) {
-        Object delegate = DelegateExpressionUtil.resolveDelegateExpression(expression, planItemInstance, fieldExtensions);
+        try {
+            Object delegate = DelegateExpressionUtil.resolveDelegateExpression(expression, planItemInstance, fieldExtensions);
 
-        if (delegate instanceof PlanItemInstanceLifecycleListener) {
-            PlanItemInstanceLifecycleListener listener = (PlanItemInstanceLifecycleListener) delegate;
-            listener.stateChanged(planItemInstance, oldState, newState);
-        } else {
-            throw new FlowableIllegalArgumentException("Delegate expression " + expression + " did not resolve to an implementation of " + PlanItemInstanceLifecycleListener.class);
+            if (delegate instanceof PlanItemInstanceLifecycleListener) {
+                try {
+                    PlanItemInstanceLifecycleListener listener = (PlanItemInstanceLifecycleListener) delegate;
+                    listener.stateChanged(planItemInstance, oldState, newState);
+                } catch (Exception e) {
+                    throw new FlowableException("Exception while invoking PlanItemInstanceLifecycleListener: " + e.getMessage(), e);
+                }
+            } else {
+                throw new FlowableIllegalArgumentException("Delegate expression " + expression + " did not resolve to an implementation of " + PlanItemInstanceLifecycleListener.class);
+            }
+
+        } catch (Exception e) {
+            throw new FlowableException(e.getMessage(), e);
         }
     }
 

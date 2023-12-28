@@ -30,10 +30,15 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.flowable.form.api.FormRepositoryService;
+import org.flowable.form.engine.FormEngine;
+import org.flowable.form.engine.FormEngineConfiguration;
+import org.flowable.form.engine.FormEngines;
+import org.flowable.form.engine.configurator.FormEngineConfigurator;
+import org.flowable.form.spring.SpringFormEngineConfiguration;
+import org.flowable.form.spring.configurator.SpringFormEngineConfigurator;
 import org.flowable.idm.api.IdmEngineConfigurationApi;
 import org.flowable.idm.api.IdmIdentityService;
-import org.flowable.rest.conf.MockFormHandlerRestApiInterceptor;
-import org.flowable.rest.service.api.FormHandlerRestApiInterceptor;
 import org.flowable.spring.ProcessEngineFactoryBean;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,8 +47,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration(proxyBeanMethods = false)
 public class EngineConfiguration {
@@ -88,7 +91,8 @@ public class EngineConfiguration {
     }
 
     @Bean(name = "processEngineConfiguration")
-    public ProcessEngineConfigurationImpl processEngineConfiguration(DataSource dataSource, PlatformTransactionManager transactionManager) {
+    public ProcessEngineConfigurationImpl processEngineConfiguration(DataSource dataSource, PlatformTransactionManager transactionManager,
+        FormEngineConfigurator formEngineConfigurator) {
         SpringProcessEngineConfiguration processEngineConfiguration = new SpringProcessEngineConfiguration();
         processEngineConfiguration.setDataSource(dataSource);
         processEngineConfiguration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
@@ -96,6 +100,7 @@ public class EngineConfiguration {
         processEngineConfiguration.setAsyncExecutorActivate(false);
         processEngineConfiguration.setHistoryLevel(HistoryLevel.FULL);
         processEngineConfiguration.setEnableEntityLinks(true);
+        processEngineConfiguration.addConfigurator(formEngineConfigurator);
 
         configureProcessEngine(processEngineConfiguration);
 
@@ -106,6 +111,32 @@ public class EngineConfiguration {
 
     }
     
+    @Bean
+    public SpringFormEngineConfigurator formEngineConfigurator(FormEngineConfiguration formEngineConfiguration) {
+        SpringFormEngineConfigurator formEngineConfigurator =  new SpringFormEngineConfigurator();
+        formEngineConfigurator.setFormEngineConfiguration(formEngineConfiguration);
+        return formEngineConfigurator;
+    }
+    
+    @Bean(name = "formEngineConfiguration")
+    public FormEngineConfiguration formEngineConfiguration(DataSource dataSource, PlatformTransactionManager transactionManager) {
+        SpringFormEngineConfiguration formEngineConfiguration = new SpringFormEngineConfiguration();
+        formEngineConfiguration.setDataSource(dataSource);
+        formEngineConfiguration.setDatabaseSchemaUpdate(FormEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+        formEngineConfiguration.setTransactionManager(transactionManager);
+        return formEngineConfiguration;
+    }
+
+    @Bean
+    public FormEngine formEngine(@SuppressWarnings("unused") ProcessEngine processEngine) {
+        // The process engine needs to be injected, as otherwise it won't be initialized, which means that the FormEngine is not initialized yet
+        if (!FormEngines.isInitialized()) {
+            throw new IllegalStateException("form engine has not been initialized");
+        }
+        return FormEngines.getDefaultFormEngine();
+    }
+
+
     @Bean
     public RepositoryService repositoryService(ProcessEngine processEngine) {
         return processEngine.getRepositoryService();
@@ -153,12 +184,17 @@ public class EngineConfiguration {
     }
     
     @Bean
-    public ProcessMigrationService processInstanceMigrationService(ProcessEngine processEngine) {
-        return processEngine.getProcessMigrationService();
+    public FormRepositoryService formRepositoryService(FormEngine formEngine) {
+        return formEngine.getFormRepositoryService();
+    }
+    
+    @Bean
+    public org.flowable.form.api.FormService formEngineFormService(FormEngine formEngine) {
+        return formEngine.getFormService();
     }
 
     @Bean
-    public FormHandlerRestApiInterceptor formHandlerRestApiInterceptor(ObjectMapper objectMapper) {
-        return new MockFormHandlerRestApiInterceptor(objectMapper);
+    public ProcessMigrationService processInstanceMigrationService(ProcessEngine processEngine) {
+        return processEngine.getProcessMigrationService();
     }
 }

@@ -12,9 +12,6 @@
  */
 package org.flowable.job.service.impl.asyncexecutor;
 
-import java.util.List;
-
-import org.flowable.common.engine.impl.cfg.TransactionContext;
 import org.flowable.job.api.Job;
 import org.flowable.job.api.JobInfo;
 import org.flowable.job.service.JobServiceConfiguration;
@@ -78,15 +75,6 @@ public interface JobManager {
     JobEntity moveTimerJobToExecutableJob(TimerJobEntity timerJob);
 
     /**
-     * Moves a collection of {@link TimerJobEntity} instances to become async {@link JobEntity} instances
-     * (the timer is deleted and a new async job is inserted).
-     *
-     * Note that there are no revision checks happening on the {@link TimerJobEntity} instances,
-     * this means this method should only be used when running with a global acquire lock.
-     */
-    void bulkMoveTimerJobsToExecutableJobs(List<TimerJobEntity> timerJobEntities);
-
-    /**
      * Moves an {@link ExternalWorkerJobEntity} to become an async {@link JobEntity}.
      *
      * This happens when the external worker has completed the work and the external work job then becomes a 'regular' async job that can be picked up by the {@link AsyncExecutor}.
@@ -130,7 +118,7 @@ public interface JobManager {
     /**
      * schedules a {@link HistoryJobEntity}, meaning it will be scheduled (inserted in the database/put on a queue/...) to be executed at a later point in time.
      */
-    HistoryJobEntity scheduleHistoryJob(HistoryJobEntity historyJobEntity, TransactionContext transactionContext);
+    HistoryJobEntity scheduleHistoryJob(HistoryJobEntity historyJobEntity);
 
     /**
      * The ProcessEngineConfiguration instance will be passed when the ProcessEngine is built.

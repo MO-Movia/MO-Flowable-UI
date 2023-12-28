@@ -75,10 +75,6 @@ public class ExternalWorkerJobCollectionResource extends ExternalWorkerJobBaseRe
         if (request.getProcessInstanceId() != null) {
             query.processInstanceId(request.getProcessInstanceId());
         }
-        
-        if (request.isWithoutProcessInstanceId()) {
-            query.withoutProcessInstanceId();
-        }
 
         if (request.getExecutionId() != null) {
             query.executionId(request.getExecutionId());
@@ -90,10 +86,6 @@ public class ExternalWorkerJobCollectionResource extends ExternalWorkerJobBaseRe
 
         if (request.getScopeId() != null) {
             query.scopeId(request.getScopeId());
-        }
-        
-        if (request.isWithoutScopeId()) {
-            query.withoutScopeId();
         }
 
         if (request.getSubScopeId() != null) {
@@ -142,9 +134,6 @@ public class ExternalWorkerJobCollectionResource extends ExternalWorkerJobBaseRe
 
         if (request.isUnlocked()) {
             query.unlocked();
-        }
-        if (request.isWithoutScopeType()) {
-            query.withoutScopeType();
         }
 
         if (restApiInterceptor != null) {

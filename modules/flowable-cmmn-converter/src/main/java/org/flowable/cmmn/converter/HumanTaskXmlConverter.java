@@ -15,7 +15,6 @@ package org.flowable.cmmn.converter;
 import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.cmmn.converter.util.CmmnXmlUtil;
 import org.flowable.cmmn.model.CmmnElement;
 import org.flowable.cmmn.model.HumanTask;
 
@@ -48,16 +47,21 @@ public class HumanTaskXmlConverter extends TaskXmlConverter {
         task.setDueDate(xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_DUE_DATE));
         task.setCategory(xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_CATEGORY));
         task.setTaskIdVariableName(xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_TASK_ID_VARIABLE_NAME));
-        task.setTaskCompleterVariableName(xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_TASK_COMPLETER_VARIABLE_NAME));
 
         String candidateUsersString = xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_CANDIDATE_USERS);
         if (StringUtils.isNotEmpty(candidateUsersString)) {
-            task.getCandidateUsers().addAll(CmmnXmlUtil.parseDelimitedList(candidateUsersString));
+            String[] candidateUsers = candidateUsersString.split(",");
+            for (String candidateUser : candidateUsers) {
+                task.getCandidateUsers().add(candidateUser);
+            }
         }
         
         String candidateGroupsString = xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_CANDIDATE_GROUPS);
         if (StringUtils.isNotEmpty(candidateGroupsString)) {
-            task.getCandidateGroups().addAll(CmmnXmlUtil.parseDelimitedList(candidateGroupsString));
+            String[] candidateGroups = candidateGroupsString.split(",");
+            for (String candidateGroup : candidateGroups) {
+                task.getCandidateGroups().add(candidateGroup);
+            }
         }
         
         return task;

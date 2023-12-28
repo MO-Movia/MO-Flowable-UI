@@ -15,6 +15,9 @@ package org.flowable.rest.service.api.runtime.process;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.rest.service.api.engine.RestIdentityLink;
@@ -23,7 +26,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -47,29 +49,22 @@ public class ProcessInstanceIdentityLinkCollectionResource extends BaseProcessIn
             @ApiResponse(code = 404, message = "Indicates the requested process instance was not found.")
     })
     @GetMapping(value = "/runtime/process-instances/{processInstanceId}/identitylinks", produces = "application/json")
-    public List<RestIdentityLink> getIdentityLinks(@ApiParam(name = "processInstanceId") @PathVariable String processInstanceId) {
-        ProcessInstance processInstance = getProcessInstanceFromRequestWithoutAccessCheck(processInstanceId);
-
-        if (restApiInterceptor != null) {
-            restApiInterceptor.accessProcessInstanceIdentityLinks(processInstance);
-        }
-
+    public List<RestIdentityLink> getIdentityLinks(@ApiParam(name = "processInstanceId") @PathVariable String processInstanceId, HttpServletRequest request) {
+        ProcessInstance processInstance = getProcessInstanceFromRequest(processInstanceId);
         return restResponseFactory.createRestIdentityLinks(runtimeService.getIdentityLinksForProcessInstance(processInstance.getId()));
     }
 
     @ApiOperation(value = "Add an involved user to a process instance", tags = {"Process Instance Identity Links" }, nickname = "createProcessInstanceIdentityLinks",
-            notes = "Note that the groupId in Response Body will always be null, as it’s only possible to involve users with a process-instance.",
-            code = 201)
+            notes = "Note that the groupId in Response Body will always be null, as it’s only possible to involve users with a process-instance.")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Indicates the process instance was found and the link is created."),
             @ApiResponse(code = 400, message = "Indicates the requested body did not contain a userId or a type."),
             @ApiResponse(code = 404, message = "Indicates the requested process instance was not found.")
     })
     @PostMapping(value = "/runtime/process-instances/{processInstanceId}/identitylinks", produces = "application/json")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RestIdentityLink createIdentityLink(@ApiParam(name = "processInstanceId") @PathVariable String processInstanceId, @RequestBody RestIdentityLink identityLink) {
+    public RestIdentityLink createIdentityLink(@ApiParam(name = "processInstanceId") @PathVariable String processInstanceId, @RequestBody RestIdentityLink identityLink, HttpServletRequest request, HttpServletResponse response) {
 
-        ProcessInstance processInstance = getProcessInstanceFromRequestWithoutAccessCheck(processInstanceId);
+        ProcessInstance processInstance = getProcessInstanceFromRequest(processInstanceId);
 
         if (identityLink.getGroup() != null) {
             throw new FlowableIllegalArgumentException("Only user identity links are supported on a process instance.");
@@ -83,11 +78,9 @@ public class ProcessInstanceIdentityLinkCollectionResource extends BaseProcessIn
             throw new FlowableIllegalArgumentException("The identity link type is required.");
         }
 
-        if (restApiInterceptor != null) {
-            restApiInterceptor.createProcessInstanceIdentityLink(processInstance, identityLink);
-        }
-
         runtimeService.addUserIdentityLink(processInstance.getId(), identityLink.getUser(), identityLink.getType());
+
+        response.setStatus(HttpStatus.CREATED.value());
 
         return restResponseFactory.createRestIdentityLink(identityLink.getType(), identityLink.getUser(), identityLink.getGroup(), null, null, processInstance.getId());
     }

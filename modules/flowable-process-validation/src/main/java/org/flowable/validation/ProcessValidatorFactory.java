@@ -12,37 +12,17 @@
  */
 package org.flowable.validation;
 
-import org.flowable.validation.validator.ValidatorSet;
 import org.flowable.validation.validator.ValidatorSetFactory;
-import org.flowable.validation.validator.impl.ServiceTaskValidator;
 
 /**
  * @author jbarrez
  */
 public class ProcessValidatorFactory {
 
-    protected ServiceTaskValidator customServiceTaskValidator;
-
     public ProcessValidator createDefaultProcessValidator() {
         ProcessValidatorImpl processValidator = new ProcessValidatorImpl();
-
-        ValidatorSet executableProcessValidatorSet = new ValidatorSetFactory().createFlowableExecutableProcessValidatorSet();
-
-        if (customServiceTaskValidator != null) {
-            executableProcessValidatorSet.removeValidator(ServiceTaskValidator.class);
-            executableProcessValidatorSet.addValidator(customServiceTaskValidator);
-        }
-
-        processValidator.addValidatorSet(executableProcessValidatorSet);
-
+        processValidator.addValidatorSet(new ValidatorSetFactory().createFlowableExecutableProcessValidatorSet());
         return processValidator;
     }
 
-    public ServiceTaskValidator getCustomServiceTaskValidator() {
-        return customServiceTaskValidator;
-    }
-
-    public void setCustomServiceTaskValidator(ServiceTaskValidator customServiceTaskValidator) {
-        this.customServiceTaskValidator = customServiceTaskValidator;
-    }
 }

@@ -62,7 +62,6 @@ public class DataAssociation extends BaseElement {
     }
 
     public void setValues(DataAssociation otherAssociation) {
-        super.setValues(otherAssociation);
         setSourceRef(otherAssociation.getSourceRef());
         setTargetRef(otherAssociation.getTargetRef());
         setTransformation(otherAssociation.getTransformation());

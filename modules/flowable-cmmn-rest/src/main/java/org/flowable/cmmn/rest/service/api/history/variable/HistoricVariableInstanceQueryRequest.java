@@ -32,7 +32,6 @@ public class HistoricVariableInstanceQueryRequest {
     private String variableName;
     private String variableNameLike;
     private List<QueryVariable> variables;
-    private Boolean excludeLocalVariables;
 
     public Boolean getExcludeTaskVariables() {
         return excludeTaskVariables;
@@ -89,13 +88,5 @@ public class HistoricVariableInstanceQueryRequest {
 
     public void setVariables(List<QueryVariable> variables) {
         this.variables = variables;
-    }
-
-    public void setExcludeLocalVariables(Boolean excludeLocalVariables) {
-        this.excludeLocalVariables = excludeLocalVariables;
-    }
-
-    public Boolean getExcludeLocalVariables() {
-        return excludeLocalVariables;
     }
 }

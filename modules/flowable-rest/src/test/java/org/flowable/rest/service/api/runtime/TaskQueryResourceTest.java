@@ -17,7 +17,6 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,11 +92,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
             String url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_QUERY);
             ObjectNode requestNode = objectMapper.createObjectNode();
             assertResultsPresentInPostDataResponse(url, requestNode, processTask.getId(), adhocTask.getId());
-
-            // ID filtering
-            requestNode.removeAll();
-            requestNode.put("taskId", adhocTask.getId());
-            assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
 
             // Name filtering
             requestNode.removeAll();
@@ -211,15 +205,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
             requestNode.removeAll();
             requestNode.put("processInstanceIdWithChildren", "nonexisting");
             assertResultsPresentInPostDataResponse(url, requestNode);
-            
-            // Without process instance id filtering
-            requestNode.removeAll();
-            requestNode.put("withoutProcessInstanceId", true);
-            assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
-            
-            requestNode.removeAll();
-            requestNode.put("withoutProcessInstanceId", false);
-            assertResultsPresentInPostDataResponse(url, requestNode, processTask.getId(), adhocTask.getId());
 
             // Execution filtering
             requestNode.removeAll();
@@ -324,11 +309,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
             requestNode.removeAll();
             requestNode.put("category", "some-category");
             assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
-            
-            // Without scope id filtering
-            requestNode.removeAll();
-            requestNode.put("withoutScopeId", true);
-            assertResultsPresentInPostDataResponse(url, requestNode, processTask.getId(), adhocTask.getId());
 
             // Filtering without duedate
             requestNode.removeAll();
@@ -622,44 +602,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
         variableNode.put("value", "AzErT%");
         variableNode.put("operation", "likeIgnoreCase");
         assertResultsPresentInPostDataResponse(url, requestNode, processTask.getId());
-    }
-
-    @Test
-    public void testQueryTaskWithCategory() throws Exception {
-        Task t1 = taskService.createTaskBuilder().name("t1").category("Cat 1").create();
-        Task t2 = taskService.createTaskBuilder().name("t2").create();
-
-        Task t3 = taskService.createTaskBuilder().name("t3").category("Cat 2").create();
-        taskService.saveTask(t1);
-        taskService.saveTask(t2);
-        taskService.saveTask(t3);
-        try {
-            String url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_QUERY);
-
-            ObjectNode requestNode = objectMapper.createObjectNode();
-            requestNode.put("withoutCategory", true);
-            assertResultsPresentInPostDataResponse(url, requestNode, t2.getId());
-
-            requestNode = objectMapper.createObjectNode();
-            requestNode.putArray("categoryIn").add("Cat 1").add("Cat 2");
-            assertResultsPresentInPostDataResponse(url, requestNode, t1.getId(), t3.getId());
-
-            requestNode = objectMapper.createObjectNode();
-            requestNode.putArray("categoryNotIn").add("Cat 1");
-            assertResultsPresentInPostDataResponse(url, requestNode, t3.getId());
-
-        } finally {
-            deleteTasks(t1, t2, t3);
-        }
-    }
-
-    private void deleteTasks(Task... tasks) {
-        if (tasks != null) {
-            Arrays.asList(tasks).forEach(t -> {
-                taskService.deleteTask(t.getId());
-                historyService.deleteHistoricTaskInstance(t.getId());
-            });
-        }
     }
 
     /**

@@ -121,9 +121,7 @@ public class MybatisCaseDefinitionDataManager extends AbstractCmmnDataManager<Ca
         if (results.size() == 1) {
             return results.get(0);
         } else if (results.size() > 1) {
-            throw new FlowableException(
-                    "There are " + results.size() + " case definitions with key = '" + caseDefinitionKey + "' and version = '" + caseDefinitionVersion
-                            + "' in tenant = '" + tenantId + "'.");
+            throw new FlowableException("There are " + results.size() + " case definitions with key = '" + caseDefinitionKey + "' and version = '" + caseDefinitionVersion + "'.");
         }
         return null;
     }
@@ -133,25 +131,18 @@ public class MybatisCaseDefinitionDataManager extends AbstractCmmnDataManager<Ca
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateCaseDefinitionTenantIdForDeploymentId", params);
+        getDbSqlSession().update("updateCaseDefinitionTenantIdForDeploymentId", params);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<CaseDefinition> findCaseDefinitionsByQueryCriteria(CaseDefinitionQueryImpl caseDefinitionQuery) {
-        setSafeInValueLists(caseDefinitionQuery);
         return getDbSqlSession().selectList("selectCaseDefinitionsByQueryCriteria", caseDefinitionQuery);
     }
 
     @Override
     public long findCaseDefinitionCountByQueryCriteria(CaseDefinitionQueryImpl caseDefinitionQuery) {
-        setSafeInValueLists(caseDefinitionQuery);
         return (Long) getDbSqlSession().selectOne("selectCaseDefinitionCountByQueryCriteria", caseDefinitionQuery);
     }
 
-    protected void setSafeInValueLists(CaseDefinitionQueryImpl caseDefinitionQuery) {
-        if (caseDefinitionQuery.getAuthorizationGroups() != null) {
-            caseDefinitionQuery.setSafeAuthorizationGroups(createSafeInValuesList(caseDefinitionQuery.getAuthorizationGroups()));
-        }
-    }
 }

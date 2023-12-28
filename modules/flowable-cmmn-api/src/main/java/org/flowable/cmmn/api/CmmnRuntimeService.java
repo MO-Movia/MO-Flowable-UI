@@ -25,14 +25,7 @@ import org.flowable.cmmn.api.runtime.PlanItemInstanceQuery;
 import org.flowable.cmmn.api.runtime.PlanItemInstanceTransitionBuilder;
 import org.flowable.cmmn.api.runtime.SignalEventListenerInstanceQuery;
 import org.flowable.cmmn.api.runtime.UserEventListenerInstanceQuery;
-import org.flowable.cmmn.api.runtime.VariableInstanceQuery;
-import org.flowable.common.engine.api.FlowableException;
-import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
-import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
-import org.flowable.common.engine.api.delegate.event.FlowableEvent;
-import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
-import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.entitylink.api.EntityLink;
 import org.flowable.eventsubscription.api.EventSubscriptionQuery;
 import org.flowable.form.api.FormInfo;
@@ -64,13 +57,7 @@ public interface CmmnRuntimeService {
     
     void terminateCaseInstance(String caseInstanceId);
 
-    void bulkTerminateCaseInstances(Collection<String> caseInstanceId);
-
     void terminatePlanItemInstance(String planItemInstanceId);
-    
-    void deleteCaseInstance(String caseInstanceId);
-
-    void bulkDeleteCaseInstances(Collection<String> caseInstanceId);
 
     void evaluateCriteria(String caseInstanceId);
     
@@ -88,16 +75,6 @@ public interface CmmnRuntimeService {
      *     when no case instance is found for the given caseInstanceId.
      */
     Map<String, Object> getVariables(String caseInstanceId);
-
-    /**
-     * The variable values for all given variableNames.
-     *
-     * @param caseInstanceId id of execution, cannot be null.
-     * @param variableNames the collection of variable names that should be retrieved.
-     * @return the variables or an empty map if no such variables are found.
-     * @throws FlowableObjectNotFoundException when no case instance is found for the given caseInstanceId.
-     */
-    Map<String, Object> getVariables(String caseInstanceId, Collection<String> variableNames);
     
     /**
      * All variables visible from the given case instance scope.
@@ -121,17 +98,6 @@ public interface CmmnRuntimeService {
      */
     Map<String, Object> getLocalVariables(String planItemInstanceId);
     
-    /**
-     * All variable values for all given variableNames that are defined in the plan item instance scope,
-     * without taking outer scopes into account.
-     *
-     * @param planItemInstanceId id of plan item instance, cannot be null.
-     * @param variableNames the collection of variable names that should be retrieved.
-     * @return the variables or an empty map if no such variables are found.
-     * @throws FlowableObjectNotFoundException when no plan item instance is found for the given planItemInstanceId.
-     */
-    Map<String, Object> getLocalVariables(String planItemInstanceId, Collection<String> variableNames);
-
     /**
      * All variable values that are defined in the plan item instance scope, without taking outer scopes into account.
      *
@@ -200,11 +166,6 @@ public interface CmmnRuntimeService {
      */
     boolean hasVariable(String caseInstanceId, String variableName);
     
-    /**
-     * Check whether or not this plan item instance has local variable set with the given name.
-     */
-    boolean hasLocalVariable(String planItemInstanceId, String variableName);
-
     void setVariables(String caseInstanceId, Map<String, Object> variables);
     
     void setVariable(String caseInstanceId, String variableName, Object variableValue);
@@ -220,8 +181,6 @@ public interface CmmnRuntimeService {
     void removeLocalVariable(String planItemInstanceId, String variableName);
     
     void removeLocalVariables(String planItemInstanceId, Collection<String> variableNames);
-    
-    VariableInstanceQuery createVariableInstanceQuery();
 
     /**
      * Set or change the name of the case instance.
@@ -258,36 +217,6 @@ public interface CmmnRuntimeService {
      *             when the case instance doesn't exist.
      */
     List<StageResponse> getStageOverview(String caseInstanceId);
-
-    /**
-     * Set the new owner of a case instance.
-     *
-     * @param caseInstanceId the id of the case to set its new owner
-     * @param userId the id of the user to set as the new owner
-     */
-    void setOwner(String caseInstanceId, String userId);
-
-    /**
-     * Removes the owner of a case instance.
-     *
-     * @param caseInstanceId the id of the case to remove the owner from
-     */
-    void removeOwner(String caseInstanceId);
-
-    /**
-     * Set the new assignee of a case instance.
-     *
-     * @param caseInstanceId the id of the case to set its new assignee
-     * @param userId the id of the user to set as the new assignee
-     */
-    void setAssignee(String caseInstanceId, String userId);
-
-    /**
-     * Removes the assignee of a case instance.
-     *
-     * @param caseInstanceId the id of the case to remove the assignee from
-     */
-    void removeAssignee(String caseInstanceId);
     
     /**
      * Involves a user with a case instance. The type of identity link is defined by the given identityLinkType.
@@ -394,52 +323,5 @@ public interface CmmnRuntimeService {
      *     new businessKey value
      */
     void updateBusinessKey(String caseInstanceId, String businessKey);
-    
-    /**
-     * Updates the business status for the provided case instance
-     *
-     * @param caseInstanceId
-     *     id of the case instance to set the business status, cannot be null
-     * @param businessStatus
-     *     new business status value
-     */
-    void updateBusinessStatus(String caseInstanceId, String businessStatus);
 
-    /**
-     * Adds an event-listener which will be notified of ALL events by the dispatcher.
-     *
-     * @param listenerToAdd
-     *     the listener to add
-     */
-    void addEventListener(FlowableEventListener listenerToAdd);
-
-    /**
-     * Adds an event-listener which will only be notified when an event occurs, which type is in the given types.
-     *
-     * @param listenerToAdd
-     *     the listener to add
-     * @param types
-     *     types of events the listener should be notified for
-     */
-    void addEventListener(FlowableEventListener listenerToAdd, FlowableEngineEventType... types);
-
-    /**
-     * Removes the given listener from this dispatcher. The listener will no longer be notified, regardless of the type(s) it was registered for in the first place.
-     *
-     * @param listenerToRemove
-     *     listener to remove
-     */
-    void removeEventListener(FlowableEventListener listenerToRemove);
-
-    /**
-     * Dispatches the given event to any listeners that are registered.
-     *
-     * @param event
-     *     event to dispatch.
-     * @throws FlowableException
-     *     if an exception occurs when dispatching the event or when the {@link FlowableEventDispatcher} is disabled.
-     * @throws FlowableIllegalArgumentException
-     *     when the given event is not suitable for dispatching.
-     */
-    void dispatchEvent(FlowableEvent event);
 }

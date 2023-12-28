@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Objects;
 
-import org.flowable.bpmn.model.FlowNode;
 import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -79,7 +78,7 @@ public class InclusiveGatewayActivityBehavior extends GatewayActivityBehavior im
                         break;
                     }
                 }
-            } else if (executionEntity.isActive() && (executionEntity.getId().equals(execution.getId()) || isAsynchronousActivity(executionEntity))) {
+            } else if (executionEntity.getId().equals(execution.getId()) && executionEntity.isActive()) {
                 // Special case: the execution has reached the inc gw, but the operation hasn't been executed yet for that execution
                 oneExecutionCanReachGatewayInstance = true;
                 break;
@@ -113,9 +112,5 @@ public class InclusiveGatewayActivityBehavior extends GatewayActivityBehavior im
             // Leave
             CommandContextUtil.getAgenda(commandContext).planTakeOutgoingSequenceFlowsOperation(execution, true);
         }
-    }
-
-    protected boolean isAsynchronousActivity(ExecutionEntity executionEntity) {
-        return executionEntity.getCurrentFlowElement() instanceof FlowNode && ((FlowNode) executionEntity.getCurrentFlowElement()).isAsynchronous();
     }
 }

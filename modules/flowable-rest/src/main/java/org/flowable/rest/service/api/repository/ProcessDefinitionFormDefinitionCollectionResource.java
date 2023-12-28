@@ -14,6 +14,8 @@ package org.flowable.rest.service.api.repository;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.form.api.FormDefinition;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +43,8 @@ public class ProcessDefinitionFormDefinitionCollectionResource extends BaseProce
     })
     @GetMapping(value = "/repository/process-definitions/{processDefinitionId}/form-definitions", produces = "application/json")
     public List<FormDefinitionResponse> getFormDefinitionsForProcessDefinition(
-            @ApiParam(name = "processDefinitionId") @PathVariable String processDefinitionId) {
+            @ApiParam(name = "processDefinitionId") @PathVariable String processDefinitionId,
+            HttpServletRequest request) {
         
         ProcessDefinition processDefinition = getProcessDefinitionFromRequest(processDefinitionId);
 

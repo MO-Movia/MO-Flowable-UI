@@ -20,8 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * @author Joram Barrez
  */
@@ -35,7 +33,6 @@ public class CmmnModel {
     protected String exporterVersion;
     protected String author;
     protected Date creationDate;
-    protected Map<String, List<ExtensionAttribute>> definitionsAttributes = new LinkedHashMap<>();
 
     protected List<Case> cases = new ArrayList<>();
 
@@ -45,15 +42,12 @@ public class CmmnModel {
 
     protected List<Association> associations = new ArrayList<>();
 
-    protected List<TextAnnotation> textAnnotations = new ArrayList<>();
-
     protected Map<String, Criterion> criterionMap = new LinkedHashMap<>();
     protected Map<String, String> criterionTechnicalIdMap = new HashMap<>();
 
     protected Map<String, GraphicInfo> locationMap = new LinkedHashMap<>();
     protected Map<String, GraphicInfo> labelLocationMap = new LinkedHashMap<>();
     protected Map<String, List<GraphicInfo>> flowLocationMap = new LinkedHashMap<>();
-    protected Map<String, CmmnDiEdge> edgeMap = new LinkedHashMap<>();
 
     protected Map<String, String> namespaceMap = new LinkedHashMap<>();
 
@@ -186,19 +180,6 @@ public class CmmnModel {
         associations.add(association);
     }
 
-    public TextAnnotation findTextAnnotation(String id) {
-        for (TextAnnotation textAnnotation : textAnnotations) {
-            if (id.equals(textAnnotation.getId())) {
-                return textAnnotation;
-            }
-        }
-        return null;
-    }
-
-    public void addTextAnnotation(TextAnnotation textAnnotation) {
-        textAnnotations.add(textAnnotation);
-    }
-
     public void addCriterion(String key, Criterion criterion) {
         criterionMap.put(key, criterion);
     }
@@ -241,18 +222,6 @@ public class CmmnModel {
 
     public Map<String, List<GraphicInfo>> getFlowLocationMap() {
         return flowLocationMap;
-    }
-    
-    public CmmnDiEdge getEdgeInfo(String key) {
-        return edgeMap.get(key);
-    }
-    
-    public void addEdgeInfo(String key, CmmnDiEdge edgeInfo) {
-        edgeMap.put(key, edgeInfo);
-    }
-
-    public Map<String, CmmnDiEdge> getEdgeMap() {
-        return edgeMap;
     }
 
     public GraphicInfo getLabelGraphicInfo(String key) {
@@ -341,12 +310,6 @@ public class CmmnModel {
     public void setAssociations(List<Association> associations) {
         this.associations = associations;
     }
-    public List<TextAnnotation> getTextAnnotations() {
-        return textAnnotations;
-    }
-    public void setTextAnnotations(List<TextAnnotation> textAnnotations) {
-        this.textAnnotations = textAnnotations;
-    }
     public void addNamespace(String prefix, String uri) {
         namespaceMap.put(prefix, uri);
     }
@@ -359,36 +322,4 @@ public class CmmnModel {
     public Map<String, String> getNamespaces() {
         return namespaceMap;
     }
-
-    public Map<String, List<ExtensionAttribute>> getDefinitionsAttributes() {
-        return definitionsAttributes;
-    }
-
-    public String getDefinitionsAttributeValue(String namespace, String name) {
-        List<ExtensionAttribute> attributes = getDefinitionsAttributes().get(name);
-        if (attributes != null && !attributes.isEmpty()) {
-            for (ExtensionAttribute attribute : attributes) {
-                if (namespace.equals(attribute.getNamespace())) {
-                    return attribute.getValue();
-                }
-            }
-        }
-        return null;
-    }
-
-    public void addDefinitionsAttribute(ExtensionAttribute attribute) {
-        if (attribute != null && StringUtils.isNotEmpty(attribute.getName())) {
-            List<ExtensionAttribute> attributeList = null;
-            if (!this.definitionsAttributes.containsKey(attribute.getName())) {
-                attributeList = new ArrayList<>();
-                this.definitionsAttributes.put(attribute.getName(), attributeList);
-            }
-            this.definitionsAttributes.get(attribute.getName()).add(attribute);
-        }
-    }
-
-    public void setDefinitionsAttributes(Map<String, List<ExtensionAttribute>> attributes) {
-        this.definitionsAttributes = attributes;
-    }
-
 }

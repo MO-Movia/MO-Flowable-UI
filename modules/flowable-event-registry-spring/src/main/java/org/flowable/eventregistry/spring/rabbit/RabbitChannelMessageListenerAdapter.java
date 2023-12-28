@@ -12,15 +12,23 @@
  */
 package org.flowable.eventregistry.spring.rabbit;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
+
 import org.flowable.eventregistry.api.EventRegistry;
 import org.flowable.eventregistry.model.InboundChannelModel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
+import org.springframework.amqp.core.MessageProperties;
 
 /**
  * @author Filip Hrisafov
  */
 public class RabbitChannelMessageListenerAdapter implements MessageListener {
+
+    protected Collection<String> stringContentTypes;
 
     protected EventRegistry eventRegistry;
     protected InboundChannelModel inboundChannelModel;
@@ -28,11 +36,29 @@ public class RabbitChannelMessageListenerAdapter implements MessageListener {
     public RabbitChannelMessageListenerAdapter(EventRegistry eventRegistry, InboundChannelModel inboundChannelModel) {
         this.eventRegistry = eventRegistry;
         this.inboundChannelModel = inboundChannelModel;
+        this.stringContentTypes = new HashSet<>();
+        this.stringContentTypes.add(MessageProperties.CONTENT_TYPE_JSON);
+        this.stringContentTypes.add(MessageProperties.CONTENT_TYPE_JSON_ALT);
+        this.stringContentTypes.add(MessageProperties.CONTENT_TYPE_TEXT_PLAIN);
+        this.stringContentTypes.add(MessageProperties.CONTENT_TYPE_XML);
     }
 
     @Override
     public void onMessage(Message message) {
-        eventRegistry.eventReceived(inboundChannelModel, new RabbitInboundEvent(message));
+        byte[] body = message.getBody();
+        MessageProperties messageProperties = message.getMessageProperties();
+        String contentType = messageProperties != null ? messageProperties.getContentType() : null;
+
+        String rawEvent;
+        if (body == null) {
+            rawEvent = null;
+        } else if (stringContentTypes.contains(contentType)) {
+            rawEvent = new String(body, StandardCharsets.UTF_8);
+        } else {
+            rawEvent = Base64.getEncoder().encodeToString(body);
+        }
+
+        eventRegistry.eventReceived(inboundChannelModel, rawEvent);
     }
 
     public EventRegistry getEventRegistry() {
@@ -49,5 +75,13 @@ public class RabbitChannelMessageListenerAdapter implements MessageListener {
 
     public void setInboundChannelModel(InboundChannelModel inboundChannelModel) {
         this.inboundChannelModel = inboundChannelModel;
+    }
+
+    public Collection<String> getStringContentTypes() {
+        return stringContentTypes;
+    }
+
+    public void setStringContentTypes(Collection<String> stringContentTypes) {
+        this.stringContentTypes = stringContentTypes;
     }
 }

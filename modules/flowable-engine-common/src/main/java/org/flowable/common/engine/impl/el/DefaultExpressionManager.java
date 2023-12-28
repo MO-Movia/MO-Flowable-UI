@@ -13,8 +13,10 @@
 package org.flowable.common.engine.impl.el;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.common.engine.api.delegate.FlowableFunctionDelegate;
@@ -39,14 +41,12 @@ import org.flowable.common.engine.impl.persistence.deploy.DeploymentCache;
  * @author Dave Syer
  * @author Frederik Heremans
  * @author Joram Barrez
- * @author Filip Hrisafov
  */
 public class DefaultExpressionManager implements ExpressionManager {
 
     protected ExpressionFactory expressionFactory;
     protected List<FlowableFunctionDelegate> functionDelegates;
-    protected FlowableFunctionResolver functionResolver;
-    protected FlowableFunctionResolverFactory functionResolverFactory = FunctionDelegatesFlowableFunctionResolver::new;
+    protected BiFunction<String, String, FlowableFunctionDelegate> functionResolver;
     protected List<FlowableAstFunctionCreator> astFunctionCreators;
 
     protected ELContext parsingElContext;
@@ -55,13 +55,9 @@ public class DefaultExpressionManager implements ExpressionManager {
     protected DeploymentCache<Expression> expressionCache;
     protected int expressionTextLengthCacheLimit = -1;
     
-    protected List<ELResolver> preDefaultResolvers;
-    protected ELResolver jsonNodeResolver;
-    protected List<ELResolver> postDefaultResolvers;
-    protected List<ELResolver> preBeanResolvers;
-    protected ELResolver beanResolver;
-
-    protected ELResolver staticElResolver;
+    public DefaultExpressionManager() {
+        this(null);
+    }
 
     public DefaultExpressionManager(Map<Object, Object> beans) {
         this.expressionFactory = ExpressionFactoryResolver.resolveExpressionFactory();
@@ -110,63 +106,45 @@ public class DefaultExpressionManager implements ExpressionManager {
     
     @Override
     public ELContext getElContext(VariableContainer variableContainer) {
-        ELResolver elResolver = getOrCreateStaticElResolver();
+        ELResolver elResolver = createElResolver(variableContainer);
         return new FlowableElContext(elResolver, functionResolver);
     }
     
-    protected ELResolver getOrCreateStaticElResolver() {
-        if (staticElResolver == null) {
-            staticElResolver = new CompositeELResolver(createDefaultElResolvers());
-        }
-
-        return staticElResolver;
-    }
-
-    protected List<ELResolver> createDefaultElResolvers() {
+    protected ELResolver createElResolver(VariableContainer variableContainer) {
         List<ELResolver> elResolvers = new ArrayList<>();
-        elResolvers.add(createVariableElResolver());
-
-        if (preDefaultResolvers != null) {
-            elResolvers.addAll(preDefaultResolvers);
-        }
+        elResolvers.add(createVariableElResolver(variableContainer));
         if (beans != null) {
             elResolvers.add(new ReadOnlyMapELResolver(beans));
         }
         elResolvers.add(new ArrayELResolver());
         elResolvers.add(new ListELResolver());
         elResolvers.add(new MapELResolver());
-        ELResolver jsonNodeElResolver = createJsonNodeElResolver();
-        if (jsonNodeElResolver != null) {
-            elResolvers.add(jsonNodeElResolver);
-        }
-        if (preBeanResolvers != null) {
-            elResolvers.addAll(preBeanResolvers);
-        }
-
+        elResolvers.add(new JsonNodeELResolver());
         ELResolver beanElResolver = createBeanElResolver();
         if (beanElResolver != null) {
             elResolvers.add(beanElResolver);
         }
         
-        if (postDefaultResolvers != null) {
-            elResolvers.addAll(postDefaultResolvers);
+        configureResolvers(elResolvers);
+        
+        CompositeELResolver compositeELResolver = new CompositeELResolver();
+        for (ELResolver elResolver : elResolvers) {
+            compositeELResolver.add(elResolver);
         }
+        compositeELResolver.add(new CouldNotResolvePropertyELResolver());
+        return compositeELResolver;
+    }
     
-        elResolvers.add(new CouldNotResolvePropertyELResolver());
-
-        return elResolvers;
+    protected void configureResolvers(List<ELResolver> elResolvers) {
+        // to be extended if needed
     }
 
-    protected ELResolver createVariableElResolver() {
-        return new VariableContainerELResolver();
-    }
-
-    protected ELResolver createJsonNodeElResolver() {
-        return jsonNodeResolver == null ? new JsonNodeELResolver() : jsonNodeResolver;
+    protected ELResolver createVariableElResolver(VariableContainer variableContainer) {
+        return new VariableContainerELResolver(variableContainer);
     }
     
     protected ELResolver createBeanElResolver() {
-        return beanResolver == null ? new BeanELResolver() : beanResolver;
+        return new BeanELResolver();
     }
 
     @Override
@@ -176,8 +154,6 @@ public class DefaultExpressionManager implements ExpressionManager {
 
     @Override
     public void setBeans(Map<Object, Object> beans) {
-        // When the beans are modified we need to reset the el resolver
-        this.staticElResolver = null;
         this.beans = beans;
     }
 
@@ -195,7 +171,18 @@ public class DefaultExpressionManager implements ExpressionManager {
 
     protected void updateFunctionResolver() {
         if (this.functionDelegates != null) {
-            this.functionResolver = this.functionResolverFactory.create(this.functionDelegates);
+            Map<String, FlowableFunctionDelegate> functionDelegateMap = new LinkedHashMap<>();
+            for (FlowableFunctionDelegate functionDelegate : functionDelegates) {
+                for (String prefix : functionDelegate.prefixes()) {
+                    for (String localName : functionDelegate.localNames()) {
+                        functionDelegateMap.put(prefix + ":" + localName, functionDelegate);
+                    }
+
+                }
+
+            }
+
+            this.functionResolver = (prefix, localName) -> functionDelegateMap.get(prefix + ":" + localName);
 
         } else {
             this.functionResolver = null;
@@ -216,17 +203,6 @@ public class DefaultExpressionManager implements ExpressionManager {
         }
     }
 
-    @Override
-    public FlowableFunctionResolverFactory getFunctionResolverFactory() {
-        return functionResolverFactory;
-    }
-
-    @Override
-    public void setFunctionResolverFactory(FlowableFunctionResolverFactory functionResolverFactory) {
-        this.functionResolverFactory = functionResolverFactory;
-        updateFunctionResolver();
-    }
-
     public DeploymentCache<Expression> getExpressionCache() {
         return expressionCache;
     }
@@ -242,48 +218,5 @@ public class DefaultExpressionManager implements ExpressionManager {
     public void setExpressionTextLengthCacheLimit(int expressionTextLengthCacheLimit) {
         this.expressionTextLengthCacheLimit = expressionTextLengthCacheLimit;
     }
-
-    public void addPreDefaultResolver(ELResolver elResolver) {
-        if (this.preDefaultResolvers == null) {
-            this.preDefaultResolvers = new ArrayList<>();
-        }
-
-        this.preDefaultResolvers.add(elResolver);
-    }
-
-    public ELResolver getJsonNodeResolver() {
-        return jsonNodeResolver;
-    }
-
-    public void setJsonNodeResolver(ELResolver jsonNodeResolver) {
-        // When the bean resolver is modified we need to reset the el resolver
-        this.staticElResolver = null;
-        this.jsonNodeResolver = jsonNodeResolver;
-    }
-
-    public void addPostDefaultResolver(ELResolver elResolver) {
-        if (this.postDefaultResolvers == null) {
-            this.postDefaultResolvers = new ArrayList<>();
-        }
-
-        this.postDefaultResolvers.add(elResolver);
-    }
-
-    public void addPreBeanResolver(ELResolver elResolver) {
-        if (this.preBeanResolvers == null) {
-            this.preBeanResolvers = new ArrayList<>();
-        }
-
-        this.preBeanResolvers.add(elResolver);
-    }
-
-    public ELResolver getBeanResolver() {
-        return beanResolver;
-    }
-
-    public void setBeanResolver(ELResolver beanResolver) {
-        // When the bean resolver is modified we need to reset the el resolver
-        this.staticElResolver = null;
-        this.beanResolver = beanResolver;
-    }
+    
 }

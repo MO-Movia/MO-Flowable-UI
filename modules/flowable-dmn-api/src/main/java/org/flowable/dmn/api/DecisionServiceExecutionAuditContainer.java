@@ -12,7 +12,6 @@
  */
 package org.flowable.dmn.api;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,10 +25,8 @@ public class DecisionServiceExecutionAuditContainer extends DecisionExecutionAud
     public DecisionServiceExecutionAuditContainer() {
     }
 
-    public DecisionServiceExecutionAuditContainer(String id, String name, int decisionVersion, boolean strictMode, 
-            Map<String, Object> variables, Date startTime) {
-        
-        super(id, name, decisionVersion, strictMode, variables, startTime);
+    public DecisionServiceExecutionAuditContainer(String id, String name, int decisionVersion, boolean strictMode, Map<String, Object> variables) {
+        super(id, name, decisionVersion, strictMode, variables);
     }
 
     public Map<String, List<Map<String, Object>>> getDecisionServiceResult() {

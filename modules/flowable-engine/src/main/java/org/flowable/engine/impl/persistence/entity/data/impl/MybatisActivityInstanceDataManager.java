@@ -75,7 +75,7 @@ public class MybatisActivityInstanceDataManager extends AbstractProcessDataManag
         List<ActivityInstanceEntity> activityInstances = getList(getDbSqlSession(), "selectActivityInstancesByProcessInstanceId", processInstanceId, 
                 activitiesByProcessInstanceIdMatcher, true, includeDeleted);
         activityInstances.sort(Comparator.comparing(ActivityInstanceEntity::getStartTime)
-                .thenComparing(ActivityInstanceEntity::getTransactionOrder, Comparator.nullsFirst(Comparator.naturalOrder())));
+                .thenComparing(Comparator.nullsFirst(Comparator.comparing(ActivityInstanceEntity::getTransactionOrder))));
         return activityInstances;
     }
 

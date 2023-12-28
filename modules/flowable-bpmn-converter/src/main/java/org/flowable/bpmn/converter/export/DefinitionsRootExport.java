@@ -60,13 +60,6 @@ public class DefinitionsRootExport implements BpmnXMLConstants {
             xtw.writeAttribute(TARGET_NAMESPACE_ATTRIBUTE, PROCESS_NAMESPACE);
         }
 
-        if (StringUtils.isNotEmpty(model.getExporter())) {
-            xtw.writeAttribute(BpmnXMLConstants.ATTRIBUTE_EXPORTER, model.getExporter());
-        }
-        if (StringUtils.isNotEmpty(model.getExporterVersion())) {
-            xtw.writeAttribute(BpmnXMLConstants.ATTRIBUTE_EXPORTER_VERSION, model.getExporterVersion());
-        }
-
         BpmnXMLUtil.writeCustomAttributes(model.getDefinitionsAttributes().values(), xtw, model.getNamespaces(), defaultAttributes);
     }
 }

@@ -55,15 +55,7 @@
     update ${prefix}ACT_CMMN_HI_MIL_INST
     <set>
         REV_ = #{revisionNext, jdbcType=INTEGER}, 
-        <if test="originalPersistentState.caseDefinitionId != caseDefinitionId">
-            CASE_DEF_ID_ = #{caseDefinitionId, jdbcType=VARCHAR},
-        </if>
-        <if test="originalPersistentState.name != name">
-            NAME_ = #{name, jdbcType=VARCHAR},
-        </if>
-        <if test="originalPersistentState.elementId != elementId">
-            ELEMENT_ID_ = #{elementId, jdbcType=VARCHAR},
-        </if>
+        NAME_ = #{name, jdbcType=VARCHAR},
     </set>
     where ID_ = #{id, jdbcType=VARCHAR}
   </update>
@@ -74,19 +66,6 @@
   
   <delete id="deleteHistoricMilestoneInstanceByCaseDefinitionId" parameterType="string">
     delete from ${prefix}ACT_CMMN_HI_MIL_INST where CASE_DEF_ID_ = #{value}
-  </delete>
-  
-  <delete id="bulkDeleteHistoricMilestoneInstancesByCaseInstanceIds" parameterType="java.util.Collection">
-    delete from ${prefix}ACT_CMMN_HI_MIL_INST where 
-    <foreach item="listItem" index="listIndex" collection="collection">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        CASE_INST_ID_ in
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>
   </delete>
   
   <delete id="bulkDeleteHistoricMilestoneInstancesForNonExistingCaseInstances" parameterType="java.util.Map">
@@ -115,16 +94,16 @@
     <result property="tenantId" column="TENANT_ID_" jdbcType="VARCHAR" />
   </resultMap>
   
-  <select id="selectHistoricMilestoneInstance" parameterType="string" resultMap="historicMileStoneInstanceResultMap">
+  <select id="selectHistoricMilestone" parameterType="string" resultMap="historicMileStoneInstanceResultMap">
       select * from ${prefix}ACT_CMMN_HI_MIL_INST where ID_ = #{id, jdbcType=VARCHAR}
   </select>
   
   <select id="selectHistoricMilestoneInstancesByQueryCriteria" parameterType="org.flowable.cmmn.engine.impl.history.HistoricMilestoneInstanceQueryImpl" resultMap="historicMileStoneInstanceResultMap">
-        <if test="needsPaging">${limitBefore}</if>
-        SELECT RES.* <if test="needsPaging">${limitBetween}</if>
+        <if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+        select RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
         <include refid="selectHistoricMilestoneInstancesByQueryCriteriaSql"/>
         ${orderBy}
-        <if test="needsPaging">${limitAfter}</if>
+        <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
   
   <select id="selectHistoricMilestoneInstanceCountByQueryCriteria" parameterType="org.flowable.cmmn.engine.impl.history.HistoricMilestoneInstanceQueryImpl" resultType="long">

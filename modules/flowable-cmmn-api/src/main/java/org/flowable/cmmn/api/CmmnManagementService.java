@@ -15,14 +15,8 @@ package org.flowable.cmmn.api;
 import java.util.Collection;
 import java.util.Map;
 
-import org.flowable.batch.api.Batch;
-import org.flowable.batch.api.BatchBuilder;
-import org.flowable.batch.api.BatchPartBuilder;
-import org.flowable.batch.api.BatchPartQuery;
-import org.flowable.batch.api.BatchQuery;
 import org.flowable.cmmn.api.runtime.CmmnExternalWorkerTransitionBuilder;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
-import org.flowable.common.engine.api.tenant.ChangeTenantIdBuilder;
 import org.flowable.job.api.DeadLetterJobQuery;
 import org.flowable.job.api.ExternalWorkerJobAcquireBuilder;
 import org.flowable.job.api.ExternalWorkerJobFailureBuilder;
@@ -106,26 +100,6 @@ public interface CmmnManagementService {
      *             when there is no job with the given id.
      */
     Job moveJobToDeadLetterJob(String jobId);
-
-    /**
-     * Moves a bulk of jobs that are in the dead letter job table back to the executable job table,
-     * and resets the retries (as the retries was 0 when it was put into the dead letter job table).
-     *
-     * @param jobIds ids of the jobs to move, cannot be null.
-     * @param retries the number of retries (value greater than 0) which will be set on the jobs.
-     * @throws FlowableObjectNotFoundException when there is no job with any of the given ids.
-     */
-    void bulkMoveDeadLetterJobs(Collection<String> jobIds, int retries);
-
-    /**
-     * Moves a bulk of jobs that are in the dead letter job table back to be history jobs,
-     * and resets the retries (as the retries was 0 when it was put into the dead letter job table).
-     *
-     * @param jobIds ids of the jobs to move, cannot be null.
-     * @param retries the number of retries (value greater than 0) which will be set on the jobs.
-     * @throws FlowableObjectNotFoundException when one job with of the given ids is not found.
-     */
-    void bulkMoveDeadLetterJobsToHistoryJobs(Collection<String> jobIds, int retries);
 
     /**
      * Moves a job that is in the dead letter job table back to be an executable job, 
@@ -287,22 +261,6 @@ public interface CmmnManagementService {
     String getExternalWorkerJobErrorDetails(String jobId);
     
     void handleHistoryCleanupTimerJob();
-
-    /**
-     * Returns a new BatchQuery implementation, that can be used to dynamically query the batches.
-     */
-    BatchQuery createBatchQuery();
-
-    BatchBuilder createBatchBuilder();
-
-    /**
-     * Returns a new BatchPartQuery implementation, that can be used to dynamically query the batch parts.
-     */
-    BatchPartQuery createBatchPartQuery();
-
-    BatchPartBuilder createBatchPartBuilder(Batch batch);
-
-    void deleteBatch(String batchId);
     
     /**
      * Returns a new HistoryJobQuery implementation, that can be used to dynamically query the history jobs.
@@ -360,27 +318,4 @@ public interface CmmnManagementService {
      */
     CmmnExternalWorkerTransitionBuilder createCmmnExternalWorkerTransitionBuilder(String externalJobId, String workerId);
 
-    /**
-     * Unaquire a locked external worker job.
-     */
-    void unacquireExternalWorkerJob(String jobId, String workerId);
-    
-    /**
-     * Unaquire all locked external worker jobs for worker.
-     */
-    void unacquireAllExternalWorkerJobsForWorker(String workerId);
-    
-    /**
-     * Unaquire all locked external worker jobs for worker and tenant.
-     */
-    void unacquireAllExternalWorkerJobsForWorker(String workerId, String tenantId);
-    
-    /**
-     * Create a {@link ChangeTenantIdBuilder} that can be used to change the tenant id of the case instances
-     * and all the related instances. See {@link CmmnChangeTenantIdEntityTypes} for related instances.
-     * <p>
-     * You must provide the source tenant id and the destination tenant id. All instances from the source tenant id in the CMMN scope
-     * will be changed to the target tenant id.
-     */
-    ChangeTenantIdBuilder createChangeTenantIdBuilder(String fromTenantId, String toTenantId);
 }

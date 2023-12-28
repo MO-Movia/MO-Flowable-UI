@@ -12,9 +12,6 @@
  */
 package org.flowable.cmmn.engine.impl.agenda.operation;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.flowable.cmmn.api.runtime.PlanItemInstanceState;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
@@ -51,34 +48,10 @@ public class TerminatePlanItemInstanceOperation extends AbstractMovePlanItemInst
     }
     
     @Override
-    protected boolean shouldAggregateForSingleInstance() {
-        return false;
-    }
-
-    @Override
-    protected boolean shouldAggregateForMultipleInstances() {
-        return false;
-    }
-
-    @Override
     protected void internalExecute() {
         planItemInstanceEntity.setEndedTime(getCurrentTime(commandContext));
         planItemInstanceEntity.setTerminatedTime(planItemInstanceEntity.getEndedTime());
         CommandContextUtil.getCmmnHistoryManager(commandContext).recordPlanItemInstanceTerminated(planItemInstanceEntity);
-    }
-
-    @Override
-    protected Map<String, String> getAsyncLeaveTransitionMetadata() {
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put(OperationSerializationMetadata.FIELD_PLAN_ITEM_INSTANCE_ID, planItemInstanceEntity.getId());
-        metadata.put(OperationSerializationMetadata.FIELD_EXIT_TYPE, exitType);
-        metadata.put(OperationSerializationMetadata.FIELD_EXIT_EVENT_TYPE, exitEventType);
-        return metadata;
-    }
-
-    @Override
-    public boolean abortOperationIfNewStateEqualsOldState() {
-        return true;
     }
 
     @Override

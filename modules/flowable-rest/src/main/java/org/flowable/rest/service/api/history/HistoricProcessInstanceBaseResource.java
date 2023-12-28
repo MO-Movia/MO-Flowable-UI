@@ -106,12 +106,6 @@ public class HistoricProcessInstanceBaseResource {
         if (queryRequest.getProcessDefinitionCategory() != null) {
             query.processDefinitionCategory(queryRequest.getProcessDefinitionCategory());
         }
-        if (queryRequest.getRootScopeId() != null) {
-            query.processInstanceRootScopeId(queryRequest.getRootScopeId());
-        }
-        if (queryRequest.getParentScopeId() != null) {
-            query.processInstanceParentScopeId(queryRequest.getParentScopeId());
-        }
         if (queryRequest.getDeploymentId() != null) {
             query.deploymentId(queryRequest.getDeploymentId());
         }
@@ -176,9 +170,6 @@ public class HistoricProcessInstanceBaseResource {
         if (queryRequest.getCallbackType() != null) {
             query.processInstanceCallbackType(queryRequest.getCallbackType());
         }
-        if (Boolean.TRUE.equals(queryRequest.getWithoutCallbackId())) {
-            query.withoutProcessInstanceCallbackId();
-        }
         
         if (queryRequest.getTenantId() != null) {
             query.processInstanceTenantId(queryRequest.getTenantId());
@@ -226,21 +217,15 @@ public class HistoricProcessInstanceBaseResource {
     }
     
     protected HistoricProcessInstance getHistoricProcessInstanceFromRequest(String processInstanceId) {
-        HistoricProcessInstance processInstance = getHistoricProcessInstanceFromRequestWithoutAccessCheck(processInstanceId);
-
-        if (restApiInterceptor != null) {
-            restApiInterceptor.accessHistoryProcessInfoById(processInstance);
-        }
-        
-        return processInstance;
-    }
-
-    protected HistoricProcessInstance getHistoricProcessInstanceFromRequestWithoutAccessCheck(String processInstanceId) {
         HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         if (processInstance == null) {
             throw new FlowableObjectNotFoundException("Could not find a process instance with id '" + processInstanceId + "'.", HistoricProcessInstance.class);
         }
-
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryProcessInfoById(processInstance);
+        }
+        
         return processInstance;
     }
 

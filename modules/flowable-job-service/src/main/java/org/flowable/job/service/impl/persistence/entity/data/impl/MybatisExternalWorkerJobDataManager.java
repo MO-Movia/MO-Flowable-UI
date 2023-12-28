@@ -118,16 +118,7 @@ public class MybatisExternalWorkerJobDataManager extends AbstractDataManager<Ext
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateExternalWorkerJobTenantIdForDeployment", params);
-    }
-
-    @Override
-    public void bulkUpdateJobLockWithoutRevisionCheck(List<ExternalWorkerJobEntity> externalWorkerJobs, String lockOwner, Date lockExpirationTime) {
-        Map<String, Object> params = new HashMap<>(3);
-        params.put("lockOwner", lockOwner);
-        params.put("lockExpirationTime", lockExpirationTime);
-
-        bulkUpdateEntities("updateExternalWorkerJobLocks", params, "externalWorkerJobs", externalWorkerJobs);
+        getDbSqlSession().update("updateExternalWorkerJobTenantIdForDeployment", params);
     }
 
     @Override
@@ -135,7 +126,7 @@ public class MybatisExternalWorkerJobDataManager extends AbstractDataManager<Ext
         Map<String, Object> params = new HashMap<>(2);
         params.put("id", jobId);
         params.put("now", jobServiceConfiguration.getClock().getCurrentTime());
-        getDbSqlSession().directUpdate("resetExpiredExternalWorkerJob", params);
+        getDbSqlSession().update("resetExpiredExternalWorkerJob", params);
     }
 
     @Override
@@ -160,19 +151,6 @@ public class MybatisExternalWorkerJobDataManager extends AbstractDataManager<Ext
         paramMap.put("scopeId", scopeId);
         paramMap.put("subScopeId", subScopeId);
         return getList(getDbSqlSession(), "selectExternalWorkerJobsByScopeIdAndSubScopeId", paramMap, externalWorkerJobsByScopeIdAndSubScopeIdMatcher, true);
-    }
-    
-    @Override
-    public List<ExternalWorkerJobEntity> findJobsByWorkerId(String workerId) {
-        return getList("selectExternalWorkerJobsByWorkerId", workerId);
-    }
-    
-    @Override
-    public List<ExternalWorkerJobEntity> findJobsByWorkerIdAndTenantId(String workerId, String tenantId) {
-        Map<String, String> paramMap = new HashMap<>();
-        paramMap.put("workerId", workerId);
-        paramMap.put("tenantId", tenantId);
-        return getList("selectExternalWorkerJobsByWorkerIdAndTenantId", paramMap);
     }
     
     @Override

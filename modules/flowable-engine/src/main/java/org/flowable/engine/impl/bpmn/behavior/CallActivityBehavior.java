@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.CallActivity;
@@ -50,7 +49,6 @@ import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntityManager;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.EntityLinkUtil;
-import org.flowable.engine.impl.util.IOParameterUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 import org.flowable.engine.interceptor.StartSubProcessInstanceAfterContext;
 import org.flowable.engine.interceptor.StartSubProcessInstanceBeforeContext;
@@ -128,10 +126,12 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
             ExecutionEntity processInstance = executionEntityManager.findById(execution.getProcessInstanceId());
             businessKey = processInstance.getBusinessKey();
         }
-
-        StartSubProcessInstanceBeforeContext instanceBeforeContext = new StartSubProcessInstanceBeforeContext(businessKey, null,
-                callActivity.getProcessInstanceName(), new HashMap<>(), new HashMap<>(), executionEntity, callActivity.getInParameters(),
-                callActivity.isInheritVariables(), initialFlowElement.getId(), initialFlowElement, subProcess, processDefinition);
+        
+        Map<String, Object> variables = new HashMap<>();
+        
+        StartSubProcessInstanceBeforeContext instanceBeforeContext = new StartSubProcessInstanceBeforeContext(businessKey, callActivity.getProcessInstanceName(), 
+                        variables, executionEntity, callActivity.getInParameters(), callActivity.isInheritVariables(), 
+                        initialFlowElement.getId(), initialFlowElement, subProcess, processDefinition);
         
         if (processEngineConfiguration.getStartProcessInstanceInterceptor() != null) {
             processEngineConfiguration.getStartProcessInstanceInterceptor().beforeStartSubProcessInstance(instanceBeforeContext);
@@ -143,7 +143,7 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
 
         FlowableEventDispatcher eventDispatcher = processEngineConfiguration.getEventDispatcher();
         if (eventDispatcher != null && eventDispatcher.isEnabled()) {
-            eventDispatcher.dispatchEvent(
+            processEngineConfiguration.getEventDispatcher().dispatchEvent(
                     FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.PROCESS_CREATED, subProcessInstance),
                     processEngineConfiguration.getEngineCfgKey());
         }
@@ -152,38 +152,45 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
         subProcessInstance.setVariables(processDataObjects(subProcess.getDataObjects()));
 
         if (instanceBeforeContext.isInheritVariables()) {
-
             Map<String, Object> executionVariables = execution.getVariables();
-            Map<String, Object> transientVariables = execution.getTransientVariables();
             for (Map.Entry<String, Object> entry : executionVariables.entrySet()) {
+                instanceBeforeContext.getVariables().put(entry.getKey(), entry.getValue());
+            }
+        }
+        
+        // copy process variables
+        for (IOParameter inParameter : instanceBeforeContext.getInParameters()) {
 
-                // The executionVariables contain all variables, including the transient variables.
-                // Hence why that map is iterated and the transient variables are split off
-                String variableName = entry.getKey();
-                if (transientVariables.containsKey(variableName)) {
-                    instanceBeforeContext.getTransientVariables().put(variableName, entry.getValue());
+            Object value = null;
+            if (StringUtils.isNotEmpty(inParameter.getSourceExpression())) {
+                Expression expression = expressionManager.createExpression(inParameter.getSourceExpression().trim());
+                value = expression.getValue(execution);
 
-                } else {
-                    instanceBeforeContext.getVariables().put(variableName, entry.getValue());
-
-                }
+            } else {
+                value = execution.getVariable(inParameter.getSource());
             }
 
-        }
+            String variableName = null;
+            if (StringUtils.isNotEmpty(inParameter.getTargetExpression())) {
+                Expression expression = expressionManager.createExpression(inParameter.getTargetExpression());
+                Object variableNameValue = expression.getValue(execution);
+                if (variableNameValue != null) {
+                    variableName = variableNameValue.toString();
+                } else {
+                    LOGGER.warn("In parameter target expression {} did not resolve to a variable name, this is most likely a programmatic error",
+                        inParameter.getTargetExpression());
+                }
 
-        List<IOParameter> inParameters = instanceBeforeContext.getInParameters();
-        if (!inParameters.isEmpty()) {
-            Map<String, Object> variables = instanceBeforeContext.getVariables();
-            // copy process variables
-            IOParameterUtil.processInParameters(inParameters, execution, variables::put, variables::put, expressionManager);
+            } else if (StringUtils.isNotEmpty(inParameter.getTarget())){
+                variableName = inParameter.getTarget();
+
+            }
+
+            instanceBeforeContext.getVariables().put(variableName, value);
         }
 
         if (!instanceBeforeContext.getVariables().isEmpty()) {
             initializeVariables(subProcessInstance, instanceBeforeContext.getVariables());
-        }
-
-        if (!instanceBeforeContext.getTransientVariables().isEmpty()) {
-            initializeTransientVariables(subProcessInstance, instanceBeforeContext.getTransientVariables());
         }
         
         // Process instance name is resolved after setting the variables on the process instance, so they can be used in the expression
@@ -218,9 +225,8 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
 
         if (processEngineConfiguration.getStartProcessInstanceInterceptor() != null) {
             StartSubProcessInstanceAfterContext instanceAfterContext = new StartSubProcessInstanceAfterContext(subProcessInstance, subProcessInitialExecution,
-                instanceBeforeContext.getVariables(), instanceBeforeContext.getTransientVariables(), instanceBeforeContext.getCallActivityExecution(),
-                instanceBeforeContext.getInParameters(), instanceBeforeContext.getInitialFlowElement(), instanceBeforeContext.getProcess(),
-                instanceBeforeContext.getProcessDefinition());
+                instanceBeforeContext.getVariables(), instanceBeforeContext.getCallActivityExecution(), instanceBeforeContext.getInParameters(),
+                instanceBeforeContext.getInitialFlowElement(), instanceBeforeContext.getProcess(), instanceBeforeContext.getProcessDefinition());
 
             processEngineConfiguration.getStartProcessInstanceInterceptor().afterStartSubProcessInstance(instanceAfterContext);
         }
@@ -230,10 +236,7 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
         CommandContextUtil.getAgenda().planContinueProcessOperation(subProcessInitialExecution);
 
         if (eventDispatcher != null && eventDispatcher.isEnabled()) {
-            Map<String, Object> allVariables = new HashMap<>();
-            allVariables.putAll(instanceBeforeContext.getVariables());
-            allVariables.putAll(instanceBeforeContext.getTransientVariables());
-            eventDispatcher.dispatchEvent(FlowableEventBuilder.createProcessStartedEvent(subProcessInitialExecution, allVariables, false),
+            eventDispatcher.dispatchEvent(FlowableEventBuilder.createProcessStartedEvent(subProcessInitialExecution, instanceBeforeContext.getVariables(), false),
                     processEngineConfiguration.getEngineCfgKey());
         }
         
@@ -249,7 +252,7 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
                 processDefinition = getProcessDefinitionByKey(execution, callActivity.isSameDeployment(), processEngineConfiguration);
                 break;
             default:
-                throw new FlowableException("Unrecognized calledElementType [" + calledElementType + "] in " + execution);
+                throw new FlowableException("Unrecognized calledElementType [" + calledElementType + "]");
         }
         return processDefinition;
     }
@@ -264,17 +267,39 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
         ExecutionEntity executionEntity = (ExecutionEntity) execution;
         CallActivity callActivity = (CallActivity) executionEntity.getCurrentFlowElement();
 
-        List<IOParameter> outParameters = callActivity.getOutParameters();
-        if (!outParameters.isEmpty()) {
-            BiConsumer<String, Object> variableConsumer = (variableName, value) -> {
-                if (callActivity.isUseLocalScopeForOutParameters()) {
-                    executionEntity.setVariableLocal(variableName, value);
-                } else {
-                    executionEntity.setVariable(variableName, value);
-                }
-            };
+        for (IOParameter outParameter : callActivity.getOutParameters()) {
 
-            IOParameterUtil.processOutParameters(outParameters, subProcessInstance, variableConsumer, variableConsumer, expressionManager);
+            Object value = null;
+            if (StringUtils.isNotEmpty(outParameter.getSourceExpression())) {
+                Expression expression = expressionManager.createExpression(outParameter.getSourceExpression().trim());
+                value = expression.getValue(subProcessInstance);
+
+            } else {
+                value = subProcessInstance.getVariable(outParameter.getSource());
+            }
+
+            String variableName = null;
+            if (StringUtils.isNotEmpty(outParameter.getTarget())) {
+                variableName = outParameter.getTarget();
+
+            } else if (StringUtils.isNotEmpty(outParameter.getTargetExpression())) {
+                Expression expression = expressionManager.createExpression(outParameter.getTargetExpression());
+
+                Object variableNameValue = expression.getValue(subProcessInstance);
+                if (variableNameValue != null) {
+                    variableName = variableNameValue.toString();
+                } else {
+                    LOGGER.warn("Out parameter target expression {} did not resolve to a variable name, this is most likely a programmatic error",
+                        outParameter.getTargetExpression());
+                }
+
+            }
+
+            if (callActivity.isUseLocalScopeForOutParameters()) {
+                executionEntity.setVariableLocal(variableName, value);
+            } else {
+                executionEntity.setVariable(variableName, value);
+            }
         }
     }
 
@@ -284,7 +309,7 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
 
         ExecutionEntity executionEntity = (ExecutionEntity) execution;
         if (executionEntity.isSuspended() || ProcessDefinitionUtil.isProcessDefinitionSuspended(execution.getProcessDefinitionId())) {
-            throw new FlowableException("Cannot complete process instance. Parent process instance " + executionEntity + " is suspended");
+            throw new FlowableException("Cannot complete process instance. Parent process instance " + executionEntity.getId() + " is suspended");
         }
 
         leave(execution);
@@ -366,10 +391,5 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
     // Allow a subclass to override how variables are initialized.
     protected void initializeVariables(ExecutionEntity subProcessInstance, Map<String, Object> variables) {
         subProcessInstance.setVariables(variables);
-    }
-
-    // Allow a subclass to override how variables are initialized.
-    protected void initializeTransientVariables(ExecutionEntity subProcessInstance, Map<String, Object> transientVariables) {
-        subProcessInstance.setTransientVariables(transientVariables);
     }
 }

@@ -13,8 +13,8 @@
 
 package org.flowable.rest.servlet;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngines;

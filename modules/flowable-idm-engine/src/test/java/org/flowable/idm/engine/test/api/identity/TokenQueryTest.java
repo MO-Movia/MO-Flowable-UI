@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -95,7 +94,9 @@ public class TokenQueryTest extends PluggableFlowableIdmTestCase {
 
     @Test
     public void testQueryByIds() {
-        TokenQuery query = idmIdentityService.createTokenQuery().tokenIds(Collections.singletonList("1111"));
+        List<String> ids = new ArrayList<>();
+        ids.add("1111");
+        TokenQuery query = idmIdentityService.createTokenQuery().tokenIds(ids);
         verifyQueryResults(query, 1);
     }
 

@@ -18,6 +18,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.engine.api.query.QueryProperty;
 import org.flowable.common.rest.api.DataResponse;
 import org.flowable.engine.RepositoryService;
@@ -72,7 +74,6 @@ public class ProcessDefinitionCollectionResource {
             @ApiImplicitParam(name = "version", dataType = "integer", value = "Only return process definitions with the given version.", paramType = "query"),
             @ApiImplicitParam(name = "name", dataType = "string", value = "Only return process definitions with the given name.", paramType = "query"),
             @ApiImplicitParam(name = "nameLike", dataType = "string", value = "Only return process definitions with a name like the given name.", paramType = "query"),
-            @ApiImplicitParam(name = "nameLikeIgnoreCase", dataType = "string", value = "Only return process definitions with a name like the given name ignoring case.", paramType = "query"),
             @ApiImplicitParam(name = "key", dataType = "string", value = "Only return process definitions with the given key.", paramType = "query"),
             @ApiImplicitParam(name = "keyLike", dataType = "string", value = "Only return process definitions with a name like the given key.", paramType = "query"),
             @ApiImplicitParam(name = "resourceName", dataType = "string", value = "Only return process definitions with the given resource name.", paramType = "query"),
@@ -80,8 +81,7 @@ public class ProcessDefinitionCollectionResource {
             @ApiImplicitParam(name = "category", dataType = "string", value = "Only return process definitions with the given category.", paramType = "query"),
             @ApiImplicitParam(name = "categoryLike", dataType = "string", value = "Only return process definitions with a category like the given name.", paramType = "query"),
             @ApiImplicitParam(name = "categoryNotEquals", dataType = "string", value = "Only return process definitions which do not have the given category.", paramType = "query"),
-            @ApiImplicitParam(name = "deploymentId", dataType = "string", value = "Only return process definitions which are part of a deployment with the given deployment id.", paramType = "query"),
-            @ApiImplicitParam(name = "parentDeploymentId", dataType = "string", value = "Only return process definitions which are part of a deployment with the given parent deployment id.", paramType = "query"),
+            @ApiImplicitParam(name = "deploymentId", dataType = "string", value = "Only return process definitions with the given category.", paramType = "query"),
             @ApiImplicitParam(name = "startableByUser", dataType = "string", value = "Only return process definitions which are part of a deployment with the given id.", paramType = "query"),
             @ApiImplicitParam(name = "latest", dataType = "boolean", value = "Only return the latest process definition versions. Can only be used together with key and keyLike parameters, using any other parameter will result in a 400-response.", paramType = "query"),
             @ApiImplicitParam(name = "suspended", dataType = "boolean", value = "If true, only returns process definitions which are suspended. If false, only active process definitions (which are not suspended) are returned.", paramType = "query"),
@@ -92,7 +92,7 @@ public class ProcessDefinitionCollectionResource {
             @ApiResponse(code = 400, message = "Indicates a parameter was passed in the wrong format or that latest is used with other parameters other than key and keyLike. The status-message contains additional information.")
     })
     @GetMapping(value = "/repository/process-definitions", produces = "application/json")
-    public DataResponse<ProcessDefinitionResponse> getProcessDefinitions(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<ProcessDefinitionResponse> getProcessDefinitions(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
 
         // Populate filter-parameters
@@ -117,9 +117,6 @@ public class ProcessDefinitionCollectionResource {
         if (allRequestParams.containsKey("nameLike")) {
             processDefinitionQuery.processDefinitionNameLike(allRequestParams.get("nameLike"));
         }
-        if (allRequestParams.containsKey("nameLikeIgnoreCase")) {
-            processDefinitionQuery.processDefinitionNameLikeIgnoreCase(allRequestParams.get("nameLikeIgnoreCase"));
-        }
         if (allRequestParams.containsKey("resourceName")) {
             processDefinitionQuery.processDefinitionResourceName(allRequestParams.get("resourceName"));
         }
@@ -130,22 +127,23 @@ public class ProcessDefinitionCollectionResource {
             processDefinitionQuery.processDefinitionVersion(Integer.valueOf(allRequestParams.get("version")));
         }
         if (allRequestParams.containsKey("suspended")) {
-            if (Boolean.parseBoolean(allRequestParams.get("suspended"))) {
-                processDefinitionQuery.suspended();
-            } else {
-                processDefinitionQuery.active();
+            Boolean suspended = Boolean.valueOf(allRequestParams.get("suspended"));
+            if (suspended != null) {
+                if (suspended) {
+                    processDefinitionQuery.suspended();
+                } else {
+                    processDefinitionQuery.active();
+                }
             }
         }
         if (allRequestParams.containsKey("latest")) {
-            if (Boolean.parseBoolean(allRequestParams.get("latest"))) {
+            Boolean latest = Boolean.valueOf(allRequestParams.get("latest"));
+            if (latest != null && latest) {
                 processDefinitionQuery.latestVersion();
             }
         }
         if (allRequestParams.containsKey("deploymentId")) {
             processDefinitionQuery.deploymentId(allRequestParams.get("deploymentId"));
-        }
-        if (allRequestParams.containsKey("parentDeploymentId")) {
-            processDefinitionQuery.parentDeploymentId(allRequestParams.get("parentDeploymentId"));
         }
         if (allRequestParams.containsKey("startableByUser")) {
             processDefinitionQuery.startableByUser(allRequestParams.get("startableByUser"));

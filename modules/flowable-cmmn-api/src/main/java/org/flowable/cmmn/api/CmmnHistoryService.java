@@ -12,14 +12,12 @@
  */
 package org.flowable.cmmn.api;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.cmmn.api.history.HistoricCaseInstanceQuery;
 import org.flowable.cmmn.api.history.HistoricMilestoneInstanceQuery;
 import org.flowable.cmmn.api.history.HistoricPlanItemInstanceQuery;
 import org.flowable.cmmn.api.history.HistoricVariableInstanceQuery;
-import org.flowable.cmmn.api.reactivation.CaseReactivationBuilder;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.entitylink.api.history.HistoricEntityLink;
 import org.flowable.identitylink.api.IdentityLink;
@@ -59,21 +57,11 @@ public interface CmmnHistoryService {
 
     void deleteHistoricCaseInstance(String caseInstanceId);
     
-    void bulkDeleteHistoricCaseInstances(Collection<String> caseInstanceIds);
-
     /**
      * Deletes historic task instance. This might be useful for tasks that are {@link CmmnTaskService#newTask() dynamically created} and then {@link CmmnTaskService#complete(String) completed}. If the
      * historic task instance doesn't exist, no exception is thrown and the method returns normal.
      */
     void deleteHistoricTaskInstance(String taskId);
-
-    /**
-     * Creates a new case reactivation builder used to reactivate an archived / finished case with various options.
-     *
-     * @param caseInstanceId the id of the historical case to be reactivated
-     * @return the case reactivation builder
-     */
-    CaseReactivationBuilder createCaseReactivationBuilder(String caseInstanceId);
     
     /**
      * Retrieves the {@link HistoricIdentityLink}s associated with the given task. Such an {@link IdentityLink} informs how a certain identity (eg. group or user) is associated with a certain task
@@ -107,16 +95,6 @@ public interface CmmnHistoryService {
      * Retrieves the {@link HistoricEntityLink}s where the given case instance is referenced.
      */
     List<HistoricEntityLink> getHistoricEntityLinkParentsForCaseInstance(String caseInstanceId);
-    
-    /**
-     * Retrieves the {@link HistoricEntityLink}s associated with the given task.
-     */
-    List<HistoricEntityLink> getHistoricEntityLinkChildrenForTask(String taskId);
-
-    /**
-     * Retrieves the {@link HistoricEntityLink}s where the given task is referenced.
-     */
-    List<HistoricEntityLink> getHistoricEntityLinkParentsForTask(String taskId);
 
     /**
      * Deletes user task log entry by its log number

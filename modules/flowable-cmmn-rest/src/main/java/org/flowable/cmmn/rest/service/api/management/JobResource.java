@@ -13,6 +13,9 @@
 
 package org.flowable.cmmn.rest.service.api.management;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
 import org.flowable.cmmn.rest.service.api.RestActionRequest;
@@ -28,7 +31,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -61,7 +63,7 @@ public class JobResource extends JobBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested job does not exist.")
     })
     @GetMapping(value = "/cmmn-management/jobs/{jobId}", produces = "application/json")
-    public JobResponse getJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public JobResponse getJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletRequest request) {
         Job job = getJobById(jobId);
         return restResponseFactory.createJobResponse(job);
     }
@@ -72,9 +74,9 @@ public class JobResource extends JobBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested job does not exist.")
     })
     @GetMapping(value = "/cmmn-management/timer-jobs/{jobId}", produces = "application/json")
-    public JobResponse getTimerJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public JobResponse getTimerJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletRequest request) {
         Job job = getTimerJobById(jobId);
-        return restResponseFactory.createTimerJobResponse(job);
+        return restResponseFactory.createJobResponse(job);
     }
 
     @ApiOperation(value = "Get a single suspended job", tags = { "Jobs" })
@@ -83,9 +85,9 @@ public class JobResource extends JobBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested job does not exist.")
     })
     @GetMapping(value = "/cmmn-management/suspended-jobs/{jobId}", produces = "application/json")
-    public JobResponse getSuspendedJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public JobResponse getSuspendedJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletRequest request) {
         Job job = getSuspendedJobById(jobId);
-        return restResponseFactory.createSuspendedJobResponse(job);
+        return restResponseFactory.createJobResponse(job);
     }
 
     @ApiOperation(value = "Get a single deadletter job", tags = { "Jobs" })
@@ -94,9 +96,9 @@ public class JobResource extends JobBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested job does not exist.")
     })
     @GetMapping(value = "/cmmn-management/deadletter-jobs/{jobId}", produces = "application/json")
-    public JobResponse getDeadletterJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public JobResponse getDeadletterJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletRequest request) {
         Job job = getDeadLetterJobById(jobId);
-        return restResponseFactory.createDeadLetterJobResponse(job);
+        return restResponseFactory.createJobResponse(job);
     }
 
     @ApiOperation(value = "Get a single history job job", tags = { "Jobs" })
@@ -117,48 +119,47 @@ public class JobResource extends JobBaseResource {
         return null;
     }
 
-    @ApiOperation(value = "Delete a job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Delete a job", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the job was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found..")
     })
     @DeleteMapping("/cmmn-management/jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public void deleteJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletResponse response) {
         Job job = getJobById(jobId);
         try {
             managementService.deleteJob(job.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
-    @ApiOperation(value = "Delete a timer job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Delete a timer job", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the job was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found.")
     })
     @DeleteMapping("/cmmn-management/timer-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTimerJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public void deleteTimerJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletResponse response) {
         Job job = getTimerJobById(jobId);
         try {
             managementService.deleteTimerJob(job.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
-    @ApiOperation(value = "Delete a history job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Delete a history job", tags = { "Jobs" })
     @ApiResponses(value = {
         @ApiResponse(code = 204, message = "Indicates the history job was found and has been deleted. Response-body is intentionally empty."),
         @ApiResponse(code = 404, message = "Indicates the requested job was not found.")
     })
     @DeleteMapping("/cmmn-management/history-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteHistoryJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public void deleteHistoryJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletResponse response) {
         HistoryJob historyJob = getHistoryJobById(jobId);
         if (restApiInterceptor != null) {
             restApiInterceptor.deleteHistoryJob(historyJob);
@@ -166,55 +167,55 @@ public class JobResource extends JobBaseResource {
 
         try {
             managementService.deleteHistoryJob(jobId);
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
     
-    @ApiOperation(value = "Delete a suspended job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Delete a suspended job", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the job was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found.")
     })
     @DeleteMapping("/cmmn-management/suspended-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteSuspendedJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public void deleteSuspendedJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletResponse response) {
         Job job = getSuspendedJobById(jobId);
         try {
             managementService.deleteSuspendedJob(job.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
-    @ApiOperation(value = "Delete a deadletter job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Delete a deadletter job", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the job was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found.")
     })
     @DeleteMapping("/cmmn-management/deadletter-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteDeadLetterJob(@ApiParam(name = "jobId") @PathVariable String jobId) {
+    public void deleteDeadLetterJob(@ApiParam(name = "jobId") @PathVariable String jobId, HttpServletResponse response) {
         Job job = getDeadLetterJobById(jobId);
         try {
             managementService.deleteDeadLetterJob(job.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
-    @ApiOperation(value = "Execute a single job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Execute a single job", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the job was executed. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found."),
             @ApiResponse(code = 500, message = "Indicates the an exception occurred while executing the job. The status-description contains additional detail about the error. The full error-stacktrace can be fetched later on if needed.")
     })
     @PostMapping("/cmmn-management/jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void executeJobAction(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest) {
+    public void executeJobAction(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest, HttpServletResponse response) {
         if (actionRequest == null || !EXECUTE_ACTION.equals(actionRequest.getAction())) {
             throw new FlowableIllegalArgumentException("Invalid action, only 'execute' is supported.");
         }
@@ -223,21 +224,22 @@ public class JobResource extends JobBaseResource {
 
         try {
             managementService.executeJob(job.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
     
-    @ApiOperation(value = "Move a single timer job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Move a single timer job", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the timer job was moved. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found."),
             @ApiResponse(code = 500, message = "Indicates the an exception occurred while executing the job. The status-description contains additional detail about the error. The full error-stacktrace can be fetched later on if needed.")
     })
     @PostMapping("/cmmn-management/timer-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void executeTimerJobAction(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest) {
+    public void executeTimerJobAction(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest, HttpServletResponse response) {
         if (actionRequest == null || !MOVE_ACTION.equals(actionRequest.getAction())) {
             throw new FlowableIllegalArgumentException("Invalid action, only 'move' is supported.");
         }
@@ -246,21 +248,22 @@ public class JobResource extends JobBaseResource {
 
         try {
             managementService.moveTimerToExecutableJob(job.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a timer job with id '" + jobId + "'.", Job.class);
         }
+
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
-    @ApiOperation(value = "Execute a history job", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Execute a history job", tags = { "Jobs" })
     @ApiResponses(value = {
         @ApiResponse(code = 204, message = "Indicates the job was executed. Response-body is intentionally empty."),
         @ApiResponse(code = 404, message = "Indicates the requested job was not found."),
         @ApiResponse(code = 500, message = "Indicates the an exception occurred while executing the job. The status-description contains additional detail about the error. The full error-stacktrace can be fetched later on if needed.")
     })
     @PostMapping("/cmmn-management/history-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void executeHistoryJob(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest) {
+    public void executeHistoryJob(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest, HttpServletResponse response) {
         if (actionRequest == null || !EXECUTE_ACTION.equals(actionRequest.getAction())) {
             throw new FlowableIllegalArgumentException("Invalid action, only 'execute' is supported.");
         }
@@ -269,21 +272,22 @@ public class JobResource extends JobBaseResource {
 
         try {
             managementService.executeHistoryJob(historyJob.getId());
-        } catch (FlowableObjectNotFoundException e) {
+        } catch (FlowableObjectNotFoundException aonfe) {
             // Re-throw to have consistent error-messaging across REST-api
             throw new FlowableObjectNotFoundException("Could not find a job with id '" + jobId + "'.", Job.class);
         }
+
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
     
-    @ApiOperation(value = "Move a single deadletter job. Accepts 'move' and 'moveToHistoryJob' as action.", tags = { "Jobs" }, code = 204)
+    @ApiOperation(value = "Move a single deadletter job. Accepts 'move' and 'moveToHistoryJob' as action.", tags = { "Jobs" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the dead letter job was moved. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested job was not found."),
             @ApiResponse(code = 500, message = "Indicates the an exception occurred while executing the job. The status-description contains additional detail about the error. The full error-stacktrace can be fetched later on if needed.")
     })
     @PostMapping("/cmmn-management/deadletter-jobs/{jobId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void executeDeadLetterJobAction(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest) {
+    public void executeDeadLetterJobAction(@ApiParam(name = "jobId") @PathVariable String jobId, @RequestBody RestActionRequest actionRequest, HttpServletResponse response) {
         if (actionRequest == null || !(MOVE_ACTION.equals(actionRequest.getAction()) || MOVE_TO_HISTORY_JOB_ACTION.equals(actionRequest.getAction()))) {
             throw new FlowableIllegalArgumentException("Invalid action, only 'move' or 'moveToHistoryJob' is supported.");
         }
@@ -292,9 +296,6 @@ public class JobResource extends JobBaseResource {
 
         if (MOVE_ACTION.equals(actionRequest.getAction())) {
 
-            if (restApiInterceptor != null) {
-                restApiInterceptor.moveDeadLetterJob(deadLetterJob, MOVE_ACTION);
-            }
             /*
              * Note that the jobType is checked to know which kind of move that needs to be done.
              * The MOVE_TO_HISTORY_JOB_ACTION allows to specifically force the move to a history job and trigger the else part below.
@@ -309,21 +310,22 @@ public class JobResource extends JobBaseResource {
 
                 }
 
-            } catch (FlowableObjectNotFoundException e) {
+            } catch (FlowableObjectNotFoundException aonfe) {
                 // Re-throw to have consistent error-messaging across REST-API
                 throw new FlowableObjectNotFoundException("Could not find a dead letter job with id '" + jobId + "'.", Job.class);
             }
 
+            response.setStatus(HttpStatus.NO_CONTENT.value());
+
         } else if (MOVE_TO_HISTORY_JOB_ACTION.equals(actionRequest.getAction())) {
-            if (restApiInterceptor != null) {
-                restApiInterceptor.moveDeadLetterJob(deadLetterJob, MOVE_TO_HISTORY_JOB_ACTION);
-            }
             try {
                 managementService.moveDeadLetterJobToHistoryJob(deadLetterJob.getId(), cmmnEngineConfiguration.getAsyncHistoryExecutorNumberOfRetries());
-            } catch (FlowableObjectNotFoundException e) {
+            } catch (FlowableObjectNotFoundException aonfe) {
                 // Re-throw to have consistent error-messaging across REST-api
                 throw new FlowableObjectNotFoundException("Could not find a dead letter job with id '" + jobId + "'.", Job.class);
             }
+
+            response.setStatus(HttpStatus.NO_CONTENT.value());
 
         }
 

@@ -12,9 +12,8 @@
  */
 package org.flowable.rest.conf.jpa;
 
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-
-import jakarta.persistence.EntityManagerFactory;
 
 import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
@@ -30,6 +29,13 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.flowable.form.api.FormRepositoryService;
+import org.flowable.form.engine.FormEngine;
+import org.flowable.form.engine.FormEngineConfiguration;
+import org.flowable.form.engine.FormEngines;
+import org.flowable.form.engine.configurator.FormEngineConfigurator;
+import org.flowable.form.spring.SpringFormEngineConfiguration;
+import org.flowable.form.spring.configurator.SpringFormEngineConfigurator;
 import org.flowable.idm.api.IdmEngineConfigurationApi;
 import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.spring.ProcessEngineFactoryBean;
@@ -59,7 +65,7 @@ public class JPAFlowableEngineConfiguration {
     }
 
     @Bean(name = "processEngineConfiguration")
-    public ProcessEngineConfigurationImpl processEngineConfiguration() {
+    public ProcessEngineConfigurationImpl processEngineConfiguration(FormEngineConfigurator formEngineConfigurator) {
         SpringProcessEngineConfiguration processEngineConfiguration = new SpringProcessEngineConfiguration();
         processEngineConfiguration.setDataSource(dataSource);
         processEngineConfiguration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
@@ -69,9 +75,36 @@ public class JPAFlowableEngineConfiguration {
         processEngineConfiguration.setJpaHandleTransaction(false);
         processEngineConfiguration.setJpaHandleTransaction(false);
         processEngineConfiguration.setHistoryLevel(HistoryLevel.FULL);
+        processEngineConfiguration.addConfigurator(formEngineConfigurator);
         return processEngineConfiguration;
     }
     
+    @Bean
+    public SpringFormEngineConfigurator formEngineConfigurator(FormEngineConfiguration formEngineConfiguration) {
+        SpringFormEngineConfigurator formEngineConfigurator =  new SpringFormEngineConfigurator();
+        formEngineConfigurator.setFormEngineConfiguration(formEngineConfiguration);
+        return formEngineConfigurator;
+    }
+    
+    @Bean(name = "formEngineConfiguration")
+    public FormEngineConfiguration formEngineConfiguration() {
+        SpringFormEngineConfiguration formEngineConfiguration = new SpringFormEngineConfiguration();
+        formEngineConfiguration.setDataSource(dataSource);
+        formEngineConfiguration.setDatabaseSchemaUpdate(FormEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+        formEngineConfiguration.setTransactionManager(transactionManager);
+        return formEngineConfiguration;
+    }
+
+    @Bean
+    public FormEngine formEngine(@SuppressWarnings("unused") ProcessEngine processEngine) {
+        // The process engine needs to be injected, as otherwise it won't be initialized, which means that the FormEngine is not initialized yet
+        if (!FormEngines.isInitialized()) {
+            throw new IllegalStateException("form engine has not been initialized");
+        }
+        return FormEngines.getDefaultFormEngine();
+    }
+
+
     @Bean
     public RepositoryService repositoryService(ProcessEngine processEngine) {
         return processEngine.getRepositoryService();
@@ -118,6 +151,16 @@ public class JPAFlowableEngineConfiguration {
         return processEngine.getDynamicBpmnService();
     }
     
+    @Bean
+    public FormRepositoryService formRepositoryService(FormEngine formEngine) {
+        return formEngine.getFormRepositoryService();
+    }
+    
+    @Bean
+    public org.flowable.form.api.FormService formEngineFormService(FormEngine formEngine) {
+        return formEngine.getFormService();
+    }
+
     @Bean
     public ProcessMigrationService processInstanceMigrationService(ProcessEngine processEngine) {
         return processEngine.getProcessMigrationService();

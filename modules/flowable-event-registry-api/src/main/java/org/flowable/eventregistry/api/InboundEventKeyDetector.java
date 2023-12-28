@@ -19,10 +19,6 @@ package org.flowable.eventregistry.api;
 @FunctionalInterface
 public interface InboundEventKeyDetector<T> {
 
-    String detectEventDefinitionKey(T payload);
-
-    default String detectEventDefinitionKey(FlowableEventInfo<T> event) {
-        return detectEventDefinitionKey(event.getPayload());
-    }
+    String detectEventDefinitionKey(T event);
 
 }

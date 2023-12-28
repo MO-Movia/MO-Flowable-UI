@@ -23,5 +23,4 @@ public interface PropertyDataManager extends DataManager<PropertyEntity> {
 
     List<PropertyEntity> findAll();
 
-    void directInsertProperty(String name, String value);
 }

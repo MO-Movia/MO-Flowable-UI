@@ -47,7 +47,7 @@ public class TimerStartEventJobHandler extends TimerEventHandler implements JobH
         ProcessDefinitionEntity processDefinitionEntity = ProcessDefinitionUtil
                 .getProcessDefinitionFromDatabase(job.getProcessDefinitionId()); // From DB -> need to get latest suspended state
         if (processDefinitionEntity == null) {
-            throw new FlowableException("Could not find process definition needed for timer start event for job " + job);
+            throw new FlowableException("Could not find process definition needed for timer start event");
         }
 
         try {
@@ -65,24 +65,23 @@ public class TimerStartEventJobHandler extends TimerEventHandler implements JobH
                 if (activityId != null) {
                     FlowElement flowElement = process.getFlowElement(activityId, true);
                     if (flowElement == null) {
-                        throw new FlowableException("Could not find matching FlowElement for activityId " + activityId + " in " + processDefinitionEntity);
+                        throw new FlowableException("Could not find matching FlowElement for activityId " + activityId);
                     }
                     ProcessInstanceHelper processInstanceHelper = processEngineConfiguration.getProcessInstanceHelper();
-                    processInstanceHelper.createAndStartProcessInstanceWithInitialFlowElement(processDefinitionEntity, null, null, null, flowElement, process
-                            , null, null, null, null, true);
+                    processInstanceHelper.createAndStartProcessInstanceWithInitialFlowElement(processDefinitionEntity, null, null, flowElement, process, null, null, true);
                 } else {
                     new StartProcessInstanceCmd(processDefinitionEntity.getKey(), null, null, null, job.getTenantId()).execute(commandContext);
                 }
 
             } else {
-                LOGGER.debug("ignoring timer of suspended process definition {}", processDefinitionEntity.getId());
+                LOGGER.debug("ignoring timer of suspended process definition {}", processDefinitionEntity.getName());
             }
         } catch (RuntimeException e) {
-            LOGGER.error("exception during timer execution for {}", job, e);
+            LOGGER.error("exception during timer execution", e);
             throw e;
         } catch (Exception e) {
-            LOGGER.error("exception during timer execution for {}", job, e);
-            throw new FlowableException("exception during timer execution for " + job, e);
+            LOGGER.error("exception during timer execution", e);
+            throw new FlowableException("exception during timer execution: " + e.getMessage(), e);
         }
     }
 }

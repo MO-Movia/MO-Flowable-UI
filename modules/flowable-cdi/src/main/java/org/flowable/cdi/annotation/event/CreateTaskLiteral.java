@@ -12,7 +12,7 @@
  */
 package org.flowable.cdi.annotation.event;
 
-import jakarta.enterprise.util.AnnotationLiteral;
+import javax.enterprise.util.AnnotationLiteral;
 
 public class CreateTaskLiteral extends AnnotationLiteral<CreateTask> implements CreateTask {
 

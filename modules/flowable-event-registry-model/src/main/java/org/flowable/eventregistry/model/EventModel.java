@@ -49,14 +49,6 @@ public class EventModel {
     }
 
     @JsonIgnore
-    public Collection<EventPayload> getHeaders() {
-        return payload.values()
-                .stream()
-                .filter(EventPayload::isHeader)
-                .collect(Collectors.toList());
-    }
-    
-    @JsonIgnore
     public Collection<EventPayload> getCorrelationParameters() {
         return payload.values()
                 .stream()
@@ -79,15 +71,6 @@ public class EventModel {
             this.payload.put(eventPayload.getName(), eventPayload);
         }
     }
-    
-    public void addHeader(String name, String type) {
-        EventPayload eventPayload = payload.get(name);
-        if (eventPayload != null) {
-            eventPayload.setHeader(true);
-        } else {
-            payload.put(name, EventPayload.header(name, type));
-        }
-    }
 
     public void addPayload(String name, String type) {
         EventPayload eventPayload = payload.get(name);
@@ -98,10 +81,6 @@ public class EventModel {
         }
     }
 
-    public void addPayload(EventPayload payload) {
-        this.payload.put(payload.getName(), payload);
-    }
-
     public void addCorrelation(String name, String type) {
         EventPayload eventPayload = payload.get(name);
         if (eventPayload != null) {
@@ -110,15 +89,5 @@ public class EventModel {
             payload.put(name, EventPayload.correlation(name, type));
         }
     }
-    
-    public void addFullPayload(String name) {
-        EventPayload eventPayload = payload.get(name);
-        if (eventPayload != null) {
-            eventPayload.setFullPayload(true);
-            eventPayload.setCorrelationParameter(false);
-            eventPayload.setHeader(false);
-        } else {
-            payload.put(name, EventPayload.fullPayload(name));
-        }
-    }
+
 }

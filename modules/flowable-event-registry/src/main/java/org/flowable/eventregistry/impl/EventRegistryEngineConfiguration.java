@@ -15,10 +15,7 @@ package org.flowable.eventregistry.impl;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.AbstractEngineConfiguration;
@@ -29,7 +26,6 @@ import org.flowable.common.engine.impl.el.DefaultExpressionManager;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.CommandInterceptor;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
-import org.flowable.common.engine.impl.javax.el.ELResolver;
 import org.flowable.common.engine.impl.persistence.deploy.DefaultDeploymentCache;
 import org.flowable.common.engine.impl.persistence.deploy.DeploymentCache;
 import org.flowable.common.engine.impl.persistence.deploy.FullDeploymentCache;
@@ -38,10 +34,7 @@ import org.flowable.eventregistry.api.ChannelModelProcessor;
 import org.flowable.eventregistry.api.EventManagementService;
 import org.flowable.eventregistry.api.EventRegistry;
 import org.flowable.eventregistry.api.EventRegistryConfigurationApi;
-import org.flowable.eventregistry.api.EventRegistryNonMatchingEventConsumer;
 import org.flowable.eventregistry.api.EventRepositoryService;
-import org.flowable.eventregistry.api.InboundChannelModelCacheManager;
-import org.flowable.eventregistry.api.InboundEventPayloadExtractor;
 import org.flowable.eventregistry.api.InboundEventProcessor;
 import org.flowable.eventregistry.api.OutboundEventProcessor;
 import org.flowable.eventregistry.api.management.EventRegistryChangeDetectionExecutor;
@@ -53,7 +46,6 @@ import org.flowable.eventregistry.impl.db.EntityDependencyOrder;
 import org.flowable.eventregistry.impl.db.EventDbSchemaManager;
 import org.flowable.eventregistry.impl.deployer.CachingAndArtifactsManager;
 import org.flowable.eventregistry.impl.deployer.ChannelDefinitionDeploymentHelper;
-import org.flowable.eventregistry.impl.deployer.DefaultInboundChannelModelCacheManager;
 import org.flowable.eventregistry.impl.deployer.EventDefinitionDeployer;
 import org.flowable.eventregistry.impl.deployer.EventDefinitionDeploymentHelper;
 import org.flowable.eventregistry.impl.deployer.ParsedDeploymentBuilderFactory;
@@ -61,7 +53,6 @@ import org.flowable.eventregistry.impl.management.DefaultEventRegistryChangeDete
 import org.flowable.eventregistry.impl.management.DefaultEventRegistryChangeDetectionManager;
 import org.flowable.eventregistry.impl.parser.ChannelDefinitionParseFactory;
 import org.flowable.eventregistry.impl.parser.EventDefinitionParseFactory;
-import org.flowable.eventregistry.impl.payload.HeadersPayloadExtractor;
 import org.flowable.eventregistry.impl.persistence.deploy.ChannelDefinitionCacheEntry;
 import org.flowable.eventregistry.impl.persistence.deploy.Deployer;
 import org.flowable.eventregistry.impl.persistence.deploy.EventDefinitionCacheEntry;
@@ -124,10 +115,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
     protected EventResourceEntityManager resourceEntityManager;
 
     protected ExpressionManager expressionManager;
-    protected Collection<Consumer<ExpressionManager>> expressionManagerConfigurers;
-    protected Collection<ELResolver> preDefaultELResolvers;
-    protected Collection<ELResolver> preBeanELResolvers;
-    protected Collection<ELResolver> postDefaultELResolvers;
 
     protected EventJsonConverter eventJsonConverter = new EventJsonConverter();
     protected ChannelJsonConverter channelJsonConverter = new ChannelJsonConverter();
@@ -146,7 +133,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
     protected List<Deployer> customPostDeployers;
     protected List<Deployer> deployers;
     protected EventDeploymentManager deploymentManager;
-    protected InboundChannelModelCacheManager inboundChannelModelCacheManager;
 
     protected int eventDefinitionCacheLimit = -1; // By default, no limit
     protected DeploymentCache<EventDefinitionCacheEntry> eventDefinitionCache;
@@ -160,17 +146,12 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
     protected OutboundEventProcessor outboundEventProcessor;
     protected OutboundEventProcessor systemOutboundEventProcessor;
 
-    protected Map<String, InboundEventPayloadExtractor<?>> inboundEventPayloadExtractorsByChannelType;
-    protected InboundEventPayloadExtractor<?> defaultInboundEventPayloadExtractor;
-    
     // Change detection
     protected boolean enableEventRegistryChangeDetection;
     protected long eventRegistryChangeDetectionInitialDelayInMs = 10000L;
     protected long eventRegistryChangeDetectionDelayInMs = 60000L;
     protected EventRegistryChangeDetectionManager eventRegistryChangeDetectionManager;
     protected EventRegistryChangeDetectionExecutor eventRegistryChangeDetectionExecutor;
-    
-    protected EventRegistryNonMatchingEventConsumer nonMatchingEventConsumer;
 
     protected boolean enableEventRegistryChangeDetectionAfterEngineCreate = true;
 
@@ -229,8 +210,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         initConfigurators();
         configuratorsBeforeInit();
         initClock();
-        initObjectMapper();
-        initBeans();
         initExpressionManager();
         initCommandContextFactory();
         initTransactionContextFactory();
@@ -246,6 +225,7 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
             initSchemaManagementCommand();
         }
 
+        initBeans();
         initTransactionFactory();
 
         if (usingRelationalDatabase) {
@@ -261,10 +241,8 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         initInboundEventProcessor();
         initOutboundEventProcessor();
         initSystemOutboundEventProcessor();
-        initInboundEventPayloadExtractorProvider();
         initChannelDefinitionProcessors();
         initDeployers();
-        initInboundChannelModelCacheManager();
         initChangeDetectionManager();
         initChangeDetectionExecutor();
     }
@@ -279,25 +257,7 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
 
     public void initExpressionManager() {
         if (expressionManager == null) {
-            DefaultExpressionManager eventRegistryExpressionManager = new DefaultExpressionManager(beans);
-
-            if (preDefaultELResolvers != null) {
-                preDefaultELResolvers.forEach(eventRegistryExpressionManager::addPreDefaultResolver);
-            }
-
-            if (preBeanELResolvers != null) {
-                preBeanELResolvers.forEach(eventRegistryExpressionManager::addPreBeanResolver);
-            }
-
-            if (postDefaultELResolvers != null) {
-                postDefaultELResolvers.forEach(eventRegistryExpressionManager::addPostDefaultResolver);
-            }
-
-            if (expressionManagerConfigurers != null) {
-                expressionManagerConfigurers.forEach(configurer -> configurer.accept(eventRegistryExpressionManager));
-            }
-
-            expressionManager = eventRegistryExpressionManager;
+            expressionManager = new DefaultExpressionManager(beans);
         }
     }
 
@@ -526,12 +486,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         }
     }
     
-    public void initInboundChannelModelCacheManager() {
-        if (inboundChannelModelCacheManager == null) {
-            inboundChannelModelCacheManager = new DefaultInboundChannelModelCacheManager(this);
-        }
-    }
-    
     public void initEventRegistry() {
         if (this.eventRegistry == null) {
             this.eventRegistry = new DefaultEventRegistry(this);
@@ -562,17 +516,11 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         this.eventRegistry.setSystemOutboundEventProcessor(systemOutboundEventProcessor);
     }
 
-    public void initInboundEventPayloadExtractorProvider() {
-        if (this.defaultInboundEventPayloadExtractor == null) {
-            this.defaultInboundEventPayloadExtractor = new HeadersPayloadExtractor<>();
-        }
-    }
-    
     public void initChannelDefinitionProcessors() {
-        channelModelProcessors.add(new DelegateExpressionInboundChannelModelProcessor(this, objectMapper));
-        channelModelProcessors.add(new DelegateExpressionOutboundChannelModelProcessor(this, objectMapper));
-        channelModelProcessors.add(new InboundChannelModelProcessor(this, objectMapper));
-        channelModelProcessors.add(new OutboundChannelModelProcessor(objectMapper));
+        channelModelProcessors.add(new DelegateExpressionInboundChannelModelProcessor(this));
+        channelModelProcessors.add(new DelegateExpressionOutboundChannelModelProcessor(this));
+        channelModelProcessors.add(new InboundChannelModelProcessor());
+        channelModelProcessors.add(new OutboundChannelModelProcessor());
     }
 
     public void initChangeDetectionManager() {
@@ -692,41 +640,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         return this;
     }
 
-    public Map<String, InboundEventPayloadExtractor<?>> getInboundEventPayloadExtractorsByChannelType() {
-        return inboundEventPayloadExtractorsByChannelType;
-    }
-
-    public EventRegistryEngineConfiguration setInboundEventPayloadExtractorsByChannelType(Map<String, InboundEventPayloadExtractor<?>> inboundEventPayloadExtractorsByChannelType) {
-        this.inboundEventPayloadExtractorsByChannelType = inboundEventPayloadExtractorsByChannelType;
-        return this;
-    }
-
-    public EventRegistryEngineConfiguration registerInboundEventPayloadExtractor(String channelType, InboundEventPayloadExtractor<?> payloadExtractor) {
-        if (this.inboundEventPayloadExtractorsByChannelType == null) {
-            this.inboundEventPayloadExtractorsByChannelType = new HashMap<>();
-        }
-
-        this.inboundEventPayloadExtractorsByChannelType.put(channelType, payloadExtractor);
-        return this;
-    }
-
-    public EventRegistryEngineConfiguration removeInboundEventPayloadExtractor(String channelType) {
-        if (this.inboundEventPayloadExtractorsByChannelType != null) {
-            this.inboundEventPayloadExtractorsByChannelType.remove(channelType);
-        }
-
-        return this;
-    }
-
-    public InboundEventPayloadExtractor<?> getDefaultInboundEventPayloadExtractor() {
-        return defaultInboundEventPayloadExtractor;
-    }
-
-    public EventRegistryEngineConfiguration setDefaultInboundEventPayloadExtractor(InboundEventPayloadExtractor<?> defaultInboundEventPayloadExtractor) {
-        this.defaultInboundEventPayloadExtractor = defaultInboundEventPayloadExtractor;
-        return this;
-    }
-
     public boolean isEnableEventRegistryChangeDetection() {
         return enableEventRegistryChangeDetection;
     }
@@ -771,15 +684,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         return this;
     }
 
-    public EventRegistryNonMatchingEventConsumer getNonMatchingEventConsumer() {
-        return nonMatchingEventConsumer;
-    }
-
-    public EventRegistryEngineConfiguration setNonMatchingEventConsumer(EventRegistryNonMatchingEventConsumer nonMatchingEventConsumer) {
-        this.nonMatchingEventConsumer = nonMatchingEventConsumer;
-        return this;
-    }
-
     public int getEventDefinitionCacheLimit() {
         return eventDefinitionCacheLimit;
     }
@@ -807,15 +711,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         return this;
     }
     
-    public InboundChannelModelCacheManager getInboundChannelModelCacheManager() {
-        return inboundChannelModelCacheManager;
-    }
-
-    public EventRegistryEngineConfiguration setInboundChannelModelCacheManager(InboundChannelModelCacheManager inboundChannelModelCacheManager) {
-        this.inboundChannelModelCacheManager = inboundChannelModelCacheManager;
-        return this;
-    }
-
     public Collection<ChannelModelProcessor> getChannelModelProcessors() {
         return channelModelProcessors;
     }
@@ -827,9 +722,8 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
         this.channelModelProcessors.add(channelModelProcessor);
     }
 
-    public EventRegistryEngineConfiguration setChannelModelProcessors(Collection<ChannelModelProcessor> channelModelProcessors) {
+    public void setChannelModelProcessors(Collection<ChannelModelProcessor> channelModelProcessors) {
         this.channelModelProcessors = channelModelProcessors;
-        return this;
     }
 
     public EventDeploymentDataManager getDeploymentDataManager() {
@@ -909,73 +803,6 @@ public class EventRegistryEngineConfiguration extends AbstractEngineConfiguratio
     @Override
     public EventRegistryEngineConfiguration setExpressionManager(ExpressionManager expressionManager) {
         this.expressionManager = expressionManager;
-        return this;
-    }
-
-    public Collection<Consumer<ExpressionManager>> getExpressionManagerConfigurers() {
-        return expressionManagerConfigurers;
-    }
-
-    @Override
-    public AbstractEngineConfiguration addExpressionManagerConfigurer(Consumer<ExpressionManager> configurer) {
-        if (this.expressionManagerConfigurers == null) {
-            this.expressionManagerConfigurers = new ArrayList<>();
-        }
-        this.expressionManagerConfigurers.add(configurer);
-        return this;
-    }
-
-    public Collection<ELResolver> getPreDefaultELResolvers() {
-        return preDefaultELResolvers;
-    }
-
-    public EventRegistryEngineConfiguration setPreDefaultELResolvers(Collection<ELResolver> preDefaultELResolvers) {
-        this.preDefaultELResolvers = preDefaultELResolvers;
-        return this;
-    }
-
-    public EventRegistryEngineConfiguration addPreDefaultELResolver(ELResolver elResolver) {
-        if (this.preDefaultELResolvers == null) {
-            this.preDefaultELResolvers = new ArrayList<>();
-        }
-
-        this.preDefaultELResolvers.add(elResolver);
-        return this;
-    }
-
-    public Collection<ELResolver> getPreBeanELResolvers() {
-        return preBeanELResolvers;
-    }
-
-    public EventRegistryEngineConfiguration setPreBeanELResolvers(Collection<ELResolver> preBeanELResolvers) {
-        this.preBeanELResolvers = preBeanELResolvers;
-        return this;
-    }
-
-    public EventRegistryEngineConfiguration addPreBeanELResolver(ELResolver elResolver) {
-        if (this.preBeanELResolvers == null) {
-            this.preBeanELResolvers = new ArrayList<>();
-        }
-
-        this.preBeanELResolvers.add(elResolver);
-        return this;
-    }
-
-    public Collection<ELResolver> getPostDefaultELResolvers() {
-        return postDefaultELResolvers;
-    }
-
-    public EventRegistryEngineConfiguration setPostDefaultELResolvers(Collection<ELResolver> postDefaultELResolvers) {
-        this.postDefaultELResolvers = postDefaultELResolvers;
-        return this;
-    }
-
-    public EventRegistryEngineConfiguration addPostDefaultELResolver(ELResolver elResolver) {
-        if (this.postDefaultELResolvers == null) {
-            this.postDefaultELResolvers = new ArrayList<>();
-        }
-
-        this.postDefaultELResolvers.add(elResolver);
         return this;
     }
 

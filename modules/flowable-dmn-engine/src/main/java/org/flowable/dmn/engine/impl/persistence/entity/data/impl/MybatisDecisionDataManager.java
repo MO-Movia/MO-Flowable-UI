@@ -154,7 +154,7 @@ public class MybatisDecisionDataManager extends AbstractDmnDataManager<DecisionE
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateDecisionTenantIdForDeploymentId", params);
+        getDbSqlSession().update("updateDecisionTenantIdForDeploymentId", params);
     }
 
 }

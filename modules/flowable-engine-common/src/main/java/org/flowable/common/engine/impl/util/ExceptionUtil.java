@@ -21,15 +21,4 @@ public class ExceptionUtil {
         throw (E) t;
     }
 
-    public static boolean containsCause(Throwable chain, Class<? extends Throwable> exceptionType) {
-        Throwable exception = chain;
-        while (exception != null) {
-            if (exceptionType.isInstance(exception)) {
-                return true;
-            }
-            exception = exception.getCause();
-        }
-        return false;
-    }
-
 }

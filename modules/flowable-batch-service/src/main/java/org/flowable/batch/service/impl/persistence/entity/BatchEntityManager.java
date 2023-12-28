@@ -30,8 +30,4 @@ public interface BatchEntityManager extends EntityManager<BatchEntity> {
     long findBatchCountByQueryCriteria(BatchQueryImpl batchQuery);
 
     Batch createBatch(BatchBuilder batchBuilder);
-
-    Batch completeBatch(String batchId, String status);
-
-    void deleteBatches(BatchQueryImpl batchQuery);
 }

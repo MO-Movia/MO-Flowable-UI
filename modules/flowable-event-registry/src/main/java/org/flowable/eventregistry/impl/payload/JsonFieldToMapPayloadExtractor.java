@@ -34,19 +34,14 @@ public class JsonFieldToMapPayloadExtractor implements InboundEventPayloadExtrac
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonFieldToMapPayloadExtractor.class);
 
     @Override
-    public Collection<EventPayloadInstance> extractPayload(EventModel eventModel, JsonNode payload) {
-        return eventModel.getPayload().stream()
-            .filter(payloadDefinition -> payloadDefinition.isFullPayload() || payload.has(payloadDefinition.getName()))
-            .map(payloadDefinition -> new EventPayloadInstanceImpl(payloadDefinition, getPayloadValue(payload,
-                    payloadDefinition.getName(), payloadDefinition.getType(), payloadDefinition.isFullPayload())))
+    public Collection<EventPayloadInstance> extractPayload(EventModel eventDefinition, JsonNode event) {
+        return eventDefinition.getPayload().stream()
+            .filter(payloadDefinition -> event.has(payloadDefinition.getName()))
+            .map(payloadDefinition -> new EventPayloadInstanceImpl(payloadDefinition, getPayloadValue(event, payloadDefinition.getName(), payloadDefinition.getType())))
             .collect(Collectors.toList());
     }
 
-    protected Object getPayloadValue(JsonNode event, String definitionName, String definitionType, boolean isFullPayload) {
-        if (isFullPayload) {
-            return event;
-        }
-        
+    protected Object getPayloadValue(JsonNode event, String definitionName, String definitionType) {
         JsonNode parameterNode = event.get(definitionName);
         Object value = null;
 

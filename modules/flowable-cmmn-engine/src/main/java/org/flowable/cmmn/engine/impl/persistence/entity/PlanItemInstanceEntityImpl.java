@@ -20,22 +20,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.flowable.cmmn.api.delegate.ReadOnlyDelegatePlanItemInstance;
-import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
 import org.flowable.cmmn.api.listener.PlanItemInstanceLifecycleListener;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.delegate.ReadOnlyDelegatePlanItemInstanceImpl;
 import org.flowable.cmmn.engine.impl.repository.CaseDefinitionUtil;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
-import org.flowable.cmmn.engine.impl.util.ExpressionUtil;
 import org.flowable.cmmn.model.Case;
 import org.flowable.cmmn.model.FlowableListener;
 import org.flowable.cmmn.model.PlanFragment;
 import org.flowable.cmmn.model.PlanItem;
-import org.flowable.cmmn.model.RepetitionRule;
 import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.variable.api.persistence.entity.VariableInstance;
 import org.flowable.variable.service.VariableServiceConfiguration;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableScopeImpl;
@@ -88,48 +83,10 @@ public class PlanItemInstanceEntityImpl extends AbstractCmmnEngineVariableScopeE
     protected List<PlanItemInstanceEntity> childPlanItemInstances;
     protected PlanItemInstanceEntity stagePlanItemInstance;
     protected List<SentryPartInstanceEntity> satisfiedSentryPartInstances;
-    protected String localizedName;
 
     protected PlanItemInstanceLifecycleListener currentLifecycleListener; // Only set when executing an plan item lifecycle listener
     protected FlowableListener currentFlowableListener; // Only set when executing an plan item lifecycle listener
-
-    public PlanItemInstanceEntityImpl() {
-    }
-
-    public PlanItemInstanceEntityImpl(HistoricPlanItemInstance historicPlanItemInstance) {
-        setId(historicPlanItemInstance.getId());
-        setName(historicPlanItemInstance.getName());
-        setState(historicPlanItemInstance.getState());
-        setCaseDefinitionId(historicPlanItemInstance.getCaseDefinitionId());
-        setDerivedCaseDefinitionId(historicPlanItemInstance.getDerivedCaseDefinitionId());
-        setCaseInstanceId(historicPlanItemInstance.getCaseInstanceId());
-        setStageInstanceId(historicPlanItemInstance.getStageInstanceId());
-        setStage(historicPlanItemInstance.isStage());
-        setElementId(historicPlanItemInstance.getElementId());
-        setPlanItemDefinitionId(historicPlanItemInstance.getPlanItemDefinitionId());
-        setPlanItemDefinitionType(historicPlanItemInstance.getPlanItemDefinitionType());
-        setCreateTime(historicPlanItemInstance.getCreateTime());
-        setLastAvailableTime(historicPlanItemInstance.getLastAvailableTime());
-        setLastUnavailableTime(historicPlanItemInstance.getLastUnavailableTime());
-        setLastEnabledTime(historicPlanItemInstance.getLastEnabledTime());
-        setLastDisabledTime(historicPlanItemInstance.getLastDisabledTime());
-        setLastStartedTime(historicPlanItemInstance.getLastStartedTime());
-        setLastSuspendedTime(historicPlanItemInstance.getLastSuspendedTime());
-        setCompletedTime(historicPlanItemInstance.getCompletedTime());
-        setOccurredTime(historicPlanItemInstance.getOccurredTime());
-        setTerminatedTime(historicPlanItemInstance.getTerminatedTime());
-        setExitTime(historicPlanItemInstance.getExitTime());
-        setEndedTime(historicPlanItemInstance.getEndedTime());
-        setStartUserId(historicPlanItemInstance.getStartUserId());
-        setReferenceId(historicPlanItemInstance.getReferenceId());
-        setReferenceType(historicPlanItemInstance.getReferenceType());
-        setEntryCriterionId(historicPlanItemInstance.getEntryCriterionId());
-        setExitCriterionId(historicPlanItemInstance.getExitCriterionId());
-        setFormKey(historicPlanItemInstance.getFormKey());
-        setExtraValue(historicPlanItemInstance.getExtraValue());
-        setTenantId(historicPlanItemInstance.getTenantId());
-    }
-
+    
     @Override
     public Object getPersistentState() {
         Map<String, Object> persistentState = new HashMap<>();
@@ -256,9 +213,6 @@ public class PlanItemInstanceEntityImpl extends AbstractCmmnEngineVariableScopeE
     }
     @Override
     public String getName() {
-        if (StringUtils.isNotBlank(localizedName)) {
-            return localizedName;
-        }
         return name;
     }
     @Override
@@ -515,11 +469,7 @@ public class PlanItemInstanceEntityImpl extends AbstractCmmnEngineVariableScopeE
     }
 
     @Override
-    public VariableScopeImpl getParentVariableScope() {
-        PlanItemInstanceEntity stagePlanItem = getStagePlanItemInstanceEntity();
-        if (stagePlanItem != null) {
-            return (VariableScopeImpl) stagePlanItem;
-        }
+    protected VariableScopeImpl getParentVariableScope() {
         if (caseInstanceId != null) {
             return (VariableScopeImpl) CommandContextUtil.getCaseInstanceEntityManager().findById(caseInstanceId);
         }
@@ -527,29 +477,12 @@ public class PlanItemInstanceEntityImpl extends AbstractCmmnEngineVariableScopeE
     }
 
     @Override
-    protected void initializeVariableInstanceBackPointer(VariableInstance variableInstance) {
+    protected void initializeVariableInstanceBackPointer(VariableInstanceEntity variableInstance) {
         variableInstance.setScopeId(caseInstanceId);
         variableInstance.setSubScopeId(id);
         variableInstance.setScopeType(ScopeTypes.CMMN);
-        variableInstance.setScopeDefinitionId(caseDefinitionId);
     }
-
-    @Override
-    protected boolean storeVariableLocal(String variableName) {
-        if (super.storeVariableLocal(variableName)) {
-            return true;
-        }
-
-        RepetitionRule repetitionRule = ExpressionUtil.getRepetitionRule(this);
-        if (repetitionRule != null && repetitionRule.getAggregations() != null) {
-            // If this is a plan item with a repetition rule and has aggregations then we need to store the variables locally
-            // Checking for the aggregations is for backwards compatibility
-            return true;
-        }
-
-        return false;
-    }
-
+    
     @Override
     protected void addLoggingSessionInfo(ObjectNode loggingNode) {
         // TODO
@@ -637,15 +570,6 @@ public class PlanItemInstanceEntityImpl extends AbstractCmmnEngineVariableScopeE
         this.currentFlowableListener = flowableListener;
     }
 
-    public String getLocalizedName() {
-        return localizedName;
-    }
-
-    @Override
-    public void setLocalizedName(String localizedName) {
-        this.localizedName = localizedName;
-    }
-
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
@@ -653,26 +577,12 @@ public class PlanItemInstanceEntityImpl extends AbstractCmmnEngineVariableScopeE
             .append(id);
 
         if (getName() != null) {
-            stringBuilder.append(", name: ").append(getName());
+            stringBuilder.append(", name: ").append(name);
         }
         stringBuilder.append(", definitionId: ")
             .append(planItemDefinitionId)
             .append(", state: ")
             .append(state);
-
-        if (elementId != null) {
-            stringBuilder.append(", elementId: ").append(elementId);
-        }
-
-        stringBuilder
-                .append(", caseInstanceId: ")
-                .append(caseInstanceId)
-                .append(", caseDefinitionId: ")
-                .append(caseDefinitionId);
-
-        if (StringUtils.isNotEmpty(tenantId)) {
-            stringBuilder.append(", tenantId=").append(tenantId);
-        }
         return stringBuilder.toString();
     }
 }

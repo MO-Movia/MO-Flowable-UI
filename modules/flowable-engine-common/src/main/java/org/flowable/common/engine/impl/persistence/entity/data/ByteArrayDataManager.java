@@ -25,6 +25,4 @@ public interface ByteArrayDataManager extends DataManager<ByteArrayEntity> {
 
     void deleteByteArrayNoRevisionCheck(String byteArrayEntityId);
 
-    void bulkDeleteByteArraysNoRevisionCheck(List<String> byteArrayEntityIds);
-
 }

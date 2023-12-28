@@ -53,7 +53,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
     protected String subScopeId;
     protected String scopeType;
     protected QueryVariableValue queryVariableValue;
-    protected boolean excludeLocalVariables;
 
     public HistoricVariableInstanceQueryImpl() {
     }
@@ -88,9 +87,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
         if (executionId == null) {
             throw new FlowableIllegalArgumentException("Execution id is null");
         }
-        if (excludeLocalVariables) {
-            throw new FlowableIllegalArgumentException("Cannot use executionId together with excludeLocalVariables");
-        }
         this.executionId = executionId;
         return this;
     }
@@ -102,9 +98,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
         }
         if (executionIds.isEmpty()) {
             throw new FlowableIllegalArgumentException("Set of executionIds is empty");
-        }
-        if (excludeLocalVariables) {
-            throw new FlowableIllegalArgumentException("Cannot use executionIds together with excludeLocalVariables");
         }
         this.executionIds = executionIds;
         return this;
@@ -123,9 +116,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
         if (excludeTaskRelated) {
             throw new FlowableIllegalArgumentException("Cannot use taskId together with excludeTaskVariables");
         }
-        if (excludeLocalVariables) {
-            throw new FlowableIllegalArgumentException("Cannot use taskId together with excludeLocalVariables");
-        }
         this.taskId = taskId;
         return this;
     }
@@ -140,9 +130,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
         }
         if (excludeTaskRelated) {
             throw new FlowableIllegalArgumentException("Cannot use taskIds together with excludeTaskVariables");
-        }
-        if (excludeLocalVariables) {
-            throw new FlowableIllegalArgumentException("Cannot use taskIds together with excludeLocalVariables");
         }
         this.taskIds = taskIds;
         return this;
@@ -244,10 +231,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
     
     @Override
     public HistoricVariableInstanceQuery subScopeId(String subScopeId) {
-        if (excludeLocalVariables) {
-            throw new FlowableIllegalArgumentException("Cannot use subScopeId together with excludeLocalVariables");
-        }
-
         this.subScopeId = subScopeId;
         return this;
     }
@@ -255,24 +238,6 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
     @Override
     public HistoricVariableInstanceQuery scopeType(String scopeType) {
         this.scopeType = scopeType;
-        return this;
-    }
-
-    @Override
-    public HistoricVariableInstanceQuery excludeLocalVariables() {
-        if (taskId != null) {
-            throw new FlowableIllegalArgumentException("Cannot use taskId together with excludeLocalVariables");
-        }
-        if (taskIds != null) {
-            throw new FlowableIllegalArgumentException("Cannot use taskIds together with excludeLocalVariables");
-        }
-        if (executionId != null) {
-            throw new FlowableIllegalArgumentException("Cannot use executionId together with excludeLocalVariables");
-        }
-        if (subScopeId != null) {
-            throw new FlowableIllegalArgumentException("Cannot use subScopeId together with excludeLocalVariables");
-        }
-        excludeLocalVariables = true;
         return this;
     }
 
@@ -366,36 +331,8 @@ public class HistoricVariableInstanceQueryImpl extends AbstractQuery<HistoricVar
         return scopeType;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public Set<String> getTaskIds() {
-        return taskIds;
-    }
-
-    public String getExecutionId() {
-        return executionId;
-    }
-
-    public Set<String> getExecutionIds() {
-        return executionIds;
-    }
-
-    public boolean isExcludeTaskRelated() {
-        return excludeTaskRelated;
-    }
-
-    public boolean isExcludeVariableInitialization() {
-        return excludeVariableInitialization;
-    }
-
     public QueryVariableValue getQueryVariableValue() {
         return queryVariableValue;
-    }
-
-    public boolean isExcludeLocalVariables() {
-        return excludeLocalVariables;
     }
 
 }

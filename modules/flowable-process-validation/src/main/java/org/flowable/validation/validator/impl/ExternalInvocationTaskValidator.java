@@ -28,18 +28,12 @@ import org.flowable.validation.validator.ProcessLevelValidator;
 public abstract class ExternalInvocationTaskValidator extends ProcessLevelValidator {
 
     protected void validateFieldDeclarationsForEmail(org.flowable.bpmn.model.Process process, TaskWithFieldExtensions task, List<FieldExtension> fieldExtensions, List<ValidationError> errors) {
-        boolean recipientDefined = false;
+        boolean toDefined = false;
         boolean textOrHtmlDefined = false;
 
         for (FieldExtension fieldExtension : fieldExtensions) {
             if ("to".equals(fieldExtension.getFieldName())) {
-                recipientDefined = true;
-            }
-            if ("cc".equals(fieldExtension.getFieldName())) {
-                recipientDefined = true;
-            }
-            if ("bcc".equals(fieldExtension.getFieldName())) {
-                recipientDefined = true;
+                toDefined = true;
             }
             if ("html".equals(fieldExtension.getFieldName())) {
                 textOrHtmlDefined = true;
@@ -55,7 +49,7 @@ public abstract class ExternalInvocationTaskValidator extends ProcessLevelValida
             }
         }
 
-        if (!recipientDefined) {
+        if (!toDefined) {
             addError(errors, Problems.MAIL_TASK_NO_RECIPIENT, process, task, "No recipient is defined on the mail activity");
         }
         if (!textOrHtmlDefined) {
@@ -75,7 +69,7 @@ public abstract class ExternalInvocationTaskValidator extends ProcessLevelValida
             }
 
             if (("wait".equals(fieldName) || "redirectError".equals(fieldName) || "cleanEnv".equals(fieldName)) && !"true".equals(fieldValue.toLowerCase()) && !"false".equals(fieldValue.toLowerCase())) {
-                addError(errors, Problems.SHELL_TASK_INVALID_PARAM, process, task, fieldExtension, "Undefined parameter value for shell field");
+                addError(errors, Problems.SHELL_TASK_INVALID_PARAM, process, task, "Undefined parameter value for shell field");
             }
 
         }
@@ -103,7 +97,7 @@ public abstract class ExternalInvocationTaskValidator extends ProcessLevelValida
         }
 
         if (!keyDefined) {
-            addError(errors, Problems.DMN_TASK_NO_KEY, process, task, "No decision table or decision service reference key is defined on the dmn activity");
+            addError(errors, Problems.DMN_TASK_NO_KEY, process, task, "No decision table reference key is defined on the dmn activity");
         }
     }
 

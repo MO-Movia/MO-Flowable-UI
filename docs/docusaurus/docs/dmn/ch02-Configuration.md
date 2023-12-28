@@ -11,7 +11,7 @@ The Flowable DMN engine is configured through an XML file named flowable.dmn.cfg
 
 The easiest way to obtain a DmnEngine, is to use the org.flowable.dmn.engine.DmnEngines class:
 
-    DmnEngine dmnEngine = DmnEngines.getDefaultDmnEngine()
+    DmnEngine dmnEngine = DMNEngines.getDefaultDmnEngine()
 
 This will look for a flowable.dmn.cfg.xml file on the classpath and construct an engine based on the configuration in that file. The following snippet shows an example configuration. The following sections will give a detailed overview of the configuration properties.
 
@@ -289,7 +289,7 @@ Listed below are the types (case sensitive!) that Flowable uses to refer to data
 
 ## Creating the database tables
 
-Flowable DMN uses [Liquibase](http://www.liquibase.org) for tracking, managing and applying database schema changes.
+Flowable DMM uses [Liquibase](http://www.liquibase.org) for tracking, managing and applying database schema changes.
 
 The easiest way to create the database tables for your database is to:
 
@@ -403,7 +403,7 @@ With Maven, for example, add a dependency like this (here using log4j), note tha
       <artifactId>slf4j-log4j12</artifactId>
     </dependency>
 
-The flowable-rest webapp is configured to use Log4j-binding. Log4j is also used when running the tests for all the flowable-\* modules.
+The flowable-ui and flowable-rest webapps are configured to use Log4j-binding. Log4j is also used when running the tests for all the flowable-\* modules.
 
 **Important note when using a container with commons-logging in the classpath:** In order to route the spring-logging through SLF4J, a bridge is used (see [<http://www.slf4j.org/legacy.html#jclOverSLF4J>](http://www.slf4j.org/legacy.html#jclOverSLF4J)). If your container provides a commons-logging implementation, please follow directions on this page: [<http://www.slf4j.org/codes.html#release>](http://www.slf4j.org/codes.html#release) to ensure stability.
 

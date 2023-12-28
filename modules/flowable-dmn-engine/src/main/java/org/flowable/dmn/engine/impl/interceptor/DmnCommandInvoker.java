@@ -12,9 +12,6 @@
  */
 package org.flowable.dmn.engine.impl.interceptor;
 
-import java.util.Collection;
-
-import org.flowable.common.engine.impl.agenda.AgendaOperationExecutionListener;
 import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.AbstractCommandInterceptor;
 import org.flowable.common.engine.impl.interceptor.Command;
@@ -22,7 +19,6 @@ import org.flowable.common.engine.impl.interceptor.CommandConfig;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.common.engine.impl.interceptor.CommandInterceptor;
-import org.flowable.common.engine.impl.util.ExceptionUtil;
 import org.flowable.dmn.engine.impl.agenda.DmnEngineAgenda;
 import org.flowable.dmn.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
@@ -34,13 +30,6 @@ import org.slf4j.LoggerFactory;
 public class DmnCommandInvoker extends AbstractCommandInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DmnCommandInvoker.class);
-
-    protected Collection<AgendaOperationExecutionListener> agendaOperationExecutionListeners;
-
-    public DmnCommandInvoker(Collection<AgendaOperationExecutionListener> agendaOperationExecutionListeners) {
-        this.agendaOperationExecutionListeners = agendaOperationExecutionListeners;
-
-    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -57,56 +46,21 @@ public class DmnCommandInvoker extends AbstractCommandInterceptor {
                 }
             });
 
-            executeOperations(commandContext);
+            executeOperations(commandContext, true); // true -> always store the case instance id for the regular operation loop, even if it's a no-op operation.
         }
         
         return (T) commandContext.getResult();
     }
 
-    protected void executeOperations(CommandContext commandContext) {
+    protected void executeOperations(CommandContext commandContext, boolean isStoreCaseInstanceIdOfNoOperation) {
         DmnEngineAgenda agenda = CommandContextUtil.getAgenda(commandContext);
         while (!agenda.isEmpty()) {
             Runnable runnable = agenda.getNextOperation();
-            executeExecutionListenersBeforeExecute(commandContext, runnable);
-            try {
-                executeOperation(commandContext, runnable);
-            } catch (Throwable throwable) {
-                executeExecutionListenersAfterException(commandContext, runnable, throwable);
-                ExceptionUtil.sneakyThrow(throwable);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Executing agenda operation {}", runnable);
             }
-            executeExecutionListenersAfterExecute(commandContext, runnable);
+            runnable.run();
         }
-    }
-
-    protected void executeExecutionListenersBeforeExecute(CommandContext commandContext, Runnable runnable) {
-        if (agendaOperationExecutionListeners != null && !agendaOperationExecutionListeners.isEmpty()) {
-            for (AgendaOperationExecutionListener listener : agendaOperationExecutionListeners) {
-                listener.beforeExecute(commandContext, runnable);
-            }
-        }
-    }
-
-    protected void executeExecutionListenersAfterExecute(CommandContext commandContext, Runnable runnable) {
-        if (agendaOperationExecutionListeners != null && !agendaOperationExecutionListeners.isEmpty()) {
-            for (AgendaOperationExecutionListener listener : agendaOperationExecutionListeners) {
-                listener.afterExecute(commandContext, runnable);
-            }
-        }
-    }
-
-    protected void executeExecutionListenersAfterException(CommandContext commandContext, Runnable runnable, Throwable throwable) {
-        if (agendaOperationExecutionListeners != null && !agendaOperationExecutionListeners.isEmpty()) {
-            for (AgendaOperationExecutionListener listener : agendaOperationExecutionListeners) {
-                listener.afterExecuteException(commandContext, runnable, throwable);
-            }
-        }
-    }
-
-    protected void executeOperation(CommandContext commandContext, Runnable runnable) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Executing agenda operation {}", runnable);
-        }
-        runnable.run();
     }
 
     @Override

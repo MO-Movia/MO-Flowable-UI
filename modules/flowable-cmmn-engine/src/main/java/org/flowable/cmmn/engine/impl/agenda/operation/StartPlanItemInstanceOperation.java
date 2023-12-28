@@ -21,7 +21,6 @@ import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.interceptor.MigrationContext;
 import org.flowable.cmmn.model.PlanItemTransition;
-import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 
 /**
@@ -84,12 +83,8 @@ public class StartPlanItemInstanceOperation extends AbstractChangePlanItemInstan
         } else if (activityBehavior instanceof CoreCmmnActivityBehavior) {
             ((CoreCmmnActivityBehavior) activityBehavior).execute(commandContext, planItemInstanceEntity);
             
-        } else if (activityBehavior != null) {
-            activityBehavior.execute(planItemInstanceEntity);
-
         } else {
-            throw new FlowableException(planItemInstanceEntity + " does not have a behavior");
-
+            activityBehavior.execute(planItemInstanceEntity);
         }
     }
 

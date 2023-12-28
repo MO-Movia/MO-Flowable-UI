@@ -13,8 +13,8 @@
 package org.flowable.spring.boot.dmn;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -41,7 +41,8 @@ import org.flowable.spring.boot.app.AppEngineAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.condition.ConditionalOnDmnEngine;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -50,23 +51,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * {@link org.springframework.boot.autoconfigure.EnableAutoConfiguration} for the Dmn engine
  *
  * @author Filip Hrisafov
  */
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnDmnEngine
 @EnableConfigurationProperties({
     FlowableProperties.class,
     FlowableAutoDeploymentProperties.class,
     FlowableDmnProperties.class
 })
-@AutoConfiguration(after = {
+@AutoConfigureAfter({
     AppEngineAutoConfiguration.class,
     ProcessEngineAutoConfiguration.class,
-}, before = {
+})
+@AutoConfigureBefore({
     AppEngineServicesAutoConfiguration.class,
     ProcessEngineServicesAutoConfiguration.class,
 })
@@ -85,8 +86,7 @@ public class DmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigur
     @Bean
     @ConditionalOnMissingBean
     public SpringDmnEngineConfiguration dmnEngineConfiguration(DataSource dataSource, PlatformTransactionManager platformTransactionManager,
-        ObjectProvider<ObjectMapper> objectMapperProvider,
-        ObjectProvider<AutoDeploymentStrategy<DmnEngine>> dmnAutoDeploymentStrategies) throws IOException {
+        ObjectProvider<List<AutoDeploymentStrategy<DmnEngine>>> dmnAutoDeploymentStrategies) throws IOException {
         SpringDmnEngineConfiguration configuration = new SpringDmnEngineConfiguration();
 
         List<Resource> resources = this.discoverDeploymentResources(
@@ -102,13 +102,16 @@ public class DmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigur
 
         configureSpringEngine(configuration, platformTransactionManager);
         configureEngine(configuration, dataSource);
-        objectMapperProvider.ifAvailable(configuration::setObjectMapper);
 
         configuration.setHistoryEnabled(dmnProperties.isHistoryEnabled());
         configuration.setEnableSafeDmnXml(dmnProperties.isEnableSafeXml());
         configuration.setStrictMode(dmnProperties.isStrictMode());
 
-        List<AutoDeploymentStrategy<DmnEngine>> deploymentStrategies = dmnAutoDeploymentStrategies.orderedStream().collect(Collectors.toList());
+        // We cannot use orderedStream since we want to support Boot 1.5 which is on pre 5.x Spring
+        List<AutoDeploymentStrategy<DmnEngine>> deploymentStrategies = dmnAutoDeploymentStrategies.getIfAvailable();
+        if (deploymentStrategies == null) {
+            deploymentStrategies = new ArrayList<>();
+        }
         CommonAutoDeploymentProperties deploymentProperties = this.autoDeploymentProperties.deploymentPropertiesForEngine(ScopeTypes.DMN);
         // Always add the out of the box auto deployment strategies as last
         deploymentStrategies.add(new DefaultAutoDeploymentStrategy(deploymentProperties));

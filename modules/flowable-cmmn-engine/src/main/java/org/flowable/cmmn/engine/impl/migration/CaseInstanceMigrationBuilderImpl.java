@@ -21,12 +21,8 @@ import org.flowable.cmmn.api.migration.ActivatePlanItemDefinitionMapping;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationBuilder;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationDocument;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationValidationResult;
-import org.flowable.cmmn.api.migration.ChangePlanItemIdMapping;
-import org.flowable.cmmn.api.migration.ChangePlanItemIdWithDefinitionIdMapping;
 import org.flowable.cmmn.api.migration.MoveToAvailablePlanItemDefinitionMapping;
-import org.flowable.cmmn.api.migration.RemoveWaitingForRepetitionPlanItemDefinitionMapping;
 import org.flowable.cmmn.api.migration.TerminatePlanItemDefinitionMapping;
-import org.flowable.cmmn.api.migration.WaitingForRepetitionPlanItemDefinitionMapping;
 import org.flowable.common.engine.api.FlowableException;
 
 /**
@@ -49,8 +45,6 @@ public class CaseInstanceMigrationBuilderImpl implements CaseInstanceMigrationBu
         this.caseInstanceMigrationDocumentDocumentBuilder.addActivatePlanItemDefinitionMappings(caseInstanceMigrationDocument.getActivatePlanItemDefinitionMappings());
         this.caseInstanceMigrationDocumentDocumentBuilder.addTerminatePlanItemDefinitionMappings(caseInstanceMigrationDocument.getTerminatePlanItemDefinitionMappings());
         this.caseInstanceMigrationDocumentDocumentBuilder.addMoveToAvailablePlanItemDefinitionMappings(caseInstanceMigrationDocument.getMoveToAvailablePlanItemDefinitionMappings());
-        this.caseInstanceMigrationDocumentDocumentBuilder.addWaitingForRepetitionPlanItemDefinitionMappings(caseInstanceMigrationDocument.getWaitingForRepetitionPlanItemDefinitionMappings());
-        this.caseInstanceMigrationDocumentDocumentBuilder.addRemoveWaitingForRepetitionPlanItemDefinitionMappings(caseInstanceMigrationDocument.getRemoveWaitingForRepetitionPlanItemDefinitionMappings());
         this.caseInstanceMigrationDocumentDocumentBuilder.addCaseInstanceVariables(caseInstanceMigrationDocument.getCaseInstanceVariables());
         return this;
     }
@@ -99,42 +93,6 @@ public class CaseInstanceMigrationBuilderImpl implements CaseInstanceMigrationBu
     }
 
     @Override
-    public CaseInstanceMigrationBuilder addWaitingForRepetitionPlanItemDefinitionMapping(WaitingForRepetitionPlanItemDefinitionMapping mapping) {
-        this.caseInstanceMigrationDocumentDocumentBuilder.addWaitingForRepetitionPlanItemDefinitionMapping(mapping);
-        return this;
-    }
-    
-    @Override
-    public CaseInstanceMigrationBuilder removeWaitingForRepetitionPlanItemDefinitionMapping(RemoveWaitingForRepetitionPlanItemDefinitionMapping mapping) {
-        this.caseInstanceMigrationDocumentDocumentBuilder.addRemoveWaitingForRepetitionPlanItemDefinitionMapping(mapping);
-        return this;
-    }
-    
-    @Override
-    public CaseInstanceMigrationBuilder addChangePlanItemIdMapping(ChangePlanItemIdMapping mapping) {
-        this.caseInstanceMigrationDocumentDocumentBuilder.addChangePlanItemIdMapping(mapping);
-        return this;
-    }
-
-    @Override
-    public CaseInstanceMigrationBuilder addChangePlanItemIdWithDefinitionIdMapping(ChangePlanItemIdWithDefinitionIdMapping mapping) {
-        this.caseInstanceMigrationDocumentDocumentBuilder.addChangePlanItemIdWithDefinitionIdMapping(mapping);
-        return this;
-    }
-
-    @Override
-    public CaseInstanceMigrationBuilder withPreUpgradeExpression(String preUpgradeExpression) {
-        this.caseInstanceMigrationDocumentDocumentBuilder.preUpgradeExpression(preUpgradeExpression);
-        return this;
-    }
-
-    @Override
-    public CaseInstanceMigrationBuilder withPostUpgradeExpression(String postUpgradeExpression) {
-        this.caseInstanceMigrationDocumentDocumentBuilder.postUpgradeExpression(postUpgradeExpression);
-        return this;
-    }
-
-    @Override
     public CaseInstanceMigrationBuilder withCaseInstanceVariable(String variableName, Object variableValue) {
         this.caseInstanceMigrationDocumentDocumentBuilder.addCaseInstanceVariable(variableName, variableValue);
         return this;
@@ -150,8 +108,6 @@ public class CaseInstanceMigrationBuilderImpl implements CaseInstanceMigrationBu
     public CaseInstanceMigrationDocument getCaseInstanceMigrationDocument() {
         return this.caseInstanceMigrationDocumentDocumentBuilder.build();
     }
-
-
 
     @Override
     public void migrate(String caseInstanceId) {

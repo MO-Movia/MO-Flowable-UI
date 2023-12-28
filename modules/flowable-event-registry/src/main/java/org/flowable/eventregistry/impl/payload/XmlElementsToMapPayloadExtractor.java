@@ -34,18 +34,14 @@ public class XmlElementsToMapPayloadExtractor implements InboundEventPayloadExtr
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlElementsToMapPayloadExtractor.class);
 
     @Override
-    public Collection<EventPayloadInstance> extractPayload(EventModel eventModel, Document payload) {
-        return eventModel.getPayload().stream()
-            .filter(parameterDefinition -> parameterDefinition.isFullPayload() || getChildNode(payload, parameterDefinition.getName()) != null)
-            .map(payloadDefinition -> new EventPayloadInstanceImpl(payloadDefinition, getPayloadValue(payload,
-                    payloadDefinition.getName(), payloadDefinition.getType(), payloadDefinition.isFullPayload())))
+    public Collection<EventPayloadInstance> extractPayload(EventModel eventDefinition, Document event) {
+        return eventDefinition.getPayload().stream()
+            .filter(parameterDefinition -> getChildNode(event, parameterDefinition.getName()) != null)
+            .map(payloadDefinition -> new EventPayloadInstanceImpl(payloadDefinition, getPayloadValue(event, payloadDefinition.getName(), payloadDefinition.getType())))
             .collect(Collectors.toList());
     }
 
-    protected Object getPayloadValue(Document document, String definitionName, String definitionType, boolean isFullPayload) {
-        if (isFullPayload) {
-            return document;
-        }
+    protected Object getPayloadValue(Document document, String definitionName, String definitionType) {
 
         Node childNode = getChildNode(document, definitionName);
         if (childNode != null) {
@@ -69,7 +65,9 @@ public class XmlElementsToMapPayloadExtractor implements InboundEventPayloadExtr
             } else {
                 LOGGER.warn("Unsupported payload type: {} ", definitionType);
                 return textContent;
+
             }
+
         }
 
         return null;
@@ -91,4 +89,37 @@ public class XmlElementsToMapPayloadExtractor implements InboundEventPayloadExtr
         }
         return null;
     }
+
+    //
+    // Commented out for now: mapping xml to json when type is JSON
+    //
+//    protected ObjectNode xmlToJson(Node childNode) {
+//        ObjectMapper objectMapper = CommandContextUtil.getEventRegistryConfiguration().getObjectMapper();
+//        ObjectNode objectNode = objectMapper.createObjectNode();
+//        xmlToJson(childNode, objectMapper, objectNode);
+//        return objectNode;
+//    }
+//
+//    protected void xmlToJson(Node childNode, ObjectMapper objectMapper, ObjectNode objectNode) {
+//        NodeList childNodes = childNode.getChildNodes();
+//        List<Element> childElements = new ArrayList<>();
+//        for (int i = 0; i < childNodes.getLength(); i++) {
+//            Node item = childNodes.item(i);
+//            if (item instanceof Element) {
+//                childElements.add((Element) item);
+//            }
+//        }
+//
+//        if (!childElements.isEmpty()) {
+//            ObjectNode childObjectNode = objectNode.putObject(childNode.getLocalName());
+//            for (Element childElement : childElements) {
+//                xmlToJson(childElement, objectMapper, childObjectNode);
+//            }
+//        } else {
+//            objectNode.put(childNode.getLocalName(), childNode.getTextContent());
+//        }
+//
+//    }
+
+
 }

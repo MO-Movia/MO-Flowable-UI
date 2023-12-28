@@ -44,23 +44,20 @@ public class JuelExpression implements Expression {
     @Override
     public Object getValue(VariableContainer variableContainer) {
         ELContext elContext = expressionManager.getElContext(variableContainer);
-        Object originalVariableContainer = elContext.getContext(VariableContainer.class);
-        elContext.putContext(VariableContainer.class, variableContainer);
         Object originalValueContext = elContext.getContext(EvaluationState.class);
         elContext.putContext(EvaluationState.class, EvaluationState.READ);
         try {
             return resolveGetValueExpression(elContext);
         } catch (PropertyNotFoundException pnfe) {
-            throw new FlowableException("Unknown property used in expression: " + expressionText + " with " + variableContainer, pnfe);
+            throw new FlowableException("Unknown property used in expression: " + expressionText, pnfe);
         } catch (MethodNotFoundException mnfe) {
-            throw new FlowableException("Unknown method used in expression: " + expressionText + " with " + variableContainer, mnfe);
+            throw new FlowableException("Unknown method used in expression: " + expressionText, mnfe);
         } catch (FlowableException ex) {
             throw ex;
         } catch (Exception e) {
-            throw new FlowableException("Error while evaluating expression: " + expressionText + " with " + variableContainer, e);
+            throw new FlowableException("Error while evaluating expression: " + expressionText, e);
         } finally {
             elContext.putContext(EvaluationState.class, originalValueContext);
-            elContext.putContext(VariableContainer.class, originalVariableContainer);
         }
     }
 
@@ -71,18 +68,15 @@ public class JuelExpression implements Expression {
     @Override
     public void setValue(Object value, VariableContainer variableContainer) {
         ELContext elContext = expressionManager.getElContext(variableContainer);
-        Object originalVariableContainer = elContext.getContext(VariableContainer.class);
-        elContext.putContext(VariableContainer.class, variableContainer);
         Object originalValueContext = elContext.getContext(EvaluationState.class);
         elContext.putContext(EvaluationState.class, EvaluationState.WRITE);
 
         try {
             resolveSetValueExpression(value, elContext);
         } catch (Exception e) {
-            throw new FlowableException("Error while evaluating expression: " + expressionText + " with " + variableContainer, e);
+            throw new FlowableException("Error while evaluating expression: " + expressionText, e);
         } finally {
             elContext.putContext(EvaluationState.class, originalValueContext);
-            elContext.putContext(VariableContainer.class, originalVariableContainer);
         }
     }
 

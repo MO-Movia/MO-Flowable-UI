@@ -12,7 +12,6 @@
  */
 package org.flowable.cmmn.engine.impl.cmd;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +30,9 @@ import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEnt
 public class GetVariablesCmd implements Command<Map<String, Object>> {
     
     protected String caseInstanceId;
-    protected Collection<String> variableNames;
-
-    public GetVariablesCmd(String caseInstanceId, Collection<String> variableNames) {
+    
+    public GetVariablesCmd(String caseInstanceId) {
         this.caseInstanceId = caseInstanceId;
-        this.variableNames = variableNames;
     }
     
     @Override
@@ -45,20 +42,8 @@ public class GetVariablesCmd implements Command<Map<String, Object>> {
         }
         
         CmmnEngineConfiguration cmmnEngineConfiguration = CommandContextUtil.getCmmnEngineConfiguration(commandContext);
-        List<VariableInstanceEntity> variableInstanceEntities;
-
-        if (variableNames == null || variableNames.isEmpty()) {
-            variableInstanceEntities = cmmnEngineConfiguration.getVariableServiceConfiguration().getVariableService()
-                    .findVariableInstanceByScopeIdAndScopeType(caseInstanceId, ScopeTypes.CMMN);
-        } else {
-            variableInstanceEntities = cmmnEngineConfiguration.getVariableServiceConfiguration().getVariableService()
-                    .createInternalVariableInstanceQuery()
-                    .scopeId(caseInstanceId)
-                    .withoutSubScopeId()
-                    .scopeType(ScopeTypes.CMMN)
-                    .names(variableNames)
-                    .list();
-        }
+        List<VariableInstanceEntity> variableInstanceEntities = cmmnEngineConfiguration.getVariableServiceConfiguration().getVariableService()
+                .findVariableInstanceByScopeIdAndScopeType(caseInstanceId, ScopeTypes.CMMN);
         Map<String, Object> variables = new HashMap<>(variableInstanceEntities.size());
         for (VariableInstanceEntity variableInstanceEntity : variableInstanceEntities) {
             variables.put(variableInstanceEntity.getName(), variableInstanceEntity.getValue());

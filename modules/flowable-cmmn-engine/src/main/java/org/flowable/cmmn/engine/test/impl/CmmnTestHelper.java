@@ -25,6 +25,7 @@ import org.flowable.cmmn.api.repository.CmmnDeploymentBuilder;
 import org.flowable.cmmn.engine.CmmnEngine;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.history.CmmnHistoryManager;
+import org.flowable.cmmn.engine.impl.history.DefaultCmmnHistoryConfigurationSettings;
 import org.flowable.cmmn.engine.impl.history.DefaultCmmnHistoryManager;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
@@ -78,13 +79,6 @@ public abstract class CmmnTestHelper {
 
             for (String resource : resources) {
                 deploymentBuilder.addClasspathResource(resource);
-            }
-
-            String[] extraResources = deploymentAnnotation.extraResources();
-            if (extraResources != null && extraResources.length > 0) {
-                for (String extraResource : extraResources) {
-                    deploymentBuilder.addClasspathResource(extraResource);
-                }
             }
 
             if (deploymentAnnotation.tenantId() != null
@@ -160,7 +154,8 @@ public abstract class CmmnTestHelper {
             if (isAsyncHistoryEnabled) {
                 cmmnEngineConfiguration.setAsyncHistoryEnabled(false);
                 asyncHistoryManager = cmmnEngineConfiguration.getCmmnHistoryManager();
-                cmmnEngineConfiguration.setCmmnHistoryManager(new DefaultCmmnHistoryManager(cmmnEngineConfiguration));
+                cmmnEngineConfiguration.setCmmnHistoryManager(new DefaultCmmnHistoryManager(cmmnEngineConfiguration,
+                        new DefaultCmmnHistoryConfigurationSettings(cmmnEngineConfiguration)));
             }
 
             consumer.accept(cmmnEngineConfiguration);

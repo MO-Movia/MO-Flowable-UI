@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 
 import org.activiti.engine.impl.test.ResourceFlowableTestCase;
 import org.activiti.engine.impl.variable.EntityManagerSession;

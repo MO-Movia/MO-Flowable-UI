@@ -429,6 +429,7 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
                 } else {
 
                     if (!activeSubProcessList.isEmpty() && ELEMENT_MULTIINSTANCE.equalsIgnoreCase(xtr.getLocalName())) {
+
                         multiInstanceParser.parseChildElement(xtr, activeSubProcessList.get(activeSubProcessList.size() - 1), model);
 
                     } else if (convertersToBpmnMap.containsKey(xtr.getLocalName())) {
@@ -486,8 +487,7 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
 
             } else if (flowElement instanceof SubProcess) {
                 SubProcess subProcess = (SubProcess) flowElement;
-                Collection<FlowElement> childFlowElements = subProcess.getFlowElements();
-                processFlowElements(childFlowElements, subProcess);
+                processFlowElements(subProcess.getFlowElements(), subProcess);
             }
         }
     }
@@ -600,12 +600,6 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
                     BpmnXMLUtil.writeQualifiedAttribute(ATTRIBUTE_ACTIVITY_ASYNCHRONOUS, ATTRIBUTE_VALUE_TRUE, xtw);
                     if (subProcess.isNotExclusive()) {
                         BpmnXMLUtil.writeQualifiedAttribute(ATTRIBUTE_ACTIVITY_EXCLUSIVE, ATTRIBUTE_VALUE_FALSE, xtw);
-                    }
-                }
-                if (subProcess.isAsynchronousLeave()) {
-                    BpmnXMLUtil.writeQualifiedAttribute(BpmnXMLConstants.ATTRIBUTE_ACTIVITY_ASYNCHRONOUS_LEAVE, ATTRIBUTE_VALUE_TRUE, xtw);
-                    if (subProcess.isAsynchronousLeaveNotExclusive()) {
-                        BpmnXMLUtil.writeQualifiedAttribute(ATTRIBUTE_ACTIVITY_ASYNCHRONOUS_LEAVE_EXCLUSIVE, ATTRIBUTE_VALUE_FALSE, xtw);
                     }
                 }
             }

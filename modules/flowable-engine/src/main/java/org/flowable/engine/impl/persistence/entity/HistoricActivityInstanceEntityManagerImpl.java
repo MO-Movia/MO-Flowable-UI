@@ -13,7 +13,6 @@
 
 package org.flowable.engine.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +22,6 @@ import org.flowable.engine.impl.HistoricActivityInstanceQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.history.HistoryManager;
 import org.flowable.engine.impl.persistence.entity.data.HistoricActivityInstanceDataManager;
-import org.flowable.engine.runtime.ActivityInstance;
 
 /**
  * @author Tom Baeyens
@@ -35,11 +33,6 @@ public class HistoricActivityInstanceEntityManagerImpl
 
     public HistoricActivityInstanceEntityManagerImpl(ProcessEngineConfigurationImpl processEngineConfiguration, HistoricActivityInstanceDataManager historicActivityInstanceDataManager) {
         super(processEngineConfiguration, historicActivityInstanceDataManager);
-    }
-
-    @Override
-    public HistoricActivityInstanceEntity create(ActivityInstance activityInstance) {
-        return dataManager.create(activityInstance);
     }
 
     @Override
@@ -89,11 +82,6 @@ public class HistoricActivityInstanceEntityManagerImpl
         dataManager.deleteHistoricActivityInstances(historicActivityInstanceQuery);
     }
     
-    @Override
-    public void bulkDeleteHistoricActivityInstancesByProcessInstanceIds(Collection<String> historicProcessInstanceIds) {
-        dataManager.bulkDeleteHistoricActivityInstancesByProcessInstanceIds(historicProcessInstanceIds);
-    }
-
     @Override
     public void deleteHistoricActivityInstancesForNonExistingProcessInstances() {
         dataManager.deleteHistoricActivityInstancesForNonExistingProcessInstances();

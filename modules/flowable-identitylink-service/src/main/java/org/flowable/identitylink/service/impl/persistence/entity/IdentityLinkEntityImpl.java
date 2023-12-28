@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.flowable.common.engine.api.FlowableException;
-import org.flowable.identitylink.api.history.HistoricIdentityLink;
 
 /**
  * @author Joram Barrez
@@ -39,19 +38,6 @@ public class IdentityLinkEntityImpl extends AbstractIdentityLinkServiceNoRevisio
 
     public IdentityLinkEntityImpl() {
 
-    }
-
-    public IdentityLinkEntityImpl(HistoricIdentityLink historicIdentityLink) {
-        this.id = ((HistoricIdentityLinkEntity) historicIdentityLink).getId();
-        this.type = historicIdentityLink.getType();
-        this.userId = historicIdentityLink.getUserId();
-        this.groupId = historicIdentityLink.getGroupId();
-        this.taskId = historicIdentityLink.getTaskId();
-        this.processInstanceId = historicIdentityLink.getProcessInstanceId();
-        this.scopeId = historicIdentityLink.getScopeId();
-        this.subScopeId = historicIdentityLink.getSubScopeId();
-        this.scopeType = historicIdentityLink.getScopeType();
-        this.scopeDefinitionId = historicIdentityLink.getScopeDefinitionId();
     }
 
     @Override

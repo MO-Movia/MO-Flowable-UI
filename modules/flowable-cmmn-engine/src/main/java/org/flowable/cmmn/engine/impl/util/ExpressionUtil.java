@@ -45,7 +45,7 @@ public class ExpressionUtil {
         } else if (evaluationResult instanceof String) {
             return "true".equals(((String) evaluationResult).toLowerCase());
         } else {
-            throw new FlowableException("Expression condition " + condition + " did not evaluate to a boolean value with " + variableContainer);
+            throw new FlowableException("Expression condition " + condition + " did not evaluate to a boolean value");
         }
     }
 
@@ -181,8 +181,7 @@ public class ExpressionUtil {
      * @return true, if there is a repetition rule of the plan item instance currently evaluating to true with all of its conditions and attributes
      */
     public static boolean evaluateRepetitionRule(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity,
-            PlanItemInstanceContainer planItemInstanceContainer) {
-        
+        PlanItemInstanceContainer planItemInstanceContainer) {
         RepetitionRule repetitionRule = getRepetitionRule(planItemInstanceEntity);
 
         if (repetitionRule != null) {
@@ -207,7 +206,7 @@ public class ExpressionUtil {
      * @return the list of equal plan item instances, might be empty, but never null
      */
     public static List<PlanItemInstance> searchNonFinishedEqualPlanItemInstances(PlanItemInstanceEntity planItemInstanceEntity,
-            PlanItemInstanceContainer planItemInstanceContainer) {
+        PlanItemInstanceContainer planItemInstanceContainer) {
 
         if (planItemInstanceContainer != null && planItemInstanceContainer.getChildPlanItemInstances() != null) {
             return planItemInstanceContainer.getChildPlanItemInstances()

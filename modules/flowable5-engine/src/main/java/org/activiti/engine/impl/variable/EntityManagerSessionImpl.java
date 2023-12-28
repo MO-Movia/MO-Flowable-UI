@@ -13,10 +13,10 @@
 
 package org.activiti.engine.impl.variable;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceException;
-import jakarta.persistence.TransactionRequiredException;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceException;
+import javax.persistence.TransactionRequiredException;
 
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.cfg.TransactionContext;

@@ -70,8 +70,6 @@ public class JavaTaskCmmnXmlConverterTest {
                     assertThat(taskA.getResultVariableName()).isEqualTo("result");
                     assertThat(taskA.isAsync()).isFalse();
                     assertThat(taskA.isExclusive()).isFalse();
-                    assertThat(taskA.isAsyncLeave()).isTrue();
-                    assertThat(taskA.isAsyncLeaveExclusive()).isTrue();
                     assertThat(taskA.isStoreResultVariableAsTransient()).isFalse();
                 });
 

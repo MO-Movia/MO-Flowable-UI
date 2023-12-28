@@ -15,6 +15,8 @@ package org.flowable.rest.service.api.runtime.process;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.rest.api.DataResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +45,8 @@ public class ProcessInstanceQueryResource extends BaseProcessInstanceResource {
             @ApiResponse(code = 400, message = "Indicates a parameter was passed in the wrong format . The status-message contains additional information.")
     })
     @PostMapping(value = "/query/process-instances", produces = "application/json")
-    public DataResponse<ProcessInstanceResponse> queryProcessInstances(@RequestBody ProcessInstanceQueryRequest queryRequest, @ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<ProcessInstanceResponse> queryProcessInstances(@RequestBody ProcessInstanceQueryRequest queryRequest, @ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams,
+            HttpServletRequest request) {
 
         return getQueryResponse(queryRequest, allRequestParams);
     }

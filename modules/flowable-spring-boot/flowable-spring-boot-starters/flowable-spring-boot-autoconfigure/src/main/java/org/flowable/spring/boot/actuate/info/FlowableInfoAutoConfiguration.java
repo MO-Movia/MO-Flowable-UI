@@ -16,17 +16,18 @@ import org.flowable.spring.boot.EndpointAutoConfiguration;
 import org.flowable.spring.boot.RestApiAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.info.ConditionalOnEnabledInfoContributor;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Filip Hrisafov
  */
-@AutoConfiguration(
-        before = EndpointAutoConfiguration.class,
-        after = RestApiAutoConfiguration.class
-)
+@Configuration(proxyBeanMethods = false)
+@AutoConfigureBefore(EndpointAutoConfiguration.class)
+@AutoConfigureAfter(RestApiAutoConfiguration.class)
 @ConditionalOnClass({
     InfoContributor.class,
     ConditionalOnEnabledInfoContributor.class

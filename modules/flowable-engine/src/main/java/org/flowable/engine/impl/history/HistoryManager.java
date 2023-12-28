@@ -12,7 +12,6 @@
  */
 package org.flowable.engine.impl.history;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
@@ -26,7 +25,6 @@ import org.flowable.entitylink.api.EntityLink;
 import org.flowable.entitylink.service.impl.persistence.entity.EntityLinkEntity;
 import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
-import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskLogEntryBuilder;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
@@ -77,11 +75,6 @@ public interface HistoryManager {
      * Deletes historic process instances for a provided process definition id
      */
     void recordDeleteHistoricProcessInstancesByProcessDefinitionId(String processDefinitionId);
-    
-    /**
-     * Bulk delete historic process instances by id
-     */
-    void recordBulkDeleteProcessInstances(Collection<String> processInstanceIds);
 
     /**
      * Record the start of an activity, if activity history is enabled.
@@ -96,6 +89,14 @@ public interface HistoryManager {
      * @param activityInstance activity instance template
      */
     void recordActivityEnd(ActivityInstance activityInstance);
+
+    /**
+     * Record activity end in the case when runtime activity instance does not exist.
+     * @deprecated Shouldn't be used anymore, as an execution is not unique to an activity instance.
+     *             Use {@link HistoryManager#recordActivityEnd(ActivityInstance)} instead.
+     */
+    @Deprecated
+    void recordActivityEnd(ExecutionEntity executionEntity, String deleteReason, Date endTime);
 
     /**
      * Finds the {@link HistoricActivityInstanceEntity} that is active in the given execution.
@@ -115,17 +116,12 @@ public interface HistoryManager {
     /**
      * Record task as ended, if audit history is enabled.
      */
-    void recordTaskEnd(TaskEntity task, ExecutionEntity execution, String userId, String deleteReason, Date endTime);
+    void recordTaskEnd(TaskEntity task, ExecutionEntity execution, String deleteReason, Date endTime);
 
     /**
      * Record task name change, if audit history is enabled.
      */
     void recordTaskInfoChange(TaskEntity taskEntity, String activityInstanceId, Date changeTime);
-
-    /**
-     * Record historic task deleted, if audit history is enabled.
-     */
-    void recordHistoricTaskDeleted(HistoricTaskInstance task);
 
     /**
      * Record a variable has been created, if audit history is enabled.
@@ -214,8 +210,6 @@ public interface HistoryManager {
     void recordEntityLinkDeleted(EntityLinkEntity entityLink);
 
     void updateProcessBusinessKeyInHistory(ExecutionEntity processInstance);
-    
-    void updateProcessBusinessStatusInHistory(ExecutionEntity processInstance);
 
     /**
      * Record the update of a process definition for historic process instance, task, and activity instance, if history is enabled.

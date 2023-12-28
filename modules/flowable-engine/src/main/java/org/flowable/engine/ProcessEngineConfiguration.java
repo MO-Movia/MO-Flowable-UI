@@ -14,15 +14,16 @@
 package org.flowable.engine;
 
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import org.flowable.common.engine.api.async.AsyncTaskExecutor;
 import org.flowable.common.engine.api.async.AsyncTaskInvoker;
+import org.flowable.common.engine.api.engine.EngineLifecycleListener;
 import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.common.engine.impl.cfg.BeansConfigurationHelper;
 import org.flowable.common.engine.impl.cfg.mail.MailServerInfo;
@@ -33,7 +34,6 @@ import org.flowable.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration;
 import org.flowable.engine.impl.cfg.StandaloneProcessEngineConfiguration;
 import org.flowable.image.ProcessDiagramGenerator;
 import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
-import org.flowable.mail.common.api.client.FlowableMailClient;
 import org.flowable.task.service.TaskPostProcessor;
 
 /**
@@ -89,11 +89,17 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     protected boolean asyncExecutorActivate;
     protected boolean asyncHistoryExecutorActivate;
 
-    protected FlowableMailClient defaultMailClient;
-    protected MailServerInfo defaultMailServer;
+    protected String mailServerHost = "localhost";
+    protected String mailServerUsername; // by default no name and password are provided, which
+    protected String mailServerPassword; // means no authentication for mail server
+    protected int mailServerPort = 25;
+    protected int mailServerSSLPort = 465;
+    protected boolean useSSL;
+    protected boolean useTLS;
+    protected String mailServerDefaultFrom = "flowable@localhost";
+    protected String mailServerForceTo;
     protected String mailSessionJndi;
     protected Map<String, MailServerInfo> mailServers = new HashMap<>();
-    protected Map<String, FlowableMailClient> mailClients = new HashMap<>();
     protected Map<String, String> mailSessionsJndi = new HashMap<>();
 
     // Set Http Client config defaults
@@ -110,14 +116,16 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     protected AsyncExecutor asyncExecutor;
     protected AsyncTaskExecutor asyncTaskExecutor;
     protected boolean shutdownAsyncTaskExecutor;
-    protected AsyncTaskExecutor asyncTaskInvokerTaskExecutor;
-    protected boolean shutdownAsyncTaskInvokerTaskExecutor;
     protected AsyncTaskInvoker asyncTaskInvoker;
 
     protected AsyncExecutor asyncHistoryExecutor;
     protected AsyncTaskExecutor asyncHistoryTaskExecutor;
     protected boolean shutdownAsyncHistoryTaskExecutor;
-
+    /**
+     * Define the default lock time for an async job in seconds. The lock time is used when creating an async job and when it expires the async executor assumes that the job has failed. It will be
+     * retried again.
+     */
+    protected int lockTimeAsyncJobWaitTime = 60;
     /** define the default wait time for a failed job in seconds */
     protected int defaultFailedJobWaitTime = 10;
     /** define the default wait time for a failed async job in seconds */
@@ -148,8 +156,7 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     // History Cleanup
     protected boolean enableHistoryCleaning = false;
     protected String historyCleaningTimeCycleConfig = "0 0 1 * * ?";
-    protected Duration cleanInstancesEndedAfter = Duration.ofDays(365);
-    protected int cleanInstancesBatchSize = 100;
+    protected int cleanInstancesEndedAfterNumberOfDays = 365;
     protected HistoryCleaningManager historyCleaningManager;
 
 
@@ -243,59 +250,30 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
         return this;
     }
 
-    public FlowableMailClient getDefaultMailClient() {
-        return defaultMailClient;
-    }
-
-    public ProcessEngineConfiguration setDefaultMailClient(FlowableMailClient defaultMailClient) {
-        this.defaultMailClient = defaultMailClient;
-        return this;
-    }
-
-    public MailServerInfo getDefaultMailServer() {
-        return getOrCreateDefaultMaiLServer();
-    }
-
-    public ProcessEngineConfiguration setDefaultMailServer(MailServerInfo defaultMailServer) {
-        this.defaultMailServer = defaultMailServer;
-        return this;
-    }
-
-    protected MailServerInfo getOrCreateDefaultMaiLServer() {
-        if (defaultMailServer == null) {
-            defaultMailServer = new MailServerInfo();
-            defaultMailServer.setMailServerHost("localhost");
-            defaultMailServer.setMailServerPort(25);
-            defaultMailServer.setMailServerSSLPort(465);
-            defaultMailServer.setMailServerDefaultFrom("flowable@localhost");
-        }
-        return defaultMailServer;
-    }
-
     public String getMailServerHost() {
-        return getOrCreateDefaultMaiLServer().getMailServerHost();
+        return mailServerHost;
     }
 
     public ProcessEngineConfiguration setMailServerHost(String mailServerHost) {
-        getOrCreateDefaultMaiLServer().setMailServerHost(mailServerHost);
+        this.mailServerHost = mailServerHost;
         return this;
     }
 
     public String getMailServerUsername() {
-        return getOrCreateDefaultMaiLServer().getMailServerUsername();
+        return mailServerUsername;
     }
 
     public ProcessEngineConfiguration setMailServerUsername(String mailServerUsername) {
-        getOrCreateDefaultMaiLServer().setMailServerUsername(mailServerUsername);
+        this.mailServerUsername = mailServerUsername;
         return this;
     }
 
     public String getMailServerPassword() {
-        return getOrCreateDefaultMaiLServer().getMailServerPassword();
+        return mailServerPassword;
     }
 
     public ProcessEngineConfiguration setMailServerPassword(String mailServerPassword) {
-        getOrCreateDefaultMaiLServer().setMailServerPassword(mailServerPassword);
+        this.mailServerPassword = mailServerPassword;
         return this;
     }
 
@@ -309,65 +287,56 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     }
 
     public int getMailServerPort() {
-        return getOrCreateDefaultMaiLServer().getMailServerPort();
+        return mailServerPort;
     }
 
     public ProcessEngineConfiguration setMailServerPort(int mailServerPort) {
-        getOrCreateDefaultMaiLServer().setMailServerPort(mailServerPort);
-        return this;
-    }
-
-    public Charset getMailServerDefaultCharset() {
-        return getOrCreateDefaultMaiLServer().getMailServerDefaultCharset();
-    }
-
-    public ProcessEngineConfiguration setMailServerDefaultCharset(Charset mailServerDefaultCharset) {
-        getOrCreateDefaultMaiLServer().setMailServerDefaultCharset(mailServerDefaultCharset);
+        this.mailServerPort = mailServerPort;
         return this;
     }
 
     public int getMailServerSSLPort() {
-        return getOrCreateDefaultMaiLServer().getMailServerSSLPort();
+        return mailServerSSLPort;
     }
 
     public ProcessEngineConfiguration setMailServerSSLPort(int mailServerSSLPort) {
-        getOrCreateDefaultMaiLServer().setMailServerSSLPort(mailServerSSLPort);
+        this.mailServerSSLPort = mailServerSSLPort;
         return this;
     }
 
     public boolean getMailServerUseSSL() {
-        return getOrCreateDefaultMaiLServer().isMailServerUseSSL();
+        return useSSL;
     }
 
     public ProcessEngineConfiguration setMailServerUseSSL(boolean useSSL) {
-        getOrCreateDefaultMaiLServer().setMailServerUseSSL(useSSL);
+        this.useSSL = useSSL;
         return this;
     }
 
     public boolean getMailServerUseTLS() {
-        return getOrCreateDefaultMaiLServer().isMailServerUseTLS();
+        return useTLS;
     }
 
     public ProcessEngineConfiguration setMailServerUseTLS(boolean useTLS) {
-        getOrCreateDefaultMaiLServer().setMailServerUseTLS(useTLS);
+        this.useTLS = useTLS;
         return this;
     }
 
     public String getMailServerDefaultFrom() {
-        return getOrCreateDefaultMaiLServer().getMailServerDefaultFrom();
+        return mailServerDefaultFrom;
     }
 
     public ProcessEngineConfiguration setMailServerDefaultFrom(String mailServerDefaultFrom) {
-        getOrCreateDefaultMaiLServer().setMailServerDefaultFrom(mailServerDefaultFrom);
+        this.mailServerDefaultFrom = mailServerDefaultFrom;
         return this;
     }
 
     public String getMailServerForceTo() {
-        return getOrCreateDefaultMaiLServer().getMailServerForceTo();
+        return mailServerForceTo;
     }
 
     public ProcessEngineConfiguration setMailServerForceTo(String mailServerForceTo) {
-        getOrCreateDefaultMaiLServer().setMailServerForceTo(mailServerForceTo);
+        this.mailServerForceTo = mailServerForceTo;
         return this;
     }
 
@@ -381,19 +350,6 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
 
     public ProcessEngineConfiguration setMailServers(Map<String, MailServerInfo> mailServers) {
         this.mailServers.putAll(mailServers);
-        return this;
-    }
-
-    public FlowableMailClient getMailClient(String tenantId) {
-        return mailClients.get(tenantId);
-    }
-
-    public Map<String, FlowableMailClient> getMailClients() {
-        return mailClients;
-    }
-
-    public ProcessEngineConfiguration setMailClients(Map<String, FlowableMailClient> mailClients) {
-        this.mailClients.putAll(mailClients);
         return this;
     }
 
@@ -640,6 +596,51 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
         return this;
     }
 
+    /**
+     * @deprecated Use {@link #setEngineLifecycleListeners(List)}.
+     */
+    @Deprecated
+    public ProcessEngineConfiguration setProcessEngineLifecycleListener(ProcessEngineLifecycleListener processEngineLifecycleListener) {
+        // Backwards compatibility (when there was only one typed engine listener)
+        if (engineLifecycleListeners == null || engineLifecycleListeners.isEmpty()) {
+            List<EngineLifecycleListener> engineLifecycleListeners = new ArrayList<>(1);
+            engineLifecycleListeners.add(processEngineLifecycleListener);
+            super.setEngineLifecycleListeners(engineLifecycleListeners);
+
+        } else {
+            ProcessEngineLifecycleListener originalEngineLifecycleListener = (ProcessEngineLifecycleListener) engineLifecycleListeners.get(0);
+
+            ProcessEngineLifecycleListener wrappingEngineLifecycleListener = new ProcessEngineLifecycleListener() {
+
+                @Override
+                public void onProcessEngineBuilt(ProcessEngine processEngine) {
+                    originalEngineLifecycleListener.onProcessEngineBuilt(processEngine);
+                }
+                @Override
+                public void onProcessEngineClosed(ProcessEngine processEngine) {
+                    originalEngineLifecycleListener.onProcessEngineClosed(processEngine);
+                }
+            };
+
+            engineLifecycleListeners.set(0, wrappingEngineLifecycleListener);
+
+        }
+
+        return this;
+    }
+
+    /**
+     * @deprecated Use {@link #getEngineLifecycleListeners()}.
+     */
+    @Deprecated
+    public ProcessEngineLifecycleListener getProcessEngineLifecycleListener() {
+        // Backwards compatibility (when there was only one typed engine listener)
+        if (engineLifecycleListeners != null && !engineLifecycleListeners.isEmpty()) {
+            return (ProcessEngineLifecycleListener) engineLifecycleListeners.get(0);
+        }
+        return null;
+    }
+
     public String getLabelFontName() {
         return labelFontName;
     }
@@ -727,15 +728,6 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
         return this;
     }
 
-    public AsyncTaskExecutor getAsyncTaskInvokerTaskExecutor() {
-        return asyncTaskInvokerTaskExecutor;
-    }
-
-    public ProcessEngineConfiguration setAsyncTaskInvokerTaskExecutor(AsyncTaskExecutor asyncTaskInvokerTaskExecutor) {
-        this.asyncTaskInvokerTaskExecutor = asyncTaskInvokerTaskExecutor;
-        return this;
-    }
-
     public AsyncTaskInvoker getAsyncTaskInvoker() {
         return asyncTaskInvoker;
     }
@@ -760,6 +752,15 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
 
     public ProcessEngineConfiguration setAsyncHistoryTaskExecutor(AsyncTaskExecutor asyncHistoryTaskExecutor) {
         this.asyncHistoryTaskExecutor = asyncHistoryTaskExecutor;
+        return this;
+    }
+
+    public int getLockTimeAsyncJobWaitTime() {
+        return lockTimeAsyncJobWaitTime;
+    }
+
+    public ProcessEngineConfiguration setLockTimeAsyncJobWaitTime(int lockTimeAsyncJobWaitTime) {
+        this.lockTimeAsyncJobWaitTime = lockTimeAsyncJobWaitTime;
         return this;
     }
 
@@ -817,37 +818,12 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
         return this;
     }
 
-    /**
-     * @deprecated use {@link #getCleanInstancesEndedAfter()} instead
-     */
-    @Deprecated
     public int getCleanInstancesEndedAfterNumberOfDays() {
-        return (int) cleanInstancesEndedAfter.toDays();
+        return cleanInstancesEndedAfterNumberOfDays;
     }
 
-    /**
-     * @deprecated use {@link #setCleanInstancesEndedAfter(Duration)} instead
-     */
-    @Deprecated
     public ProcessEngineConfiguration setCleanInstancesEndedAfterNumberOfDays(int cleanInstancesEndedAfterNumberOfDays) {
-        return setCleanInstancesEndedAfter(Duration.ofDays(cleanInstancesEndedAfterNumberOfDays));
-    }
-
-    public Duration getCleanInstancesEndedAfter() {
-        return cleanInstancesEndedAfter;
-    }
-
-    public ProcessEngineConfiguration setCleanInstancesEndedAfter(Duration cleanInstancesEndedAfter) {
-        this.cleanInstancesEndedAfter = cleanInstancesEndedAfter;
-        return this;
-    }
-
-    public int getCleanInstancesBatchSize() {
-        return cleanInstancesBatchSize;
-    }
-
-    public ProcessEngineConfiguration setCleanInstancesBatchSize(int cleanInstancesBatchSize) {
-        this.cleanInstancesBatchSize = cleanInstancesBatchSize;
+        this.cleanInstancesEndedAfterNumberOfDays = cleanInstancesEndedAfterNumberOfDays;
         return this;
     }
 

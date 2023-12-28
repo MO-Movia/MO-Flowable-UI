@@ -243,6 +243,7 @@
         <enumeration value="camel"/>
         <enumeration value="http"/>
         <enumeration value="mail"/>
+        <enumeration value="mule"/>
         <enumeration value="shell"/>
         <enumeration value="dmn"/>
         <enumeration value="case"/>
@@ -319,18 +320,8 @@
     <annotation>
       <documentation>
         Can be used in combination with an async value of true. By default exclusive is set to false
-        and the async executor can run multiple async tasks of the same process instance concurrently.
+        and the job executor can run multiple async tasks of the same process instance concurrently.
         When exclusive is set to true, only one async task of the same process instance will be executed at a time.
-      </documentation>
-    </annotation>
-  </attribute>
-
-  <attribute name="asyncLeave" type="boolean">
-    <annotation>
-      <documentation>
-        The asyncLeave attribute can be set on an activity, gateway, start or end event to let
-        the async executor handle the leaving of the activity asynchronously. This provides ways
-        to define transaction boundaries for your process execution.
       </documentation>
     </annotation>
   </attribute>
@@ -344,20 +335,6 @@
           exclusive asynchronous job. A value of sync means the service task will execute synchronously without
           the creation of a job.
         </documentation>
-    </annotation>
-  </attribute>
-
-  <attribute name="noWaitStatesAsyncLeave" type="boolean">
-    <annotation>
-      <documentation>
-        This attribute can be set on the 'multiInstanceLoopCharacteristics' of an activity.
-        The default is false when not set. If set to true, the engine will assume all instances of
-        the multi-instances are automatic steps without wait states. When doing so, the leave of
-        the multi-instance activity will be happening asynchronous in an exclusive job that gets
-        scheduled (and rescheduled) to check whether the multi-instance is completed. Similar
-        to the async leave (engine-wide feature), this will also avoid optimistic locking exceptions
-        when completing.
-      </documentation>
     </annotation>
   </attribute>
 
@@ -788,7 +765,6 @@
       <attribute name="source" type="string" use="optional"/>
       <attribute name="sourceExpression" type="tns:tExpression" use="optional"/>
       <attribute name="target" type="string" use="required" />
-      <attribute name="transient" type="boolean" default="false" use="optional" />
     </complexType>
   </element>
   <element name="out">
@@ -802,7 +778,6 @@
       <attribute name="source" type="string" use="optional"/>
       <attribute name="sourceExpression" type="tns:tExpression" use="optional"/>
       <attribute name="target" type="string" use="required" />
-      <attribute name="transient" type="boolean" default="false" use="optional"/>
     </complexType>
   </element>
 
@@ -922,14 +897,6 @@
     <annotation>
       <documentation>
         Allows to specify a variable name on a user task where the task ID will be stored.
-      </documentation>
-    </annotation>
-  </attribute>
-
-  <attribute name="taskCompleterVariableName" type="string" default="">
-    <annotation>
-      <documentation>
-        Optional variable name on a user task where the completer's user ID will be stored.
       </documentation>
     </annotation>
   </attribute>

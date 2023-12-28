@@ -29,8 +29,8 @@ public class JsonFieldBasedInboundEventKeyDetector implements InboundEventKeyDet
     }
 
     @Override
-    public String detectEventDefinitionKey(JsonNode payload) {
-        return payload.path(field).asText();
+    public String detectEventDefinitionKey(JsonNode event) {
+        return event.path(field).asText();
     }
     
     public String getJsonField() {

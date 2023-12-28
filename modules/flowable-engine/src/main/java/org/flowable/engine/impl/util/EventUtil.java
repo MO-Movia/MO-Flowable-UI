@@ -40,9 +40,7 @@ public class EventUtil {
                 variableInstance.getTaskId(),
                 variableInstance.getExecutionId(),
                 variableInstance.getProcessInstanceId(),
-                processDefinitionId,
-                variableInstance.getId()
-        );
+                processDefinitionId);
     }
 
 }

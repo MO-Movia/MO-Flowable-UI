@@ -12,17 +12,15 @@
  */
 package org.flowable.eventregistry.spring.kafka;
 
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.flowable.eventregistry.api.EventRegistry;
 import org.flowable.eventregistry.model.InboundChannelModel;
-import org.springframework.kafka.listener.AcknowledgingConsumerAwareMessageListener;
-import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.listener.MessageListener;
 
 /**
  * @author Filip Hrisafov
  */
-public class KafkaChannelMessageListenerAdapter implements AcknowledgingConsumerAwareMessageListener<Object, Object> {
+public class KafkaChannelMessageListenerAdapter implements MessageListener<String, String> {
 
     protected EventRegistry eventRegistry;
     protected InboundChannelModel inboundChannelModel;
@@ -33,13 +31,8 @@ public class KafkaChannelMessageListenerAdapter implements AcknowledgingConsumer
     }
 
     @Override
-    public void onMessage(ConsumerRecord<Object, Object> data, Acknowledgment acknowledgment, Consumer<?, ?> consumer) {
-        // This can easily be the default MessageListener.
-        // However, the Spring Kafka retry mechanism requires this to be AcknowledgingConsumerAwareMessageListener
-        eventRegistry.eventReceived(inboundChannelModel, new KafkaConsumerRecordInboundEvent(data));
-        if (acknowledgment != null) {
-            acknowledgment.acknowledge();
-        }
+    public void onMessage(ConsumerRecord<String, String> data) {
+        eventRegistry.eventReceived(inboundChannelModel, data.value());
     }
 
     public EventRegistry getEventRegistry() {

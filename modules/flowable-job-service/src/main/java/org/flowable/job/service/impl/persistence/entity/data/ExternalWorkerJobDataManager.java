@@ -36,8 +36,4 @@ public interface ExternalWorkerJobDataManager extends DataManager<ExternalWorker
     List<ExternalWorkerJobEntity> findExternalJobsToExecute(ExternalWorkerJobAcquireBuilderImpl builder, int numberOfJobs);
 
     List<ExternalWorkerJobEntity> findJobsByScopeIdAndSubScopeId(String scopeId, String subScopeId);
-    
-    List<ExternalWorkerJobEntity> findJobsByWorkerId(String workerId);
-    
-    List<ExternalWorkerJobEntity> findJobsByWorkerIdAndTenantId(String workerId, String tenantId);
 }

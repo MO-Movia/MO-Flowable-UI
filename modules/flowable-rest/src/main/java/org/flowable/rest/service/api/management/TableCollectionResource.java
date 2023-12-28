@@ -15,6 +15,8 @@ package org.flowable.rest.service.api.management;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.engine.ManagementService;
 import org.flowable.rest.service.api.BpmnRestApiInterceptor;
 import org.flowable.rest.service.api.RestResponseFactory;
@@ -49,7 +51,7 @@ public class TableCollectionResource {
             @ApiResponse(code = 200, message = "Indicates the request was successful.")
     })
     @GetMapping(value = "/management/tables", produces = "application/json")
-    public List<TableResponse> getTables() {
+    public List<TableResponse> getTables(HttpServletRequest request) {
         if (restApiInterceptor != null) {
             restApiInterceptor.accessTableInfo();
         }

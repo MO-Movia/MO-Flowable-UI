@@ -18,6 +18,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.engine.api.query.QueryProperty;
 import org.flowable.common.rest.api.DataResponse;
 import org.flowable.eventregistry.api.EventDefinitionQuery;
@@ -71,17 +73,14 @@ public class EventDefinitionCollectionResource {
             @ApiImplicitParam(name = "version", dataType = "integer", value = "Only return event definitions with the given version.", paramType = "query"),
             @ApiImplicitParam(name = "name", dataType = "string", value = "Only return event definitions with the given name.", paramType = "query"),
             @ApiImplicitParam(name = "nameLike", dataType = "string", value = "Only return event definitions with a name like the given name.", paramType = "query"),
-            @ApiImplicitParam(name = "nameLikeIgnoreCase", dataType = "string", value = "Only return event definitions with a name like the given name (case-insensitive).", paramType = "query"),
             @ApiImplicitParam(name = "key", dataType = "string", value = "Only return event definitions with the given key.", paramType = "query"),
             @ApiImplicitParam(name = "keyLike", dataType = "string", value = "Only return event definitions with a name like the given key.", paramType = "query"),
-            @ApiImplicitParam(name = "keyLikeIgnoreCase", dataType = "string", value = "Only return event definitions with a name like the given key (case-insensitive).", paramType = "query"),
             @ApiImplicitParam(name = "resourceName", dataType = "string", value = "Only return event definitions with the given resource name.", paramType = "query"),
             @ApiImplicitParam(name = "resourceNameLike", dataType = "string", value = "Only return event definitions with a name like the given resource name.", paramType = "query"),
             @ApiImplicitParam(name = "category", dataType = "string", value = "Only return event definitions with the given category.", paramType = "query"),
             @ApiImplicitParam(name = "categoryLike", dataType = "string", value = "Only return event definitions with a category like the given name.", paramType = "query"),
             @ApiImplicitParam(name = "categoryNotEquals", dataType = "string", value = "Only return event definitions which do not have the given category.", paramType = "query"),
-            @ApiImplicitParam(name = "deploymentId", dataType = "string", value = "Only return event definitions which are part of a deployment with the given deployment id.", paramType = "query"),
-            @ApiImplicitParam(name = "parentDeploymentId", dataType = "string", value = "Only return event definitions which are part of a deployment with the given parent deployment id.", paramType = "query"),
+            @ApiImplicitParam(name = "deploymentId", dataType = "string", value = "Only return event definitions with the given category.", paramType = "query"),
             @ApiImplicitParam(name = "latest", dataType = "boolean", value = "Only return the latest event definition versions. Can only be used together with key and keyLike parameters, using any other parameter will result in a 400-response.", paramType = "query"),
             @ApiImplicitParam(name = "sort", dataType = "string", value = "Property to sort on, to be used together with the order.", allowableValues = "name,id,key,category,deploymentId,version", paramType = "query"),
     })
@@ -90,7 +89,7 @@ public class EventDefinitionCollectionResource {
             @ApiResponse(code = 400, message = "Indicates a parameter was passed in the wrong format or that latest is used with other parameters other than key and keyLike. The status-message contains additional information.")
     })
     @GetMapping(value = "/event-registry-repository/event-definitions", produces = "application/json")
-    public DataResponse<EventDefinitionResponse> getEventDefinitions(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<EventDefinitionResponse> getEventDefinitions(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         EventDefinitionQuery eventDefinitionQuery = repositoryService.createEventDefinitionQuery();
 
         // Populate filter-parameters
@@ -109,17 +108,11 @@ public class EventDefinitionCollectionResource {
         if (allRequestParams.containsKey("keyLike")) {
             eventDefinitionQuery.eventDefinitionKeyLike(allRequestParams.get("keyLike"));
         }
-        if (allRequestParams.containsKey("keyLikeIgnoreCase")) {
-            eventDefinitionQuery.eventDefinitionKeyLikeIgnoreCase(allRequestParams.get("keyLikeIgnoreCase"));
-        }
         if (allRequestParams.containsKey("name")) {
             eventDefinitionQuery.eventDefinitionName(allRequestParams.get("name"));
         }
         if (allRequestParams.containsKey("nameLike")) {
             eventDefinitionQuery.eventDefinitionNameLike(allRequestParams.get("nameLike"));
-        }
-        if (allRequestParams.containsKey("nameLikeIgnoreCase")) {
-            eventDefinitionQuery.eventDefinitionNameLikeIgnoreCase(allRequestParams.get("nameLikeIgnoreCase"));
         }
         if (allRequestParams.containsKey("resourceName")) {
             eventDefinitionQuery.eventDefinitionResourceName(allRequestParams.get("resourceName"));
@@ -131,15 +124,13 @@ public class EventDefinitionCollectionResource {
             eventDefinitionQuery.eventVersion(Integer.valueOf(allRequestParams.get("version")));
         }
         if (allRequestParams.containsKey("latest")) {
-            if (Boolean.parseBoolean(allRequestParams.get("latest"))) {
+            Boolean latest = Boolean.valueOf(allRequestParams.get("latest"));
+            if (latest != null && latest) {
                 eventDefinitionQuery.latestVersion();
             }
         }
         if (allRequestParams.containsKey("deploymentId")) {
             eventDefinitionQuery.deploymentId(allRequestParams.get("deploymentId"));
-        }
-        if (allRequestParams.containsKey("parentDeploymentId")) {
-            eventDefinitionQuery.parentDeploymentId(allRequestParams.get("parentDeploymentId"));
         }
         if (allRequestParams.containsKey("tenantId")) {
             eventDefinitionQuery.tenantId(allRequestParams.get("tenantId"));

@@ -12,8 +12,7 @@
  */
 package org.flowable.cdi;
 
-import org.flowable.cdi.impl.CdiAgendaOperationExecutionListener;
-import org.flowable.cdi.impl.el.CdiResolver;
+import org.flowable.cdi.impl.CdiCommandInvoker;
 import org.flowable.engine.impl.bpmn.parser.factory.AbstractBehaviorFactory;
 import org.flowable.engine.impl.cfg.StandaloneProcessEngineConfiguration;
 
@@ -22,9 +21,16 @@ import org.flowable.engine.impl.cfg.StandaloneProcessEngineConfiguration;
  */
 public class CdiStandaloneProcessEngineConfiguration extends StandaloneProcessEngineConfiguration {
 
-    public CdiStandaloneProcessEngineConfiguration() {
-        addPreDefaultELResolver(new CdiResolver());
-        addAgendaOperationExecutionListener(new CdiAgendaOperationExecutionListener());
+    @Override
+    public void initExpressionManager() {
+        expressionManager = new CdiExpressionManager();
+    }
+
+    @Override
+    public void initCommandInvoker() {
+        if (commandInvoker == null) {
+            commandInvoker = new CdiCommandInvoker(agendaOperationRunner);
+        }
     }
 
     @Override

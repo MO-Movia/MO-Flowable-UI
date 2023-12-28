@@ -22,7 +22,6 @@ import java.util.Set;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.query.CacheAwareQuery;
-import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.common.engine.impl.db.SuspensionState;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
@@ -52,8 +51,6 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
     protected String businessKey;
     protected String businessKeyLike;
     protected boolean includeChildExecutionsWithBusinessKeyQuery;
-    protected String businessStatus;
-    protected String businessStatusLike;
     protected String processDefinitionId;
     protected Set<String> processDefinitionIds;
     protected String processDefinitionCategory;
@@ -71,16 +68,14 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
     protected String involvedUser;
     protected IdentityLinkQueryObject involvedUserIdentityLink;
     protected Set<String> involvedGroups;
-    private List<List<String>> safeInvolvedGroups;
     protected IdentityLinkQueryObject involvedGroupIdentityLink;
     protected SuspensionState suspensionState;
     protected boolean includeProcessVariables;
+    protected Integer processInstanceVariablesLimit;
     protected boolean withJobException;
     protected String name;
     protected String nameLike;
     protected String nameLikeIgnoreCase;
-    protected String rootScopeId;
-    protected String parentScopeId;
     protected String activeActivityId;
     protected Set<String> activeActivityIds;
     protected String callbackId;
@@ -186,29 +181,6 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
             this.currentOrQueryObject.businessKeyLike = businessKeyLike;
         } else {
             this.businessKeyLike = businessKeyLike;
-        }
-        return this;
-    }
-    
-    @Override
-    public ProcessInstanceQuery processInstanceBusinessStatus(String businessStatus) {
-        if (businessStatus == null) {
-            throw new FlowableIllegalArgumentException("Business status is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.businessStatus = businessStatus;
-        } else {
-            this.businessStatus = businessStatus;
-        }
-        return this;
-    }
-    
-    @Override
-    public ProcessInstanceQuery processInstanceBusinessStatusLike(String businessStatusLike) {
-        if (inOrStatement) {
-            this.currentOrQueryObject.businessStatusLike = businessStatusLike;
-        } else {
-            this.businessStatusLike = businessStatusLike;
         }
         return this;
     }
@@ -503,6 +475,16 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
     }
 
     @Override
+    public ProcessInstanceQuery limitProcessInstanceVariables(Integer processInstanceVariablesLimit) {
+        this.processInstanceVariablesLimit = processInstanceVariablesLimit;
+        return this;
+    }
+
+    public Integer getProcessInstanceVariablesLimit() {
+        return processInstanceVariablesLimit;
+    }
+
+    @Override
     public ProcessInstanceQuery withJobException() {
         this.withJobException = true;
         return this;
@@ -538,25 +520,6 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
         return this;
     }
     
-    public ProcessInstanceQuery processInstanceRootScopeId(String rootId) {
-        if (inOrStatement) {
-            this.currentOrQueryObject.rootScopeId = rootId;
-        } else {
-            this.rootScopeId = rootId;
-        }
-        return this;
-    }
-
-    @Override
-    public ProcessInstanceQuery processInstanceParentScopeId(String parentId) {
-        if (inOrStatement) {
-            this.currentOrQueryObject.parentScopeId = parentId;
-        } else {
-            this.parentScopeId = parentId;
-        }
-        return this;
-    }
-
     @Override
     public ProcessInstanceQuery activeActivityId(String activityId) {
         if (inOrStatement) {
@@ -845,6 +808,16 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
         return this;
     }
 
+    public String getMssqlOrDB2OrderBy() {
+        String specialOrderBy = super.getOrderByColumns();
+        if (specialOrderBy != null && specialOrderBy.length() > 0) {
+            specialOrderBy = specialOrderBy.replace("RES.", "TEMPRES_");
+            specialOrderBy = specialOrderBy.replace("ProcessDefinitionKey", "TEMPP_KEY_");
+            specialOrderBy = specialOrderBy.replace("ProcessDefinitionId", "TEMPP_ID_");
+        }
+        return specialOrderBy;
+    }
+
     // results /////////////////////////////////////////////////////////////////
 
     @Override
@@ -926,24 +899,12 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
         return processInstanceIds;
     }
 
-    public String getRootScopeId() {
-        return rootScopeId;
-    }
-
     public String getBusinessKey() {
         return businessKey;
     }
 
     public String getBusinessKeyLike() {
         return businessKeyLike;
-    }
-
-    public String getBusinessStatus() {
-        return businessStatus;
-    }
-
-    public String getBusinessStatusLike() {
-        return businessStatusLike;
     }
 
     public boolean isIncludeChildExecutionsWithBusinessKeyQuery() {
@@ -1152,35 +1113,5 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
 
     public void setStartedBy(String startedBy) {
         this.startedBy = startedBy;
-    }
-
-    public boolean isWithJobException() {
-        return withJobException;
-    }
-
-    public String getLocale() {
-        return locale;
-    }
-
-    public boolean isNeedsProcessDefinitionOuterJoin() {
-        if (isNeedsPaging()) {
-            if (AbstractEngineConfiguration.DATABASE_TYPE_ORACLE.equals(databaseType)
-                    || AbstractEngineConfiguration.DATABASE_TYPE_DB2.equals(databaseType)
-                    || AbstractEngineConfiguration.DATABASE_TYPE_MSSQL.equals(databaseType)) {
-                // When using oracle, db2 or mssql we don't need outer join for the process definition join.
-                // It is not needed because the outer join order by is done by the row number instead
-                return false;
-            }
-        }
-
-        return hasOrderByForColumn(ProcessInstanceQueryProperty.PROCESS_DEFINITION_KEY.getName());
-    }
-
-    public List<List<String>> getSafeInvolvedGroups() {
-        return safeInvolvedGroups;
-    }
-
-    public void setSafeInvolvedGroups(List<List<String>> safeInvolvedGroups) {
-        this.safeInvolvedGroups = safeInvolvedGroups;
     }
 }

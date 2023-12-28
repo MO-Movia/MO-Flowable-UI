@@ -24,10 +24,6 @@ public interface SchemaManager {
     
     String schemaUpdate();
     
-    default String schemaUpdate(String engineDbVersion) {
-        return schemaUpdate();
-    }
-    
     void schemaCheckVersion();
 
 }

@@ -12,7 +12,6 @@
  */
 package org.flowable.engine.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.common.engine.impl.persistence.entity.EntityManager;
@@ -27,6 +26,5 @@ public interface AttachmentEntityManager extends EntityManager<AttachmentEntity>
     List<AttachmentEntity> findAttachmentsByTaskId(String taskId);
 
     void deleteAttachmentsByTaskId(String taskId);
-    
-    void bulkDeleteAttachmentsByTaskId(Collection<String> taskIds);
+
 }

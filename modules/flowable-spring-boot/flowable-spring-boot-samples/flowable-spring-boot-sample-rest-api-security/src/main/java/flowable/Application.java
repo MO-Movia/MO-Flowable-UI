@@ -12,8 +12,6 @@
  */
 package flowable;
 
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.idm.api.Privilege;
@@ -27,28 +25,26 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
 @Configuration(proxyBeanMethods = false)
 @ComponentScan
 @EnableAutoConfiguration
 public class Application {
 
+    @Order(99)
     @Configuration
-    static class ApiWebSecurityConfigurationAdapter {
-        @Bean
-        @Order(99)
-        public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+    static class ApiWebSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
             http
-                    .securityMatcher(antMatcher("/api/**"))
-                    .authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().authenticated())
-                    .httpBasic(Customizer.withDefaults());
-
-            return http.build();
+                    .antMatcher("/api/**")
+                    .authorizeRequests()
+                    .anyRequest().authenticated()
+                    .and()
+                    .httpBasic();
         }
     }
 
@@ -107,22 +103,22 @@ public class Application {
 
     @Configuration
     @EnableWebSecurity
-    public static class SecurityConfiguration {
+    public static class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         @Bean
         public AuthenticationProvider authenticationProvider() {
             return new BasicAuthenticationProvider();
         }
 
-        @Bean
-        public SecurityFilterChain defaultSecurity(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
             http
-                .authenticationProvider(authenticationProvider)
-                .csrf(CsrfConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults());
-
-            return http.build();
+                .authenticationProvider(authenticationProvider())
+                .csrf().disable()
+                .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+                .httpBasic();
         }
     }
 }

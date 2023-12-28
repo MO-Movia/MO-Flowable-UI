@@ -12,8 +12,6 @@
  */
 package org.flowable.eventregistry.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public class ChannelModel {
 
     protected String key;
@@ -26,8 +24,6 @@ public class ChannelModel {
     
     // jms, rabbitmq, kafka etc
     protected String type;
-
-    protected JsonNode extension;
     
     public String getKey() {
         return key;
@@ -77,11 +73,4 @@ public class ChannelModel {
         this.type = type;
     }
 
-    public JsonNode getExtension() {
-        return extension;
-    }
-
-    public void setExtension(JsonNode extension) {
-        this.extension = extension;
-    }
 }

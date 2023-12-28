@@ -219,7 +219,6 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
         initSessionFactories(engineConfiguration, targetEngineConfiguration);
         initEventDispatcher(engineConfiguration, targetEngineConfiguration);
         initClock(engineConfiguration, targetEngineConfiguration);
-        initObjectMapper(engineConfiguration, targetEngineConfiguration);
         initVariableTypes(engineConfiguration, targetEngineConfiguration);
     }
 
@@ -291,12 +290,6 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
 
     protected void initClock(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
         targetEngineConfiguration.setClock(engineConfiguration.getClock());
-    }
-
-    protected void initObjectMapper(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
-        if (targetEngineConfiguration.getObjectMapper() == null) {
-            targetEngineConfiguration.setObjectMapper(engineConfiguration.getObjectMapper());
-        }
     }
 
     protected void initVariableTypes(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {

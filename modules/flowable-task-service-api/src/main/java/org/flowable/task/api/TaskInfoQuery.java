@@ -33,14 +33,6 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      */
     T taskId(String taskId);
 
-    /**
-     * Only select tasks with an id that is in the given list
-     *
-     * @throws FlowableIllegalArgumentException
-     *             When passed id list is empty or <code>null</code> or contains <code>null String</code>.
-     */
-    T taskIds(Collection<String> taskIds);
-
     /** Only select tasks with the given name */
     T taskName(String name);
 
@@ -115,12 +107,6 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * executed.
      */
     T taskAssigneeLikeIgnoreCase(String assigneeLikeIgnoreCase);
-    
-    /** Only select tasks which don't have an assignee. */
-    T taskUnassigned();
-    
-    /** Only select tasks which are assigned to any user */
-    T taskAssigned();
 
     /**
      * Only select tasks with an assignee that is in the given list
@@ -200,15 +186,8 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks for the given process ids.
      */
     T processInstanceIdIn(Collection<String> processInstanceIds);
-    
-    /**
-     * Only select tasks without a process instance id.
-     */
-    T withoutProcessInstanceId();
 
-    /**
-     * Only select tasks for the given business key
-     */
+    /** Only select tasks foe the given business key */
     T processInstanceBusinessKey(String processInstanceBusinessKey);
 
     /**
@@ -314,102 +293,12 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks that are created after the given date.
      */
     T taskCreatedAfter(Date after);
-    
-    /**
-     * Only select tasks that are started in progress on the given date.
-     */
-    T taskInProgressStartTimeOn(Date claimedTime);
-
-    /**
-     * Only select tasks that are started in progress before the given date.
-     */
-    T taskInProgressStartTimeBefore(Date before);
-
-    /**
-     * Only select tasks that are started in progress after the given date.
-     */
-    T taskInProgressStartTimeAfter(Date after);
-    
-    /**
-     * Select all tasks that have an in progress started user reference for the given value.
-     */
-    T taskInProgressStartedBy(String startedBy);
-    
-    /**
-     * Only select tasks that are claimed on the given date.
-     */
-    T taskClaimedOn(Date claimedTime);
-
-    /**
-     * Only select tasks that are claimed before the given date.
-     */
-    T taskClaimedBefore(Date before);
-
-    /**
-     * Only select tasks that are claimed after the given date.
-     */
-    T taskClaimedAfter(Date after);
-    
-    /**
-     * Select all tasks that have a claimed by user reference for the given value.
-     */
-    T taskClaimedBy(String claimedBy);
-    
-    /**
-     * Only select tasks that are suspended on the given date.
-     */
-    T taskSuspendedOn(Date suspendedTime);
-
-    /**
-     * Only select tasks that are suspended before the given date.
-     */
-    T taskSuspendedBefore(Date before);
-
-    /**
-     * Only select tasks that are suspended after the given date.
-     */
-    T taskSuspendedAfter(Date after);
-    
-    /**
-     * Select all tasks that have a suspended by user reference for the given value.
-     */
-    T taskSuspendedBy(String suspendedBy);
 
     /**
      * Only select tasks with the given category.
      */
     T taskCategory(String category);
-
-    /**
-     * Only select tasks belonging to one of the categories in the given list.
-     *
-     * @param taskCategoryInList
-     * @throws FlowableIllegalArgumentException When passed category list is empty or <code>null</code> or contains <code>null</code> String.
-     */
-    T taskCategoryIn(Collection<String> taskCategoryInList);
-
-    /**
-     * Only select tasks with a defined category which do not belong to a category present in the given list.
-     * <p>
-     * NOTE: This method does <b>not</b> return tasks <b>without</b> category e.g. tasks having a <code>null</code> category.
-     * To include <code>null</code> categories, use <code>query.or().taskCategoryNotIn(...).taskWithoutCategory().endOr()</code>
-     * </p>
-     *
-     * @param taskCategoryNotInList
-     * @throws FlowableIllegalArgumentException When passed category list is empty or <code>null</code> or contains <code>null String</code>.
-     * @see #taskWithoutCategory
-     */
-    T taskCategoryNotIn(Collection<String> taskCategoryNotInList);
-
-    /**
-     * Selects tasks without category.
-     * <p>
-     * Can also be used in conjunction with other filter criteria to include tasks without category e.g. in <code>or</code> queries.
-     * </p>
-     * @see #taskCategoryNotIn(Collection)
-     */
-    T taskWithoutCategory();
-
+    
     /**
      * Only select tasks with form key.
      */
@@ -435,31 +324,6 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks with the given taskDefinitionKeys. The task definition key is the id of the userTask: &lt;userTask id="xxx" .../&gt;
      **/
     T taskDefinitionKeys(Collection<String> keys);
-    
-    /**
-     * Only select tasks with the given state.
-     **/
-    T taskState(String state);
-    
-    /**
-     * Only select tasks with the given in progress start due date.
-     */
-    T taskInProgressStartDueDate(Date dueDate);
-
-    /**
-     * Only select tasks which have an in progress start due date before the given date.
-     */
-    T taskInProgressStartDueBefore(Date dueDate);
-
-    /**
-     * Only select tasks which have an in progress start due date after the given date.
-     */
-    T taskInProgressStartDueAfter(Date dueDate);
-
-    /**
-     * Only select tasks with no in progress start due date.
-     */
-    T withoutTaskInProgressStartDueDate();
 
     /**
      * Only select tasks with the given due date.
@@ -559,11 +423,6 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks which are related to a case instances for the given deployment id.
      */
     T cmmnDeploymentIdIn(Collection<String> cmmnDeploymentIds);
-    
-    /**
-     * Only select tasks which don't have a scope id set.
-     */
-    T withoutScopeId();
 
     /**
      * Only select tasks which have a local task variable with the given name set to the given value.
@@ -794,129 +653,19 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
     T processVariableNotExists(String name);
 
     /**
-     * Only select tasks which are part of a case that has a variable with the given name set to the given value.
-     */
-    T caseVariableValueEquals(String variableName, Object variableValue);
-
-    /**
-     * Only select tasks which are part of a case that has at least one variable with the given value.
-     */
-    T caseVariableValueEquals(Object variableValue);
-
-    /**
-     * Only select tasks which are part of a case that has a local string variable which is not the given value, case insensitive.
-     * <p>
-     * This method only works if your database has encoding/collation that supports case-sensitive queries. For example, use "collate UTF-8" on MySQL and for MSSQL, select one of the case-sensitive
-     * Collations available (<a href="http://msdn.microsoft.com/en-us/library/ms144250(v=sql.105).aspx" >MSDN Server Collation Reference</a>).
-     * </p>
-     */
-    T caseVariableValueEqualsIgnoreCase(String name, String value);
-
-    /**
-     * Only select tasks which have a variable with the given name, but with a different value than the passed value. Byte-arrays and {@link Serializable} objects (which are not primitive type
-     * wrappers) are not supported.
-     */
-    T caseVariableValueNotEquals(String variableName, Object variableValue);
-
-    /**
-     * Only select tasks which are part of a case that has a string variable with the given value, case insensitive.
-     * <p>
-     * This method only works if your database has encoding/collation that supports case-sensitive queries. For example, use "collate UTF-8" on MySQL and for MSSQL, select one of the case-sensitive
-     * Collations available (<a href="http://msdn.microsoft.com/en-us/library/ms144250(v=sql.105).aspx" >MSDN Server Collation Reference</a>).
-     * </p>
-     */
-    T caseVariableValueNotEqualsIgnoreCase(String name, String value);
-
-    /**
-     * Only select tasks which have a global variable value greater than the passed value when they ended. Booleans, Byte-arrays and {@link Serializable} objects (which are not primitive type
-     * wrappers) are not supported.
-     *
-     * @param name cannot be null.
-     * @param value cannot be null.
-     */
-    T caseVariableValueGreaterThan(String name, Object value);
-
-    /**
-     * Only select tasks which have a global variable value greater than or equal to the passed value when they ended. Booleans, Byte-arrays and {@link Serializable} objects (which are not primitive
-     * type wrappers) are not supported.
-     *
-     * @param name cannot be null.
-     * @param value cannot be null.
-     */
-    T caseVariableValueGreaterThanOrEqual(String name, Object value);
-
-    /**
-     * Only select tasks which have a global variable value less than the passed value when the ended.Booleans, Byte-arrays and {@link Serializable} objects (which are not primitive type wrappers) are
-     * not supported.
-     *
-     * @param name cannot be null.
-     * @param value cannot be null.
-     */
-    T caseVariableValueLessThan(String name, Object value);
-
-    /**
-     * Only select tasks which have a global variable value less than or equal to the passed value when they ended. Booleans, Byte-arrays and {@link Serializable} objects (which are not primitive type
-     * wrappers) are not supported.
-     *
-     * @param name cannot be null.
-     * @param value cannot be null.
-     */
-    T caseVariableValueLessThanOrEqual(String name, Object value);
-
-    /**
-     * Only select tasks which have a global variable value like the given value when they ended. This can be used on string variables only.
-     *
-     * @param name cannot be null.
-     * @param value cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
-     */
-    T caseVariableValueLike(String name, String value);
-
-    /**
-     * Only select tasks which have a global variable value like the given value (case insensitive) when they ended. This can be used on string variables only.
-     *
-     * @param name cannot be null.
-     * @param value cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
-     */
-    T caseVariableValueLikeIgnoreCase(String name, String value);
-
-    /**
-     * Only select tasks which have a global variable with the given name.
-     *
-     * @param name cannot be null.
-     */
-    T caseVariableExists(String name);
-
-    /**
-     * Only select tasks which does not have a global variable with the given name.
-     *
-     * @param name cannot be null.
-     */
-    T caseVariableNotExists(String name);
-
-    /**
-     * Only selects tasks which with the given root scope id
-     */
-    T taskRootScopeId(String parentScopeId);
-
-    /**
-     * Only selects tasks which with the given parent scope id
-     */
-    T taskParentScopeId(String parentScopeId);
-
-    /**
      * Include local task variables in the task query result
      */
     T includeTaskLocalVariables();
 
     /**
-     * Include global process variables in the task query result
+     * Include global task variables in the task query result
      */
     T includeProcessVariables();
 
     /**
-     * Include global case variables in the task query result
+     * Limit task variables
      */
-    T includeCaseVariables();
+    T limitTaskVariables(Integer taskVariablesLimit);
 
     /**
      * Include identity links in the task query result

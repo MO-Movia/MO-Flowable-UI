@@ -38,12 +38,6 @@ public class Resource extends BaseElement {
 
     @Override
     public BaseElement clone() {
-        Resource clone = new Resource(id, name);
-        clone.setValues(this);
-        return clone;
-    }
-
-    public void setValues(Resource otherResource) {
-        super.setValues(otherResource);
+        return new Resource(getId(), getName());
     }
 }

@@ -59,17 +59,12 @@ public class DeploymentResourcesResourceTest extends BaseSpringRestTestCase {
                     .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_EXTRA_ARRAY_ITEMS, Option.IGNORING_ARRAY_ORDER)
                     .isEqualTo("["
                             + "  {"
-                            + "    id: 'org/flowable/app/rest/service/api/repository/oneApp.app',"
-                            + "    mediaType: 'application/json',"
-                            + "    type: 'appDefinition'"
-                            + "  },"
-                            + "  {"
                             + "    id: 'test.txt',"
                             + "    url: '" + SERVER_URL_PREFIX + AppRestUrls
                             .createRelativeResourceUrl(AppRestUrls.URL_DEPLOYMENT_RESOURCE, deployment.getId(), "test.txt") + "',"
                             + "    contentUrl: '" + SERVER_URL_PREFIX + AppRestUrls
                             .createRelativeResourceUrl(AppRestUrls.URL_DEPLOYMENT_RESOURCE_CONTENT, deployment.getId(), "test.txt") + "',"
-                            + "    mediaType: 'text/plain',"
+                            + "    mediaType: null,"
                             + "    type: 'resource'"
                             + "  }"
                             + "]");

@@ -16,14 +16,7 @@ package org.flowable.common.engine.api.variable;
  * @author Joram Barrez
  */
 public interface VariableContainer {
-
-    /**
-     * @return an empty (null object) variable container.
-     */
-    public static VariableContainer empty(){
-        return EmptyVariableContainer.INSTANCE;
-    }
-
+    
     boolean hasVariable(String variableName);
     
     Object getVariable(String variableName);

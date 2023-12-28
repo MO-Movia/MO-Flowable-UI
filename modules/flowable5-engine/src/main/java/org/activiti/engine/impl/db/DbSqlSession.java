@@ -873,7 +873,7 @@ public class DbSqlSession implements Session {
 
     protected static FlowableVariableEvent createVariableDeleteEvent(VariableInstanceEntity variableInstance) {
         return ActivitiEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_DELETED, variableInstance.getName(), null, variableInstance.getType(),
-                variableInstance.getTaskId(), variableInstance.getExecutionId(), variableInstance.getProcessInstanceId(), null, variableInstance.getId());
+                variableInstance.getTaskId(), variableInstance.getExecutionId(), variableInstance.getProcessInstanceId(), null);
     }
 
     protected void flushRegularDeletes(boolean dispatchEvent) {

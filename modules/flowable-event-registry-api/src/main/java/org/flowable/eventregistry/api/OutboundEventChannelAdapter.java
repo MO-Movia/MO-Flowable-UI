@@ -12,17 +12,11 @@
  */
 package org.flowable.eventregistry.api;
 
-import java.util.Map;
-
 /**
  * @author Joram Barrez
  */
 public interface OutboundEventChannelAdapter<T> {
 
-    default void sendEvent(OutboundEvent<T> event) {
-        sendEvent(event.getBody(), event.getHeaders());
-    }
-
-    void sendEvent(T rawEvent, Map<String, Object> headerMap);
+    void sendEvent(T rawEvent);
 
 }

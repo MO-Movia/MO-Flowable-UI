@@ -145,23 +145,8 @@ public class EventSubscriptionServiceImpl extends CommonServiceImpl<EventSubscri
     }
 
     @Override
-    public void updateEventSubscriptionProcessDefinitionId(String oldProcessDefinitionId, String newProcessDefinitionId, String eventType, String activityId, String scopeDefinitionKey, String configuration) {
-        getEventSubscriptionEntityManager().updateEventSubscriptionProcessDefinitionId(oldProcessDefinitionId, newProcessDefinitionId, eventType, activityId, scopeDefinitionKey, configuration);
-    }
-
-    @Override
     public void updateEventSubscription(EventSubscriptionEntity eventSubscription) {
         getEventSubscriptionEntityManager().update(eventSubscription);
-    }
-
-    @Override
-    public boolean lockEventSubscription(String eventSubscriptionId) {
-        return getEventSubscriptionEntityManager().lockEventSubscription(eventSubscriptionId);
-    }
-
-    @Override
-    public void unlockEventSubscription(String eventSubscriptionId) {
-        getEventSubscriptionEntityManager().unlockEventSubscription(eventSubscriptionId);
     }
 
     @Override
@@ -192,11 +177,6 @@ public class EventSubscriptionServiceImpl extends CommonServiceImpl<EventSubscri
     @Override
     public void deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(String scopeDefinitionId, String scopeType) {
         getEventSubscriptionEntityManager().deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(scopeDefinitionId, scopeType);
-    }
-
-    @Override
-    public void deleteEventSubscriptionsForProcessDefinitionAndProcessStartEvent(String processDefinitionId, String eventType, String activityId, String configuration) {
-        getEventSubscriptionEntityManager().deleteEventSubscriptionsForProcessDefinitionAndProcessStartEvent(processDefinitionId, eventType, activityId, configuration);
     }
 
     public EventSubscription createEventSubscription(EventSubscriptionBuilder builder) {

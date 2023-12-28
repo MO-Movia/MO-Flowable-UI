@@ -21,7 +21,6 @@ import org.flowable.engine.impl.jobexecutor.AsyncContinuationJobHandler;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.runtime.ProcessInstanceBuilderImpl;
 import org.flowable.engine.impl.util.CommandContextUtil;
-import org.flowable.engine.impl.util.JobUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -42,9 +41,9 @@ public class StartProcessInstanceAsyncCmd extends StartProcessInstanceCmd {
         ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
         ProcessDefinition processDefinition = getProcessDefinition(processEngineConfiguration, commandContext);
         processInstanceHelper = processEngineConfiguration.getProcessInstanceHelper();
-        ExecutionEntity processInstance = (ExecutionEntity) processInstanceHelper.createProcessInstance(processDefinition, businessKey, businessStatus,
-                processInstanceName, startEventId, overrideDefinitionTenantId, predefinedProcessInstanceId, variables, transientVariables, callbackId, callbackType,
-                referenceId, referenceType, ownerId, assigneeId, stageInstanceId, false);
+        ExecutionEntity processInstance = (ExecutionEntity) processInstanceHelper.createProcessInstance(processDefinition, businessKey, processInstanceName,
+            overrideDefinitionTenantId, predefinedProcessInstanceId, variables, transientVariables,
+            callbackId, callbackType, referenceId, referenceType, stageInstanceId, false);
         ExecutionEntity execution = processInstance.getExecutions().get(0);
         Process process = ProcessDefinitionUtil.getProcess(processInstance.getProcessDefinitionId());
 
@@ -62,11 +61,22 @@ public class StartProcessInstanceAsyncCmd extends StartProcessInstanceCmd {
     }
 
     protected void executeAsynchronous(ExecutionEntity execution, Process process, CommandContext commandContext) {
-        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
-        JobService jobService = processEngineConfiguration.getJobServiceConfiguration().getJobService();
+        JobService jobService = CommandContextUtil.getJobService(commandContext);
 
-        JobEntity job = JobUtil.createJob(execution, process, AsyncContinuationJobHandler.TYPE, processEngineConfiguration);
+        JobEntity job = jobService.createJob();
+        job.setExecutionId(execution.getId());
+        job.setProcessInstanceId(execution.getProcessInstanceId());
+        job.setProcessDefinitionId(execution.getProcessDefinitionId());
+        job.setElementId(process.getId());
         job.setElementName(process.getName());
+        job.setJobHandlerType(AsyncContinuationJobHandler.TYPE);
+
+        // Inherit tenant id (if applicable)
+        if (execution.getTenantId() != null) {
+            job.setTenantId(execution.getTenantId());
+        }
+
+        execution.getJobs().add(job);
 
         jobService.createAsyncJob(job, false);
         jobService.scheduleAsyncJob(job);

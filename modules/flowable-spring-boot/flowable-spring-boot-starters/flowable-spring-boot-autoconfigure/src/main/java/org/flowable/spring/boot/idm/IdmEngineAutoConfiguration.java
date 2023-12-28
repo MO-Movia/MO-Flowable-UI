@@ -31,7 +31,8 @@ import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.condition.ConditionalOnIdmEngine;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -51,15 +52,17 @@ import org.springframework.transaction.PlatformTransactionManager;
  *
  * @author Filip Hrisafov
  */
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnIdmEngine
 @EnableConfigurationProperties({
     FlowableProperties.class,
     FlowableIdmProperties.class
 })
-@AutoConfiguration(after = {
+@AutoConfigureAfter({
     AppEngineAutoConfiguration.class,
     ProcessEngineAutoConfiguration.class,
-}, before = {
+})
+@AutoConfigureBefore({
     AppEngineServicesAutoConfiguration.class,
     ProcessEngineServicesAutoConfiguration.class
 })

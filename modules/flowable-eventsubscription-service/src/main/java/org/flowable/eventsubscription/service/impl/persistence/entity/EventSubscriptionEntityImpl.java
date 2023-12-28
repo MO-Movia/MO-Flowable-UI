@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.apache.commons.lang3.StringUtils;
 import org.flowable.eventsubscription.service.EventSubscriptionServiceConfiguration;
 
 /**
@@ -40,10 +39,7 @@ public abstract class EventSubscriptionEntityImpl extends AbstractEventSubscript
     protected String subScopeId;
     protected String scopeId;
     protected String scopeDefinitionId;
-    protected String scopeDefinitionKey;
     protected String scopeType;
-    protected Date lockTime;
-    protected String lockOwner;
     protected String tenantId;
     
     public EventSubscriptionEntityImpl() {}
@@ -64,7 +60,6 @@ public abstract class EventSubscriptionEntityImpl extends AbstractEventSubscript
         persistentState.put("subScopeId", this.subScopeId);
         persistentState.put("scopeId", this.scopeId);
         persistentState.put("scopeDefinitionId", this.scopeDefinitionId);
-        persistentState.put("scopeDefinitionKey", this.scopeDefinitionKey);
         persistentState.put("scopeType", this.scopeType);
         persistentState.put("tenantId", this.tenantId);
         return persistentState;
@@ -183,16 +178,6 @@ public abstract class EventSubscriptionEntityImpl extends AbstractEventSubscript
     }
 
     @Override
-    public String getScopeDefinitionKey() {
-        return scopeDefinitionKey;
-    }
-
-    @Override
-    public void setScopeDefinitionKey(String scopeDefinitionKey) {
-        this.scopeDefinitionKey = scopeDefinitionKey;
-    }
-
-    @Override
     public String getScopeType() {
         return scopeType;
     }
@@ -200,26 +185,6 @@ public abstract class EventSubscriptionEntityImpl extends AbstractEventSubscript
     @Override
     public void setScopeType(String scopeType) {
         this.scopeType = scopeType;
-    }
-
-    @Override
-    public Date getLockTime() {
-        return lockTime;
-    }
-
-    @Override
-    public void setLockTime(Date lockTime) {
-        this.lockTime = lockTime;
-    }
-
-    @Override
-    public String getLockOwner() {
-        return lockOwner;
-    }
-
-    @Override
-    public void setLockOwner(String lockOwner) {
-        this.lockOwner = lockOwner;
     }
 
     @Override
@@ -262,45 +227,4 @@ public abstract class EventSubscriptionEntityImpl extends AbstractEventSubscript
         return true;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName().replace("EntityImpl", "")).append("[")
-                .append("id=").append(id)
-                .append(", eventType=").append(eventType);
-
-        if (activityId != null) {
-            sb.append(", activityId=").append(activityId);
-        }
-
-        if (executionId != null) {
-            sb.append(", processInstanceId=").append(processInstanceId)
-                    .append(", executionId=").append(executionId);
-        } else if (scopeId != null) {
-            sb.append(", scopeId=").append(scopeId)
-                    .append(", subScopeId=").append(subScopeId)
-                    .append(", scopeType=").append(scopeType)
-                    .append(", scopeDefinitionId=").append(scopeDefinitionId);
-        }
-
-        if (processDefinitionId != null) {
-            sb.append(", processDefinitionId=").append(processDefinitionId);
-        } else if (scopeDefinitionId != null) {
-            if (scopeId == null) {
-                sb.append(", scopeType=").append(scopeType);
-            }
-            sb.append(", scopeDefinitionId=").append(scopeDefinitionId);
-        }
-        
-        if (scopeDefinitionKey != null) {
-            sb.append(", scopeDefinitionKey=").append(scopeDefinitionKey);
-        }
-
-        if (StringUtils.isNotEmpty(tenantId)) {
-            sb.append(", tenantId=").append(tenantId);
-        }
-
-        sb.append("]");
-        return sb.toString();
-    }
 }

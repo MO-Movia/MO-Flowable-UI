@@ -14,6 +14,7 @@ package org.flowable.cmmn.engine.impl.el;
 
 import java.util.Map;
 
+import org.flowable.common.engine.api.variable.VariableContainer;
 import org.flowable.common.engine.impl.javax.el.ELResolver;
 import org.flowable.variable.service.impl.el.VariableScopeExpressionManager;
 
@@ -22,13 +23,16 @@ import org.flowable.variable.service.impl.el.VariableScopeExpressionManager;
  */
 public class CmmnExpressionManager extends VariableScopeExpressionManager {
 
+    public CmmnExpressionManager() {
+    }
+
     public CmmnExpressionManager(Map<Object, Object> beans) {
        super(beans);
     }
 
     @Override
-    protected ELResolver createVariableElResolver() {
-        return new CmmnVariableScopeELResolver();
+    protected ELResolver createVariableElResolver(VariableContainer variableContainer) {
+        return new CmmnVariableScopeELResolver(variableContainer);
     }
     
 }

@@ -25,7 +25,6 @@ import org.flowable.app.engine.AppEngines;
 import org.flowable.app.spring.autodeployment.DefaultAutoDeploymentStrategy;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.EngineConfigurator;
-import org.flowable.common.engine.impl.cfg.SpringBeanFactoryProxyMap;
 import org.flowable.common.engine.impl.interceptor.CommandConfig;
 import org.flowable.common.engine.impl.interceptor.CommandInterceptor;
 import org.flowable.common.spring.AutoDeploymentStrategy;
@@ -67,13 +66,6 @@ public class SpringAppEngineConfiguration extends AppEngineConfiguration impleme
         AppEngines.setInitialized(true);
         enginesBuild.add(appEngine.getName());
         return appEngine;
-    }
-
-    @Override
-    public void initBeans() {
-        if (beans == null) {
-            beans = new SpringBeanFactoryProxyMap(applicationContext);
-        }
     }
 
     @Override

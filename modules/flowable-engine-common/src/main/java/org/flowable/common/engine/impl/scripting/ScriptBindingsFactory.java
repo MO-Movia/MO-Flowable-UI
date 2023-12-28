@@ -19,6 +19,7 @@ import java.util.List;
 import javax.script.Bindings;
 
 import org.flowable.common.engine.impl.AbstractEngineConfiguration;
+import org.flowable.variable.api.delegate.VariableScope;
 
 /**
  * @author Tom Baeyens
@@ -34,16 +35,18 @@ public class ScriptBindingsFactory {
         this.resolverFactories = resolverFactories;
     }
 
-    public Bindings createBindings(ScriptEngineRequest request) {
-        return new ScriptBindings(createResolvers(request), request.getVariableContainer(),
-                request.isStoreScriptVariables());
+    public Bindings createBindings(VariableScope variableScope) {
+        return new ScriptBindings(createResolvers(variableScope), variableScope);
     }
 
-    protected List<Resolver> createResolvers(ScriptEngineRequest request) {
+    public Bindings createBindings(VariableScope variableScope, boolean storeScriptVariables) {
+        return new ScriptBindings(createResolvers(variableScope), variableScope, storeScriptVariables);
+    }
+
+    protected List<Resolver> createResolvers(VariableScope variableScope) {
         List<Resolver> scriptResolvers = new ArrayList<>();
-        scriptResolvers.addAll(request.getAdditionalResolvers());
         for (ResolverFactory scriptResolverFactory : resolverFactories) {
-            Resolver resolver = scriptResolverFactory.createResolver(engineConfiguration, request.getVariableContainer());
+            Resolver resolver = scriptResolverFactory.createResolver(engineConfiguration, variableScope);
             if (resolver != null) {
                 scriptResolvers.add(resolver);
             }

@@ -40,10 +40,10 @@ public class TestReturnValueFromFlowable extends SpringFlowableTestCase {
     @Autowired
     RuntimeService runtimeService;
 
-    @EndpointInject("mock:result")
+    @EndpointInject(uri = "mock:result")
     protected MockEndpoint resultEndpoint;
 
-    @Produce("direct:startReturnResultTest")
+    @Produce(uri = "direct:startReturnResultTest")
     protected ProducerTemplate template;
 
     public void setUp() throws Exception {
@@ -60,7 +60,7 @@ public class TestReturnValueFromFlowable extends SpringFlowableTestCase {
     public void tearDown() throws Exception {
         List<Route> routes = camelContext.getRoutes();
         for (Route r : routes) {
-            camelContext.getRouteController().stopRoute(r.getId());
+            camelContext.stopRoute(r.getId());
             camelContext.removeRoute(r.getId());
         }
     }

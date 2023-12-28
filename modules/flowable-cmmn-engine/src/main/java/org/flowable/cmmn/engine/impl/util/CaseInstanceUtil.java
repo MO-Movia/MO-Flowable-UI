@@ -99,7 +99,8 @@ public class CaseInstanceUtil {
         return planItemInstances;
     }
 
-    protected static void internalCollectPlanItemInstances(PlanItemInstanceContainer planItemInstanceContainer, List<PlanItemInstanceEntity> planItemInstances) {
+    protected static void internalCollectPlanItemInstances(PlanItemInstanceContainer planItemInstanceContainer,
+        List<PlanItemInstanceEntity> planItemInstances) {
         List<PlanItemInstanceEntity> childPlanItemInstances = planItemInstanceContainer.getChildPlanItemInstances();
         if (childPlanItemInstances != null && !childPlanItemInstances.isEmpty()) {
             for (PlanItemInstanceEntity childPlanItemInstanceEntity : childPlanItemInstances) {

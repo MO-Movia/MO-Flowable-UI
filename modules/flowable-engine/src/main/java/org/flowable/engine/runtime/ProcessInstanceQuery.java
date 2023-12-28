@@ -47,14 +47,6 @@ public interface ProcessInstanceQuery extends Query<ProcessInstanceQuery, Proces
      * Select process instances with a business key like the given value.
      */
     ProcessInstanceQuery processInstanceBusinessKeyLike(String businessKeyLike);
-    
-    /** Select process instances with the given business status */
-    ProcessInstanceQuery processInstanceBusinessStatus(String businessStatus);
-
-    /**
-     * Select process instances with a business status like the given value.
-     */
-    ProcessInstanceQuery processInstanceBusinessStatusLike(String businessStatusLike);
 
     /**
      * Only select process instances that have the given tenant id.
@@ -322,17 +314,6 @@ public interface ProcessInstanceQuery extends Query<ProcessInstanceQuery, Proces
      */
     ProcessInstanceQuery processInstanceNameLikeIgnoreCase(String nameLikeIgnoreCase);
     
-
-    /**
-     * Only select process instances with a root instance with a name like the given value.
-     */
-    ProcessInstanceQuery processInstanceRootScopeId(String rootScopeId);
-
-    /**
-     * Only select process instances with the given parent process instance id.
-     */
-    ProcessInstanceQuery processInstanceParentScopeId(String parentScopeId);
-
     /**
      * Only select process instances with the given callback id. 
      */
@@ -367,6 +348,11 @@ public interface ProcessInstanceQuery extends Query<ProcessInstanceQuery, Proces
      * Include process variables in the process query result
      */
     ProcessInstanceQuery includeProcessVariables();
+
+    /**
+     * Limit process instance variables
+     */
+    ProcessInstanceQuery limitProcessInstanceVariables(Integer processInstanceVariablesLimit);
 
     /**
      * Only select process instances that failed due to an exception happening during a job execution.

@@ -23,11 +23,9 @@ import org.flowable.common.engine.api.FlowableException;
  */
 public class FlowableVersions {
     
-    public static final String CURRENT_VERSION = "7.0.1.1"; // Note the extra .x at the end. To cater for snapshot releases with different database changes
+    public static final String CURRENT_VERSION = "6.6.0.1"; // Note the extra .x at the end. To cater for snapshot releases with different database changes
     
     public static final List<FlowableVersion> FLOWABLE_VERSIONS = new ArrayList<>();
-    
-    public static final List<FlowableVersion> CAM_MIGRATION_VERSIONS = new ArrayList<>();
     
     public static final String LAST_V5_VERSION = "5.99.0.0";
     
@@ -50,11 +48,8 @@ public class FlowableVersions {
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.13"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.14"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.15"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("5.15"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.15.1"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("5.15.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.16"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("5.16"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.16.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.16.2-SNAPSHOT"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.16.2"));
@@ -65,7 +60,6 @@ public class FlowableVersions {
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.17.0.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.17.0.2"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.18.0.0"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("5.18.0.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.18.0.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.20.0.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("5.20.0.1"));
@@ -88,17 +82,14 @@ public class FlowableVersions {
 
         // Version 6
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.0.0"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("6.0.0.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.0.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.0.2"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("6.0.0.2"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.0.3"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.0.4"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.0.5"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.0.1.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.1.0.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.1.1.0"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("6.1.1.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion(LAST_V6_VERSION_BEFORE_SERVICES));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.2.0.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.2.1.0"));
@@ -111,7 +102,6 @@ public class FlowableVersions {
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.4.1.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.4.1.2"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.4.1.3"));
-        CAM_MIGRATION_VERSIONS.add(new FlowableVersion("6.4.1.3"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.5.0.0"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.5.0.1"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.5.0.2"));
@@ -127,21 +117,6 @@ public class FlowableVersions {
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.5.1.5"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.5.1.6"));
         FLOWABLE_VERSIONS.add(new FlowableVersion("6.6.0.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.6.0.1"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.6.1.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.6.2.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.6.2.1"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.0.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.0.1"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.1.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.2.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.2.1"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.2.2"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.7.2.3"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.8.0.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("6.8.1.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("7.0.0.0"));
-        FLOWABLE_VERSIONS.add(new FlowableVersion("7.0.1.0"));
 
         /* Current */
         FLOWABLE_VERSIONS.add(new FlowableVersion(CURRENT_VERSION));
@@ -177,11 +152,6 @@ public class FlowableVersions {
     
     public static int getFlowableVersionIndexForDbVersion(String dbVersion) {
         int matchingVersionIndex;
-        
-        if ("fox".equalsIgnoreCase(dbVersion)) {
-            dbVersion = "5.13";
-        }
-        
         // Determine index in the sequence of Flowable releases
         matchingVersionIndex = findMatchingVersionIndex(dbVersion);
 
@@ -199,25 +169,4 @@ public class FlowableVersions {
         return matchingVersionIndex;
     }
 
-    public static boolean hasCamMigrationVersion(String version) {
-        int index = findMatchingCamMigrationIndex(version);
-        if (index >= 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    protected static int findMatchingCamMigrationIndex(String dbVersion) {
-        int index = 0;
-        int matchingVersionIndex = -1;
-        while (matchingVersionIndex < 0 && index < FlowableVersions.CAM_MIGRATION_VERSIONS.size()) {
-            if (FlowableVersions.CAM_MIGRATION_VERSIONS.get(index).matches(dbVersion)) {
-                matchingVersionIndex = index;
-            } else {
-                index++;
-            }
-        }
-        return matchingVersionIndex;
-    }
 }

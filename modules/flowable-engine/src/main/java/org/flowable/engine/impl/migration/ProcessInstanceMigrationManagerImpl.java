@@ -21,21 +21,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.flowable.batch.api.Batch;
 import org.flowable.batch.api.BatchPart;
 import org.flowable.batch.api.BatchService;
-import org.flowable.bpmn.model.Activity;
 import org.flowable.bpmn.model.BoundaryEvent;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.CallActivity;
-import org.flowable.bpmn.model.ExternalWorkerServiceTask;
 import org.flowable.bpmn.model.FlowElement;
-import org.flowable.bpmn.model.MultiInstanceLoopCharacteristics;
 import org.flowable.bpmn.model.ReceiveTask;
 import org.flowable.bpmn.model.SubProcess;
 import org.flowable.bpmn.model.Task;
@@ -50,7 +47,6 @@ import org.flowable.common.engine.impl.calendar.CycleBusinessCalendar;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.common.engine.impl.scripting.ScriptEngineRequest;
 import org.flowable.common.engine.impl.scripting.ScriptingEngines;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.impl.ProcessInstanceQueryImpl;
@@ -75,7 +71,6 @@ import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 import org.flowable.engine.migration.ActivityMigrationMapping;
 import org.flowable.engine.migration.ProcessInstanceBatchMigrationResult;
-import org.flowable.engine.migration.ProcessInstanceMigrationCallback;
 import org.flowable.engine.migration.ProcessInstanceMigrationDocument;
 import org.flowable.engine.migration.ProcessInstanceMigrationManager;
 import org.flowable.engine.migration.ProcessInstanceMigrationValidationResult;
@@ -247,10 +242,9 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                 if (!isActivityIdInProcessDefinitionModel(executionActivityId, newModel)) {
                     //Check if the execution is inside a MultiInstance parent and if so, check that its mapped
                     FlowElement currentModelFlowElement = currentModel.getFlowElement(executionActivityId);
-                    String flowElementMultiInstanceParentId = getFlowElementMultiInstanceParentId(currentModelFlowElement);
-                    if (flowElementMultiInstanceParentId == null || !mainProcessActivityMappingByFromActivityId.containsKey(flowElementMultiInstanceParentId)) {
-                        validationResult.addValidationMessage("Process instance (id:'" + processInstanceId + "') has a running Activity (id:'" + executionActivityId + 
-                        		"') that is not mapped for migration (Or its Multi-Instance parent)");
+                    Optional<String> flowElementMultiInstanceParentId = getFlowElementMultiInstanceParentId(currentModelFlowElement);
+                    if (!flowElementMultiInstanceParentId.isPresent() || !mainProcessActivityMappingByFromActivityId.containsKey(flowElementMultiInstanceParentId.get())) {
+                        validationResult.addValidationMessage("Process instance (id:'" + processInstanceId + "') has a running Activity (id:'" + executionActivityId + "') that is not mapped for migration (Or its Multi-Instance parent)");
                         continue;
                     }
                 }
@@ -295,16 +289,14 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                 List<String> toActivityIds = mapping.getToActivityIds();
                 for (String targetActivityId : toActivityIds) {
                     if (!isActivityIdInProcessDefinitionModel(targetActivityId, mappingModel)) {
-                        validationResult.addValidationMessage("Invalid mapping for '" + execution.getCurrentActivityId() + "' to '" + 
-                        		targetActivityId + "', cannot be found in the process definition with id '" + mappingModel.getMainProcess().getId() + "'");
+                        validationResult.addValidationMessage("Invalid mapping for '" + execution.getCurrentActivityId() + "' to '" + targetActivityId + "', cannot be found in the process definition with id '" + mappingModel.getMainProcess().getId() + "'");
                         continue;
                     }
                     //We cannot move an activity inside a MultiInstance container
                     FlowElement targetFlowElement = mappingModel.getFlowElement(targetActivityId);
-                    String targetFlowElementMultiInstanceParentId = getFlowElementMultiInstanceParentId(targetFlowElement);
-                    if (targetFlowElementMultiInstanceParentId != null) {
-                        validationResult.addValidationMessage("Invalid mapping for '" + execution.getCurrentActivityId() + "' to '" + targetActivityId + "', cannot migrate arbitrarily inside a Multi Instance container '" + 
-                        		targetFlowElementMultiInstanceParentId + "' inside process definition with id '" + mappingModel.getMainProcess().getId() + "'");
+                    Optional<String> targetFlowElementMultiInstanceParentId = getFlowElementMultiInstanceParentId(targetFlowElement);
+                    if (targetFlowElementMultiInstanceParentId.isPresent()) {
+                        validationResult.addValidationMessage("Invalid mapping for '" + execution.getCurrentActivityId() + "' to '" + targetActivityId + "', cannot migrate arbitrarily inside a Multi Instance container '" + targetFlowElementMultiInstanceParentId.get() + "' inside process definition with id '" + mappingModel.getMainProcess().getId() + "'");
                         continue;
                     }
                 }
@@ -406,6 +398,8 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
         LOGGER.debug("Start migration of process instance with Id:'{}' to process definition identified by {}", processInstance.getId(),
             printProcessDefinitionIdentifierMessage(document));
 
+        ExecutionEntityManager executionEntityManager = CommandContextUtil.getExecutionEntityManager(commandContext);
+
         if (document.getPreUpgradeScript() != null) {
             LOGGER.debug("Execute pre upgrade process instance script");
             executeScript(processInstance, procDefToMigrateTo, document.getPreUpgradeScript(), commandContext);
@@ -421,19 +415,17 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
             executeExpression(processInstance, procDefToMigrateTo, document.getPreUpgradeJavaDelegateExpression(), commandContext);
         }
 
-        ExecutionEntity processInstanceEntity = (ExecutionEntity) processInstance;
-        List<ChangeActivityStateBuilderImpl> changeActivityStateBuilders = prepareChangeStateBuilders(processInstanceEntity, 
-        		procDefToMigrateTo, document, commandContext);
+        List<ChangeActivityStateBuilderImpl> changeActivityStateBuilders = prepareChangeStateBuilders((ExecutionEntity) processInstance, procDefToMigrateTo,
+            document, commandContext);
 
         LOGGER.debug("Updating Process definition reference of process root execution with id:'{}' to '{}'", processInstance.getId(), procDefToMigrateTo.getId());
-        processInstanceEntity.setProcessDefinitionId(procDefToMigrateTo.getId());
+        ((ExecutionEntity) processInstance).setProcessDefinitionId(procDefToMigrateTo.getId());
 
         LOGGER.debug("Resolve activity executions to migrate");
         List<MoveExecutionEntityContainer> moveExecutionEntityContainerList = new ArrayList<>();
         for (ChangeActivityStateBuilderImpl builder : changeActivityStateBuilders) {
-        	List<MoveExecutionEntityContainer> moveExecutionEntityContainers = resolveMoveExecutionEntityContainers(
-        			builder, document.getProcessInstanceVariables(), commandContext);
-            moveExecutionEntityContainerList.addAll(moveExecutionEntityContainers);
+            moveExecutionEntityContainerList.addAll(
+                resolveMoveExecutionEntityContainers(builder, Optional.of(procDefToMigrateTo.getId()), document.getProcessInstanceVariables(), commandContext));
         }
 
         ProcessInstanceChangeState processInstanceChangeState = new ProcessInstanceChangeState()
@@ -444,6 +436,12 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
             .setLocalVariables(document.getActivitiesLocalVariables());
 
         doMoveExecutionState(processInstanceChangeState, commandContext);
+
+        LOGGER.debug("Updating Process definition of unchanged call activity");
+        List<ExecutionEntity> callActivities = executionEntityManager.findChildExecutionsByProcessInstanceId(processInstance.getId()).stream()
+            .filter(executionEntity -> executionEntity.getCurrentFlowElement() instanceof CallActivity)
+            .collect(Collectors.toList());
+        callActivities.forEach(executionEntity -> executionEntity.setProcessDefinitionId(procDefToMigrateTo.getId()));
 
         LOGGER.debug("Updating process definition reference in activity instances");
         CommandContextUtil.getActivityInstanceEntityManager().updateActivityInstancesProcessDefinitionId(procDefToMigrateTo.getId(), processInstance.getId());
@@ -465,106 +463,44 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
             LOGGER.debug("Execute post upgrade process instance script");
             executeExpression(processInstance, procDefToMigrateTo, document.getPostUpgradeJavaDelegateExpression(), commandContext);
         }
-        
-        List<ProcessInstanceMigrationCallback> migrationCallbacks = CommandContextUtil.getProcessEngineConfiguration(commandContext).getProcessInstanceMigrationCallbacks();
-        if (migrationCallbacks != null && !migrationCallbacks.isEmpty()) {
-            for (ProcessInstanceMigrationCallback processInstanceMigrationCallback : migrationCallbacks) {
-                processInstanceMigrationCallback.processInstanceMigrated(processInstance, procDefToMigrateTo, document, commandContext);
-            }
-        }
 
         LOGGER.debug("Process migration ended for process instance with Id:'{}'", processInstance.getId());
     }
 
     @Override
     protected Map<String, List<ExecutionEntity>> resolveActiveEmbeddedSubProcesses(String processInstanceId, CommandContext commandContext) {
-        ExecutionEntityManager executionEntityManager = CommandContextUtil.getExecutionEntityManager(commandContext);
-        List<ExecutionEntity> childExecutions = executionEntityManager.findChildExecutionsByProcessInstanceId(processInstanceId);
-
-        Map<String, List<ExecutionEntity>> activeSubProcessesByActivityId = childExecutions.stream()
-            .filter(ExecutionEntity::isActive)
-            .filter(executionEntity -> executionEntity.getCurrentFlowElement() instanceof SubProcess)
-            .filter(executionEntity -> ((SubProcess) executionEntity.getCurrentFlowElement()).hasMultiInstanceLoopCharacteristics())
-            .collect(Collectors.groupingBy(ExecutionEntity::getActivityId));
-        return activeSubProcessesByActivityId;
+        return Collections.emptyMap();
     }
 
     @Override
     protected boolean isDirectFlowElementExecutionMigration(FlowElement currentFlowElement, FlowElement newFlowElement) {
         //Activities inside or that are MultiInstance cannot be migrated directly, as it is better to trigger the MultiInstanceBehavior using the agenda, directMigration skips the agenda
-
-        return (isDirectCallActivityExecutionMigration(currentFlowElement, newFlowElement) ||
-                isDirectUserTaskExecutionMigration(currentFlowElement, newFlowElement) ||
-                isDirectReceiveTaskExecutionMigration(currentFlowElement, newFlowElement) ||
-                isDirectExternalWorkerServiceTaskExecutionMigration(currentFlowElement, newFlowElement)) &&
-                (getFlowElementMultiInstanceParentId(currentFlowElement) == null && getFlowElementMultiInstanceParentId(newFlowElement) == null);
-    }
-
-    protected boolean isDirectCallActivityExecutionMigration(FlowElement currentFlowElement, FlowElement newFlowElement) {
-        return currentFlowElement instanceof CallActivity &&
-                newFlowElement instanceof CallActivity &&
-                ((CallActivity) currentFlowElement).getLoopCharacteristics() == null &&
-                ((CallActivity) newFlowElement).getLoopCharacteristics() == null;
-    }
-
-    protected boolean isDirectUserTaskExecutionMigration(FlowElement currentFlowElement, FlowElement newFlowElement) {
-        return currentFlowElement instanceof UserTask &&
-                newFlowElement instanceof UserTask &&
-                ((Task) currentFlowElement).getLoopCharacteristics() == null &&
-                ((Task) newFlowElement).getLoopCharacteristics() == null;
-    }
-
-    protected boolean isDirectReceiveTaskExecutionMigration(FlowElement currentFlowElement, FlowElement newFlowElement) {
-        return currentFlowElement instanceof ReceiveTask &&
-                newFlowElement instanceof ReceiveTask &&
-                ((Task) currentFlowElement).getLoopCharacteristics() == null &&
-                ((Task) newFlowElement).getLoopCharacteristics() == null;
-    }
-
-    protected boolean isDirectExternalWorkerServiceTaskExecutionMigration(FlowElement currentFlowElement, FlowElement newFlowElement) {
-        //The current and new external worker service task must be equal to support direct execution migration
-        if (currentFlowElement instanceof ExternalWorkerServiceTask && newFlowElement instanceof ExternalWorkerServiceTask) {
-            ExternalWorkerServiceTask currentExternalWorkerServiceTask = (ExternalWorkerServiceTask) currentFlowElement;
-            ExternalWorkerServiceTask newExternalWorkerServiceTask = (ExternalWorkerServiceTask) newFlowElement;
-            return currentExternalWorkerServiceTask.getLoopCharacteristics() == null &&
-                    newExternalWorkerServiceTask.getLoopCharacteristics() == null &&
-                    new EqualsBuilder()
-                            .append(currentExternalWorkerServiceTask.getId(), newExternalWorkerServiceTask.getId())
-                            .append(currentExternalWorkerServiceTask.getName(), newExternalWorkerServiceTask.getName())
-                            .append(currentExternalWorkerServiceTask.getTopic(), newExternalWorkerServiceTask.getTopic())
-                            .append(currentExternalWorkerServiceTask.isExclusive(), newExternalWorkerServiceTask.isExclusive())
-                            .append(currentExternalWorkerServiceTask.isAsynchronous(), newExternalWorkerServiceTask.isAsynchronous())
-                            .isEquals();
-        }
-        return false;
+        return (currentFlowElement instanceof UserTask && newFlowElement instanceof UserTask ||
+            currentFlowElement instanceof ReceiveTask && newFlowElement instanceof ReceiveTask) &&
+            (((Task) currentFlowElement).getLoopCharacteristics() == null && !getFlowElementMultiInstanceParentId(currentFlowElement).isPresent()) &&
+            (((Task) newFlowElement).getLoopCharacteristics() == null && !getFlowElementMultiInstanceParentId(newFlowElement).isPresent());
     }
 
     protected void executeScript(ProcessInstance processInstance, ProcessDefinition procDefToMigrateTo, Script script, CommandContext commandContext) {
         ScriptingEngines scriptingEngines = CommandContextUtil.getProcessEngineConfiguration(commandContext).getScriptingEngines();
 
         try {
-            ScriptEngineRequest.Builder builder = ScriptEngineRequest.builder()
-                    .script(script.getScript())
-                    .language(script.getLanguage())
-                    .variableContainer((ExecutionEntityImpl) processInstance);
-            scriptingEngines.evaluate(builder.build());
+            scriptingEngines.evaluate(script.getScript(), script.getLanguage(), (ExecutionEntityImpl) processInstance);
         } catch (FlowableException e) {
             LOGGER.warn("Exception while executing upgrade of process instance {} : {}", processInstance.getId(), e.getMessage());
             throw e;
         }
     }
 
-    protected void executeJavaDelegate(ProcessInstance processInstance, ProcessDefinition procDefToMigrateTo, 
-            String preUpgradeJavaDelegate, CommandContext commandContext) {
-        
+    protected void executeJavaDelegate(ProcessInstance processInstance, ProcessDefinition procDefToMigrateTo, String preUpgradeJavaDelegate,
+        CommandContext commandContext) {
         CommandContextUtil.getProcessEngineConfiguration(commandContext).getDelegateInterceptor()
             .handleInvocation(new JavaDelegateInvocation((JavaDelegate) defaultInstantiateDelegate(preUpgradeJavaDelegate, Collections.emptyList()),
                 (ExecutionEntityImpl) processInstance));
     }
 
-    protected void executeExpression(ProcessInstance processInstance, ProcessDefinition procDefToMigrateTo, 
-            String preUpgradeJavaDelegateExpression, CommandContext commandContext) {
-        
+    protected void executeExpression(ProcessInstance processInstance, ProcessDefinition procDefToMigrateTo, String preUpgradeJavaDelegateExpression,
+        CommandContext commandContext) {
         Expression expression = CommandContextUtil.getProcessEngineConfiguration(commandContext).getExpressionManager().createExpression(preUpgradeJavaDelegateExpression);
 
         Object delegate = DelegateExpressionUtil.resolveDelegateExpression(expression, (VariableContainer) processInstance, Collections.emptyList());
@@ -580,11 +516,9 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
     protected List<ChangeActivityStateBuilderImpl> prepareChangeStateBuilders(ExecutionEntity processInstanceExecution, ProcessDefinition procDefToMigrateTo, ProcessInstanceMigrationDocument document, CommandContext commandContext) {
         ExecutionEntityManager executionEntityManager = CommandContextUtil.getExecutionEntityManager(commandContext);
 
-        // Check processDefinition tenant
+        //Check processDefinition tenant
         String procDefTenantId = procDefToMigrateTo.getTenantId();
-        if (!isSameOrDefaultTenant(processInstanceExecution.getTenantId(), procDefToMigrateTo.getKey(), 
-                procDefTenantId, CommandContextUtil.getProcessEngineConfiguration(commandContext))) {
-            
+        if (!isSameTenant(processInstanceExecution.getTenantId(), procDefTenantId)) {
             throw new FlowableException("Tenant mismatch between Process Instance ('" + processInstanceExecution.getTenantId() + "') and Process Definition ('" + procDefTenantId + "') to migrate to");
         }
 
@@ -593,7 +527,7 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
         mainProcessChangeActivityStateBuilder.processInstanceId(processInstanceExecution.getId());
         changeActivityStateBuilders.add(mainProcessChangeActivityStateBuilder);
 
-        // Current executions to migrate...
+        //Current executions to migrate...
         Map<String, List<ExecutionEntity>> filteredExecutionsByActivityId = executionEntityManager.findChildExecutionsByProcessInstanceId(processInstanceExecution.getId())
             .stream()
             .filter(executionEntity -> executionEntity.getCurrentActivityId() != null)
@@ -611,7 +545,7 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
 
         Set<String> mappedFromActivities = mainProcessActivityMappingByFromActivityId.keySet();
 
-        // Partition the executions by Explicitly mapped or not
+        //Partition the executions by Explicitly mapped or not
         Map<Boolean, List<String>> partitionedExecutionActivityIds = filteredExecutionsByActivityId.keySet()
             .stream()
             .collect(Collectors.partitioningBy(mappedFromActivities::contains));
@@ -621,13 +555,13 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
         BpmnModel newModel = ProcessDefinitionUtil.getBpmnModel(procDefToMigrateTo.getId());
         BpmnModel currentModel = ProcessDefinitionUtil.getBpmnModel(processInstanceExecution.getProcessDefinitionId());
 
-        // Auto Mapping
+        //Auto Mapping
         LOGGER.debug("Process AutoMapping for '{}' activity executions", executionActivityIdsToAutoMap.size());
         for (String executionActivityId : executionActivityIdsToAutoMap) {
             FlowElement currentModelFlowElement = currentModel.getFlowElement(executionActivityId);
 
             if (currentModelFlowElement instanceof CallActivity) {
-                // Check that all or none of the call activity child activities executions are explicitly mapped
+                //Check that all or none of the call activity child activities executions are explicitly mapped
                 boolean runningChildrenNotFullyMapped = false;
                 if (subProcessActivityMappingsByCallActivityIdAndFromActivityId.containsKey(executionActivityId)) {
                     Set<String> mappedSubProcessActivityIds = subProcessActivityMappingsByCallActivityIdAndFromActivityId.get(executionActivityId).keySet();
@@ -660,42 +594,27 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                         throw new FlowableException("Call activity '" + executionActivityId + "' is not a Call Activity in the new model. It must be mapped explicitly for migration (or all its child activities)");
                     }
                 }
+                continue;
             }
 
-            String flowElementMultiInstanceParentId = getFlowElementMultiInstanceParentId(currentModelFlowElement);
-            if (flowElementMultiInstanceParentId != null && mappedFromActivities.contains(flowElementMultiInstanceParentId)) {
-                // Add the parent MI execution activity Id to be explicitly mapped...
-                if (!executionActivityIdsToMapExplicitly.contains(flowElementMultiInstanceParentId)) {
-                    executionActivityIdsToMapExplicitly.add(flowElementMultiInstanceParentId);
+            Optional<String> flowElementMultiInstanceParentId = getFlowElementMultiInstanceParentId(currentModelFlowElement);
+            if (flowElementMultiInstanceParentId.isPresent() && mappedFromActivities.contains(flowElementMultiInstanceParentId.get())) {
+                //Add the parent MI execution activity Id to be explicitly mapped...
+                if (!executionActivityIdsToMapExplicitly.contains(flowElementMultiInstanceParentId.get())) {
+                    executionActivityIdsToMapExplicitly.add(flowElementMultiInstanceParentId.get());
                 }
-                // The root executions are the ones to migrate and are explicitly mapped
-                List<ExecutionEntity> miRootExecutions = (List<ExecutionEntity>) executionEntityManager.findInactiveExecutionsByActivityIdAndProcessInstanceId(flowElementMultiInstanceParentId, processInstanceExecution.getId());
-                filteredExecutionsByActivityId.put(flowElementMultiInstanceParentId, miRootExecutions);
-                
+                //The root executions are the ones to migrate and are explicitly mapped
+                List<ExecutionEntity> miRootExecutions = (List<ExecutionEntity>) executionEntityManager.findInactiveExecutionsByActivityIdAndProcessInstanceId(flowElementMultiInstanceParentId.get(), processInstanceExecution.getId());
+                filteredExecutionsByActivityId.put(flowElementMultiInstanceParentId.get(), miRootExecutions);
             } else {
                 LOGGER.debug("Checking execution(s) - activityId:'{}", executionActivityId);
                 if (isActivityIdInProcessDefinitionModel(executionActivityId, newModel)) {
-                    // Cannot auto-map inside a MultiInstance container
+                    //Cannot auto-map inside a MultiInstance container
                     FlowElement newModelFlowElement = newModel.getFlowElement(executionActivityId);
-                    String newFlowElementMIParentId = getFlowElementMultiInstanceParentId(newModelFlowElement);
+                    Optional<String> newFlowElementMIParentId = getFlowElementMultiInstanceParentId(newModelFlowElement);
 
-                    if (newFlowElementMIParentId != null) {
-                    	boolean noChangesInMI = false;
-                    	Activity currentMIElement = (Activity) currentModel.getFlowElement(newFlowElementMIParentId);
-                    	Activity newMIElement = (Activity) newModel.getFlowElement(newFlowElementMIParentId);
-                    	if (currentMIElement.getClass().getName().equals(newMIElement.getClass().getName()) &&
-                    			hasSameLoopCharacteristics(currentMIElement, newMIElement)) {
-                    		
-                    		if (!(currentMIElement instanceof SubProcess)) {
-                    			noChangesInMI = true;
-                    		} else if (hasSameSubProcessContent((SubProcess) currentMIElement, (SubProcess) newMIElement)) {
-                    			noChangesInMI = true;
-                    		}
-                    	}
-                    	
-                    	if (!noChangesInMI) {
-                    		throw new FlowableException("Cannot autoMap activity migration for '" + executionActivityId + "'. Cannot migrate arbitrarily inside a Multi Instance container '" + newFlowElementMIParentId);
-                    	}
+                    if (newFlowElementMIParentId.isPresent()) {
+                        throw new FlowableException("Cannot autoMap activity migration for '" + executionActivityId + "'. Cannot migrate arbitrarily inside a Multi Instance container '" + newFlowElementMIParentId.get());
                     }
 
                     LOGGER.debug("Auto mapping activity '{}'", executionActivityId);
@@ -706,12 +625,8 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                     } else {
                         mainProcessChangeActivityStateBuilder.moveExecutionToActivityId(executionEntities.get(0).getId(), executionActivityId);
                     }
-                    
                 } else {
-                    if (!(currentModelFlowElement instanceof CallActivity)) {
-                        throw new FlowableException("Migration Activity mapping missing for activity definition Id:'" + 
-                        		executionActivityId + "' or its MI Parent");
-                    }
+                    throw new FlowableException("Migration Activity mapping missing for activity definition Id:'" + executionActivityId + "' or its MI Parent");
                 }
             }
         }
@@ -727,7 +642,6 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                 String fromActivityId = ((ActivityMigrationMapping.OneToOneMapping) activityMapping).getFromActivityId();
                 String toActivityId = ((ActivityMigrationMapping.OneToOneMapping) activityMapping).getToActivityId();
                 String newAssignee = ((ActivityMigrationMapping.OneToOneMapping) activityMapping).getWithNewAssignee();
-                String newOwner = ((ActivityMigrationMapping.OneToOneMapping) activityMapping).getWithNewOwner();
                 String fromCallActivityId = activityMapping.getFromCallActivityId();
 
                 if (activityMapping.isToParentProcess() && !executionActivityIdsToMapExplicitly.contains(fromCallActivityId)) {
@@ -736,24 +650,17 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                         ExecutionEntity subProcessInstanceExecution = executionEntityManager.findSubProcessInstanceBySuperExecutionId(callActivityExecution.getId());
                         ChangeActivityStateBuilderImpl subProcessChangeActivityStateBuilder = new ChangeActivityStateBuilderImpl();
                         subProcessChangeActivityStateBuilder.processInstanceId(subProcessInstanceExecution.getId());
-                        subProcessChangeActivityStateBuilder.moveActivityIdToParentActivityId(fromActivityId, toActivityId, newAssignee, newOwner);
+                        subProcessChangeActivityStateBuilder.moveActivityIdToParentActivityId(fromActivityId, toActivityId, newAssignee);
                         changeActivityStateBuilders.add(subProcessChangeActivityStateBuilder);
                     }
-                    
                 } else if (executionActivityIdsToMapExplicitly.contains(fromActivityId)) {
                     if (activityMapping.isToCallActivity()) {
-                        mainProcessChangeActivityStateBuilder.moveActivityIdToSubProcessInstanceActivityId(fromActivityId, toActivityId,
-                                activityMapping.getToCallActivityId(),
-                                activityMapping.getCallActivityProcessDefinitionVersion(),
-                                newAssignee,
-                                newOwner);
-                        
+                        mainProcessChangeActivityStateBuilder.moveActivityIdToSubProcessInstanceActivityId(fromActivityId, toActivityId, activityMapping.getToCallActivityId(), activityMapping.getCallActivityProcessDefinitionVersion(), newAssignee);
                     } else {
-                        mainProcessChangeActivityStateBuilder.moveActivityIdTo(fromActivityId, toActivityId, newAssignee, newOwner);
+                        mainProcessChangeActivityStateBuilder.moveActivityIdTo(fromActivityId, toActivityId, newAssignee);
                     }
                     executionActivityIdsToMapExplicitly.remove(fromActivityId);
                 }
-                
             } else if (activityMapping instanceof ActivityMigrationMapping.OneToManyMapping) {
                 String fromActivityId = ((ActivityMigrationMapping.OneToManyMapping) activityMapping).getFromActivityId();
                 List<String> toActivityIds = activityMapping.getToActivityIds();
@@ -767,7 +674,6 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                         subProcessChangeActivityStateBuilder.moveSingleActivityIdToParentActivityIds(fromActivityId, toActivityIds);
                         changeActivityStateBuilders.add(subProcessChangeActivityStateBuilder);
                     }
-                    
                 } else if (executionActivityIdsToMapExplicitly.contains(fromActivityId)) {
                     if (activityMapping.isToCallActivity()) {
                         mainProcessChangeActivityStateBuilder.moveSingleActivityIdToSubProcessInstanceActivityIds(fromActivityId, toActivityIds, activityMapping.getToCallActivityId(), activityMapping.getCallActivityProcessDefinitionVersion());
@@ -776,23 +682,20 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                     }
                     executionActivityIdsToMapExplicitly.remove(fromActivityId);
                 }
-                
             } else if (activityMapping instanceof ActivityMigrationMapping.ManyToOneMapping) {
                 List<String> fromActivityIds = activityMapping.getFromActivityIds();
                 String toActivityId = ((ActivityMigrationMapping.ManyToOneMapping) activityMapping).getToActivityId();
                 String fromCallActivityId = activityMapping.getFromCallActivityId();
                 String newAssignee = ((ActivityMigrationMapping.ManyToOneMapping) activityMapping).getWithNewAssignee();
-                String newOwner = ((ActivityMigrationMapping.ManyToOneMapping) activityMapping).getWithNewOwner();
                 if (activityMapping.isToParentProcess() && !executionActivityIdsToMapExplicitly.contains(fromCallActivityId)) {
                     List<ExecutionEntity> callActivityExecutions = filteredExecutionsByActivityId.get(fromCallActivityId).stream().filter(ExecutionEntity::isActive).collect(Collectors.toList());
                     for (ExecutionEntity callActivityExecution : callActivityExecutions) {
                         ExecutionEntity subProcessInstanceExecution = executionEntityManager.findSubProcessInstanceBySuperExecutionId(callActivityExecution.getId());
                         ChangeActivityStateBuilderImpl subProcessChangeActivityStateBuilder = new ChangeActivityStateBuilderImpl();
                         subProcessChangeActivityStateBuilder.processInstanceId(subProcessInstanceExecution.getId());
-                        subProcessChangeActivityStateBuilder.moveActivityIdsToParentActivityId(fromActivityIds, toActivityId, newAssignee, newOwner);
+                        subProcessChangeActivityStateBuilder.moveActivityIdsToParentActivityId(fromActivityIds, toActivityId, newAssignee);
                         changeActivityStateBuilders.add(subProcessChangeActivityStateBuilder);
                     }
-                    
                 } else {
                     List<String> executionIds = new ArrayList<>();
                     for (String activityId : fromActivityIds) {
@@ -803,16 +706,11 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
                         }
                     }
                     if (activityMapping.isToCallActivity()) {
-                        mainProcessChangeActivityStateBuilder.moveActivityIdsToSubProcessInstanceActivityId(fromActivityIds, toActivityId,
-                                activityMapping.getToCallActivityId(),
-                                activityMapping.getCallActivityProcessDefinitionVersion(),
-                                newAssignee,
-                                newOwner);
+                        mainProcessChangeActivityStateBuilder.moveActivityIdsToSubProcessInstanceActivityId(fromActivityIds, toActivityId, activityMapping.getToCallActivityId(), activityMapping.getCallActivityProcessDefinitionVersion(), newAssignee);
                     } else {
-                        mainProcessChangeActivityStateBuilder.moveExecutionsToSingleActivityId(executionIds, toActivityId, newAssignee, newOwner);
+                        mainProcessChangeActivityStateBuilder.moveExecutionsToSingleActivityId(executionIds, toActivityId, newAssignee);
                     }
                 }
-                
             } else {
                 throw new FlowableException("Unknown Activity Mapping or not implemented yet!!!");
             }
@@ -825,18 +723,11 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
         return changeActivityStateBuilders;
     }
 
-    protected boolean isSameOrDefaultTenant(String processInstanceTenantId, String processDefinitionKey, 
-            String processDefinitionTenantId, ProcessEngineConfigurationImpl processEngineConfiguration) {
-        
-        if (processInstanceTenantId != null && processDefinitionTenantId != null) {
-            boolean tenantIdsEqual = processInstanceTenantId.equals(processDefinitionTenantId);
-            if (!tenantIdsEqual && processEngineConfiguration.isFallbackToDefaultTenant() && processEngineConfiguration.getDefaultTenantProvider() != null) {
-                return processDefinitionTenantId.equals(processEngineConfiguration.getDefaultTenantProvider().getDefaultTenant(processInstanceTenantId, ScopeTypes.BPMN, processDefinitionKey));
-            }
-            
-            return tenantIdsEqual;
-            
-        } else if (processInstanceTenantId == null && processDefinitionTenantId == null) {
+    protected boolean isSameTenant(String tenantId1, String tenantId2) {
+
+        if (tenantId1 != null && tenantId2 != null) {
+            return tenantId1.equals(tenantId2);
+        } else if (tenantId1 == null && tenantId2 == null) {
             return true;
         }
         return false;
@@ -891,49 +782,8 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
 
         return calledElement1.equals(calledElement2) && !isExpression(calledElement1);
     }
-    
-    protected boolean hasSameLoopCharacteristics(Activity currentActivity, Activity newActivity) {
-    	boolean hasSameMI = false;
-    	MultiInstanceLoopCharacteristics currentMIConfig = currentActivity.getLoopCharacteristics();
-    	MultiInstanceLoopCharacteristics newMIConfig = newActivity.getLoopCharacteristics();
-    	if (currentMIConfig.isSequential() == newMIConfig.isSequential() &&
-    			hasSameStringValue(currentMIConfig.getCollectionString(), newMIConfig.getCollectionString()) &&
-    			hasSameStringValue(currentMIConfig.getLoopCardinality(), newMIConfig.getLoopCardinality()) &&
-    			hasSameStringValue(currentMIConfig.getCompletionCondition(), newMIConfig.getCompletionCondition()) &&
-    			hasSameStringValue(currentMIConfig.getElementIndexVariable(), newMIConfig.getElementIndexVariable()) &&
-    			hasSameStringValue(currentMIConfig.getElementVariable(), newMIConfig.getElementVariable()) && 
-    			hasSameStringValue(currentMIConfig.getInputDataItem(), newMIConfig.getInputDataItem()) &&
-    			hasSameStringValue(currentMIConfig.getLoopCardinality(), newMIConfig.getLoopCardinality())) {
-    			
-    		hasSameMI = true;
-    	}
-    	
-    	return hasSameMI;
-    }
-    
-    protected boolean hasSameSubProcessContent(SubProcess currentSubProcess, SubProcess newSubProcess) {
-    	if (currentSubProcess.getFlowElements().size() != newSubProcess.getFlowElements().size()) {
-    		return false;
-    	}
-    	
-    	boolean hasSameContent = true;
-    	for (FlowElement subElement : currentSubProcess.getFlowElements()) {
-			FlowElement newSubElement = newSubProcess.getFlowElement(subElement.getId());
-			if (newSubElement == null) {
-				hasSameContent = false;
-				break;
-			}
-			
-			if (!(subElement.getClass().getName().equals(newSubElement.getClass().getName()))) {
-				hasSameContent = false;
-				break;
-			}
-		}
-    	
-    	return hasSameContent;
-    }
 
-    protected void splitMigrationMappingByCallActivitySubProcessScope(ActivityMigrationMapping activityMigrationMapping, HashMap<String, ActivityMigrationMapping> mainProcessActivityMappingByFromActivityId, HashMap<String, HashMap<String, ActivityMigrationMapping>> subProcessActivityMappingsByCallActivityIdAndFromActivityId) {
+    protected static void splitMigrationMappingByCallActivitySubProcessScope(ActivityMigrationMapping activityMigrationMapping, HashMap<String, ActivityMigrationMapping> mainProcessActivityMappingByFromActivityId, HashMap<String, HashMap<String, ActivityMigrationMapping>> subProcessActivityMappingsByCallActivityIdAndFromActivityId) {
         HashMap<String, ActivityMigrationMapping> mapToFill;
         if (activityMigrationMapping.isToParentProcess()) {
             mapToFill = subProcessActivityMappingsByCallActivityIdAndFromActivityId.computeIfAbsent(activityMigrationMapping.getFromCallActivityId(), k -> new HashMap<>());
@@ -945,15 +795,5 @@ public class ProcessInstanceMigrationManagerImpl extends AbstractDynamicStateMan
         }
     }
 
-    protected boolean hasSameStringValue(String currentValue, String newValue) {
-    	boolean sameValue = false;
-    	if ((currentValue == null && newValue == null) ||
-    			(currentValue != null && currentValue.equals(newValue))) {
-    		
-    		sameValue = true;
-    	}
-    	
-    	return sameValue;
-    }
 }
 

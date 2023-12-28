@@ -165,11 +165,11 @@
   </select>
   
   <select id="selectCaseDefinitionsByQueryCriteria" parameterType="org.flowable.cmmn.engine.impl.repository.CaseDefinitionQueryImpl" resultMap="caseDefinitionResultMap">
-    <if test="needsPaging">${limitBefore}</if>
-    SELECT RES.* <if test="needsPaging">${limitBetween}</if>
+    <if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+    select RES.* <if test="nullHandlingColumn != null">, ${nullHandlingColumn}</if> <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
     <include refid="selectCaseDefinitionsByQueryCriteriaSql"/>
     ${orderBy}
-    <if test="needsPaging">${limitAfter}</if>
+    <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
 
   <select id="selectCaseDefinitionCountByQueryCriteria" parameterType="org.flowable.cmmn.engine.impl.repository.CaseDefinitionQueryImpl" resultType="long">
@@ -204,9 +204,6 @@
       <if test="nameLike != null">
         and RES.NAME_ like #{nameLike}${wildcardEscapeClause}
       </if>
-      <if test="nameLikeIgnoreCase != null">
-        and lower(RES.NAME_) like lower(#{nameLikeIgnoreCase}${wildcardEscapeClause})
-      </if>
       <if test="key != null">
         and RES.KEY_ = #{key}
       </if>
@@ -237,14 +234,11 @@
       <if test="deploymentId != null">
         and RES.DEPLOYMENT_ID_ = #{deploymentId}
       </if>
-      <if test="deploymentIds != null and !deploymentIds.empty">
+      <if test="deploymentIds != null and !deploymentIds.isEmpty()">
         and RES.DEPLOYMENT_ID_ in
         <foreach item="item" index="index" collection="deploymentIds" open="(" separator="," close=")">
           #{item}
         </foreach>
-      </if>
-      <if test="parentDeploymentId != null">
-          and EXISTS (select 1 from ${prefix}ACT_CMMN_DEPLOYMENT D where D.PARENT_DEPLOYMENT_ID_ = #{parentDeploymentId} and D.ID_ = RES.DEPLOYMENT_ID_)
       </if>
       <if test="latest">
         and RES.VERSION_ = (select max(VERSION_) from ${prefix}ACT_CMMN_CASEDEF where KEY_ = RES.KEY_ 
@@ -277,20 +271,12 @@
              <if test="authorizationUserId != null">
                  exists (select ID_  from ${prefix}ACT_RU_IDENTITYLINK  IDN where IDN.SCOPE_DEFINITION_ID_ = RES.ID_ and IDN.SCOPE_TYPE_ = 'cmmn' and IDN.USER_ID_ = #{authorizationUserId})
              </if>
-              <if test="authorizationGroups != null &amp;&amp; !authorizationGroups.empty">
-                  OR exists (select ID_ from ${prefix}ACT_RU_IDENTITYLINK  IDN where IDN.SCOPE_DEFINITION_ID_ = RES.ID_ and IDN.SCOPE_TYPE_ = 'cmmn' and 
-                    (
-                    <foreach item="authorizationGroupListItem" index="groupIndex" collection="safeAuthorizationGroups">
-                        <if test="groupIndex &gt; 0">
-                        or
-                        </if>
-                        IDN.GROUP_ID_ IN
-                        <foreach item="group" index="index" collection="authorizationGroupListItem"
-                              open="(" separator="," close=")">
-                          #{group}
-                        </foreach>
-                    </foreach>
-                    )
+              <if test="authorizationGroups != null &amp;&amp; authorizationGroups.size() &gt; 0">
+                  OR exists (select ID_ from ${prefix}ACT_RU_IDENTITYLINK  IDN where IDN.SCOPE_DEFINITION_ID_ = RES.ID_ and IDN.SCOPE_TYPE_ = 'cmmn' and IDN.GROUP_ID_ IN
+                  <foreach item="group" index="index" collection="authorizationGroups"
+                           open="(" separator="," close=")">
+                      #{group}
+                  </foreach>
                   )
               </if>
 

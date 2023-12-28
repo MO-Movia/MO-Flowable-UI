@@ -28,39 +28,35 @@ public class MoveActivityIdContainer {
     protected String callActivityId;
     protected Integer callActivitySubProcessVersion;
     protected String newAssigneeId;
-    protected String newOwnerId;
 
     public MoveActivityIdContainer(String singleActivityId, String moveToActivityId) {
-        this(singleActivityId, moveToActivityId, null, null);
+        this(singleActivityId, moveToActivityId, null);
     }
 
-    public MoveActivityIdContainer(String singleActivityId, String moveToActivityId, String newAssigneeId, String newOwnerId) {
+    public MoveActivityIdContainer(String singleActivityId, String moveToActivityId, String newAssigneeId) {
         this.activityIds = Collections.singletonList(singleActivityId);
         this.moveToActivityIds = Collections.singletonList(moveToActivityId);
         this.newAssigneeId = newAssigneeId;
-        this.newOwnerId = newOwnerId;
     }
 
     public MoveActivityIdContainer(List<String> activityIds, String moveToActivityId) {
-        this(activityIds, moveToActivityId, null, null);
+        this(activityIds, moveToActivityId, null);
     }
 
-    public MoveActivityIdContainer(List<String> activityIds, String moveToActivityId, String newAssigneeId, String newOwnerId) {
+    public MoveActivityIdContainer(List<String> activityIds, String moveToActivityId, String newAssigneeId) {
         this.activityIds = activityIds;
         this.moveToActivityIds = Collections.singletonList(moveToActivityId);
         this.newAssigneeId = newAssigneeId;
-        this.newOwnerId = newOwnerId;
     }
 
     public MoveActivityIdContainer(String singleActivityId, List<String> moveToActivityIds) {
-        this(singleActivityId, moveToActivityIds, null, null);
+        this(singleActivityId, moveToActivityIds, null);
     }
 
-    public MoveActivityIdContainer(String singleActivityId, List<String> moveToActivityIds, String newAssigneeId, String newOwnerId) {
+    public MoveActivityIdContainer(String singleActivityId, List<String> moveToActivityIds, String newAssigneeId) {
         this.activityIds = Collections.singletonList(singleActivityId);
         this.moveToActivityIds = moveToActivityIds;
         this.newAssigneeId = newAssigneeId;
-        this.newOwnerId = newOwnerId;
     }
 
     public List<String> getActivityIds() {
@@ -105,9 +101,5 @@ public class MoveActivityIdContainer {
 
     public Optional<String> getNewAssigneeId() {
         return Optional.ofNullable(newAssigneeId);
-    }
-
-    public Optional<String> getNewOwnerId() {
-        return Optional.ofNullable(newOwnerId);
     }
 }

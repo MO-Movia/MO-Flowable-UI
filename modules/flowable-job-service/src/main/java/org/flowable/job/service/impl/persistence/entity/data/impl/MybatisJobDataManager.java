@@ -99,7 +99,9 @@ public class MybatisJobDataManager extends AbstractDataManager<JobEntity> implem
         params.put("jobExecutionScope", jobServiceConfiguration.getJobExecutionScope());
         Date now = jobServiceConfiguration.getClock().getCurrentTime();
         params.put("now", now);
-
+        Date maxTimeout = new Date(now.getTime() - jobServiceConfiguration.getAsyncExecutorResetExpiredJobsMaxTimeout());
+        params.put("maxTimeout", maxTimeout);
+        
         if (enabledCategories != null && enabledCategories.size() > 0) {
             params.put("enabledCategories", enabledCategories);
         }
@@ -123,16 +125,7 @@ public class MybatisJobDataManager extends AbstractDataManager<JobEntity> implem
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateJobTenantIdForDeployment", params);
-    }
-
-    @Override
-    public void bulkUpdateJobLockWithoutRevisionCheck(List<JobEntity> jobEntities, String lockOwner, Date lockExpirationTime) {
-        Map<String, Object> params = new HashMap<>(3);
-        params.put("lockOwner", lockOwner);
-        params.put("lockExpirationTime", lockExpirationTime);
-
-        bulkUpdateEntities("updateJobLocks", params, "jobs", jobEntities);
+        getDbSqlSession().update("updateJobTenantIdForDeployment", params);
     }
 
     @Override
@@ -140,7 +133,7 @@ public class MybatisJobDataManager extends AbstractDataManager<JobEntity> implem
         Map<String, Object> params = new HashMap<>(2);
         params.put("id", jobId);
         params.put("now", jobServiceConfiguration.getClock().getCurrentTime());
-        getDbSqlSession().directUpdate("resetExpiredJob", params);
+        getDbSqlSession().update("resetExpiredJob", params);
     }
     
     @Override

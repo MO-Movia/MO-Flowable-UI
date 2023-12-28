@@ -15,6 +15,9 @@ package org.flowable.rest.service.api.runtime.task;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.engine.task.Comment;
 import org.flowable.rest.service.api.engine.CommentRequest;
@@ -26,7 +29,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -49,29 +51,24 @@ public class TaskCommentCollectionResource extends TaskBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested task was not found.")
     })
     @GetMapping(value = "/runtime/tasks/{taskId}/comments", produces = "application/json")
-    public List<CommentResponse> getComments(@ApiParam(name = "taskId") @PathVariable String taskId) {
+    public List<CommentResponse> getComments(@ApiParam(name = "taskId") @PathVariable String taskId, HttpServletRequest request) {
         HistoricTaskInstance task = getHistoricTaskFromRequest(taskId);
         return restResponseFactory.createRestCommentList(taskService.getTaskComments(task.getId()));
     }
 
-    @ApiOperation(value = "Create a new comment on a task", tags = { "Task Comments" }, nickname = "createTaskComments", code = 201)
+    @ApiOperation(value = "Create a new comment on a task", tags = { "Task Comments" }, nickname = "createTaskComments")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Indicates the comment was created and the result is returned."),
             @ApiResponse(code = 400, message = "Indicates the comment is missing from the request."),
             @ApiResponse(code = 404, message = "Indicates the requested task was not found.")
     })
     @PostMapping(value = "/runtime/tasks/{taskId}/comments", produces = "application/json")
-    @ResponseStatus(HttpStatus.CREATED)
-    public CommentResponse createComment(@ApiParam(name = "taskId") @PathVariable String taskId, @RequestBody CommentRequest comment) {
+    public CommentResponse createComment(@ApiParam(name = "taskId") @PathVariable String taskId, @RequestBody CommentRequest comment, HttpServletRequest request, HttpServletResponse response) {
 
-        Task task = getTaskFromRequestWithoutAccessCheck(taskId);
+        Task task = getTaskFromRequest(taskId);
 
         if (comment.getMessage() == null) {
             throw new FlowableIllegalArgumentException("Comment text is required.");
-        }
-
-        if (restApiInterceptor != null) {
-            restApiInterceptor.createTaskComment(task, comment);
         }
 
         String processInstanceId = null;
@@ -80,6 +77,7 @@ public class TaskCommentCollectionResource extends TaskBaseResource {
             processInstanceId = taskEntity.getProcessInstanceId();
         }
         Comment createdComment = taskService.addComment(task.getId(), processInstanceId, comment.getMessage());
+        response.setStatus(HttpStatus.CREATED.value());
 
         return restResponseFactory.createRestComment(createdComment);
     }

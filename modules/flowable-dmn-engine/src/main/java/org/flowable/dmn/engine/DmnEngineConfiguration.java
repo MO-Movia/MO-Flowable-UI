@@ -15,12 +15,10 @@ package org.flowable.dmn.engine;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
@@ -37,14 +35,10 @@ import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.CommandInterceptor;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.common.engine.impl.interceptor.SessionFactory;
-import org.flowable.common.engine.impl.javax.el.ELResolver;
 import org.flowable.common.engine.impl.persistence.deploy.DefaultDeploymentCache;
 import org.flowable.common.engine.impl.persistence.deploy.DeploymentCache;
 import org.flowable.common.engine.impl.persistence.entity.TableDataManager;
 import org.flowable.common.engine.impl.runtime.Clock;
-import org.flowable.common.engine.impl.tenant.ChangeTenantIdManager;
-import org.flowable.common.engine.impl.tenant.MyBatisChangeTenantIdManager;
-import org.flowable.dmn.api.DmnChangeTenantIdEntityTypes;
 import org.flowable.dmn.api.DmnDecisionService;
 import org.flowable.dmn.api.DmnEngineConfigurationApi;
 import org.flowable.dmn.api.DmnHistoryService;
@@ -113,6 +107,9 @@ import org.flowable.dmn.engine.impl.persistence.entity.data.impl.MybatisHistoric
 import org.flowable.dmn.image.DecisionRequirementsDiagramGenerator;
 import org.flowable.dmn.image.impl.DefaultDecisionRequirementsDiagramGenerator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 public class DmnEngineConfiguration extends AbstractEngineConfiguration
         implements DmnEngineConfigurationApi, HasExpressionManagerEngineConfiguration {
 
@@ -127,7 +124,7 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     // SERVICES
     // /////////////////////////////////////////////////////////////////
 
-    protected DmnManagementService dmnManagementService = new DmnManagementServiceImpl(this);
+    protected DmnManagementService dmnManagementService = new DmnManagementServiceImpl();
     protected DmnRepositoryService dmnRepositoryService = new DmnRepositoryServiceImpl();
     protected DmnDecisionService ruleService = new DmnDecisionServiceImpl(this);
     protected DmnHistoryService dmnHistoryService = new DmnHistoryServiceImpl();
@@ -146,16 +143,10 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     protected DmnResourceEntityManager resourceEntityManager;
     protected HistoricDecisionExecutionEntityManager historicDecisionExecutionEntityManager;
 
-    protected ChangeTenantIdManager changeTenantIdManager;
-
     // EXPRESSION MANAGER /////////////////////////////////////////////
     protected ExpressionManager expressionManager;
-    protected Collection<Consumer<ExpressionManager>> expressionManagerConfigurers;
     protected List<FlowableFunctionDelegate> flowableFunctionDelegates;
     protected List<FlowableFunctionDelegate> customFlowableFunctionDelegates;
-    protected Collection<ELResolver> preDefaultELResolvers;
-    protected Collection<ELResolver> preBeanELResolvers;
-    protected Collection<ELResolver> postDefaultELResolvers;
 
     // DEPLOYERS
     // ////////////////////////////////////////////////////////////////
@@ -186,6 +177,8 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
 
     protected int decisionCacheLimit = -1; // By default, no limit
     protected DeploymentCache<DecisionCacheEntry> definitionCache;
+
+    protected ObjectMapper dmnEngineObjectMapper = new ObjectMapper();
 
     // HIT POLICIES
     protected Map<String, AbstractHitPolicy> hitPolicyBehaviors;
@@ -250,9 +243,7 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     protected void init() {
         initEngineConfigurations();
         initClock();
-        initObjectMapper();
         initFunctionDelegates();
-        initBeans();
         initExpressionManager();
         initCommandContextFactory();
         initTransactionContextFactory();
@@ -269,6 +260,9 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
             initSchemaManagementCommand();
         }
 
+        dmnEngineObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+        initBeans();
         initTransactionFactory();
 
         if (usingRelationalDatabase) {
@@ -277,7 +271,6 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
 
         initSessionFactories();
         initServices();
-        initChangeTenantIdManager();
         initDataManagers();
         initEntityManagers();
         initDeployers();
@@ -431,33 +424,9 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
         }
     }
 
-    public void initChangeTenantIdManager() {
-        if (changeTenantIdManager == null) {
-            changeTenantIdManager = new MyBatisChangeTenantIdManager(commandExecutor, ScopeTypes.DMN,
-                    Collections.singleton(DmnChangeTenantIdEntityTypes.HISTORIC_DECISION_EXECUTIONS));
-        }
-    }
-
     public void initExpressionManager() {
         if (expressionManager == null) {
-            DefaultExpressionManager dmnExpressionManager = new DefaultExpressionManager(beans);
-            if (preDefaultELResolvers != null) {
-                preDefaultELResolvers.forEach(dmnExpressionManager::addPreDefaultResolver);
-            }
-
-            if (preBeanELResolvers != null) {
-                preBeanELResolvers.forEach(dmnExpressionManager::addPreBeanResolver);
-            }
-
-            if (postDefaultELResolvers != null) {
-                postDefaultELResolvers.forEach(dmnExpressionManager::addPostDefaultResolver);
-            }
-
-            if (expressionManagerConfigurers != null) {
-                expressionManagerConfigurers.forEach(configurer -> configurer.accept(dmnExpressionManager));
-            }
-
-            expressionManager = dmnExpressionManager;
+            expressionManager = new DefaultExpressionManager(beans);
         }
 
         expressionManager.setFunctionDelegates(flowableFunctionDelegates);
@@ -466,7 +435,7 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     @Override
     public void initCommandInvoker() {
         if (commandInvoker == null) {
-            commandInvoker = new DmnCommandInvoker(agendaOperationExecutionListeners);
+            commandInvoker = new DmnCommandInvoker();
         }
     }
     public void initDmnEngineAgendaFactory() {
@@ -615,7 +584,7 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     /////////////////////////////////////////////////////////////
     public void initRuleEngineExecutor() {
     	if (ruleEngineExecutor == null) {
-	        ruleEngineExecutor = new RuleEngineExecutorImpl(hitPolicyBehaviors, expressionManager, objectMapper, this);
+	        ruleEngineExecutor = new RuleEngineExecutorImpl(hitPolicyBehaviors, expressionManager, dmnEngineObjectMapper);
 	        
     	} else {
     	    if (ruleEngineExecutor.getExpressionManager() == null) {
@@ -627,7 +596,7 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     	    }
     	    
     	    if (ruleEngineExecutor.getObjectMapper() == null) {
-    	        ruleEngineExecutor.setObjectMapper(objectMapper);
+    	        ruleEngineExecutor.setObjectMapper(dmnEngineObjectMapper);
     	    }
     	}
     }
@@ -805,15 +774,6 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
         return this;
     }
 
-    public ChangeTenantIdManager getChangeTenantIdManager() {
-        return changeTenantIdManager;
-    }
-
-    public DmnEngineConfiguration setChangeTenantIdManager(ChangeTenantIdManager changeTenantIdManager) {
-        this.changeTenantIdManager = changeTenantIdManager;
-        return this;
-    }
-
     @Override
     public ExpressionManager getExpressionManager() {
         return expressionManager;
@@ -822,19 +782,6 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
     @Override
     public DmnEngineConfiguration setExpressionManager(ExpressionManager expressionManager) {
         this.expressionManager = expressionManager;
-        return this;
-    }
-
-    public Collection<Consumer<ExpressionManager>> getExpressionManagerConfigurers() {
-        return expressionManagerConfigurers;
-    }
-
-    @Override
-    public AbstractEngineConfiguration addExpressionManagerConfigurer(Consumer<ExpressionManager> configurer) {
-        if (this.expressionManagerConfigurers == null) {
-            this.expressionManagerConfigurers = new ArrayList<>();
-        }
-        this.expressionManagerConfigurers.add(configurer);
         return this;
     }
 
@@ -853,60 +800,6 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
 
     public DmnEngineConfiguration setCustomFlowableFunctionDelegates(List<FlowableFunctionDelegate> customFlowableFunctionDelegates) {
         this.customFlowableFunctionDelegates = customFlowableFunctionDelegates;
-        return this;
-    }
-
-    public Collection<ELResolver> getPreDefaultELResolvers() {
-        return preDefaultELResolvers;
-    }
-
-    public DmnEngineConfiguration setPreDefaultELResolvers(Collection<ELResolver> preDefaultELResolvers) {
-        this.preDefaultELResolvers = preDefaultELResolvers;
-        return this;
-    }
-
-    public DmnEngineConfiguration addPreDefaultELResolver(ELResolver elResolver) {
-        if (this.preDefaultELResolvers == null) {
-            this.preDefaultELResolvers = new ArrayList<>();
-        }
-
-        this.preDefaultELResolvers.add(elResolver);
-        return this;
-    }
-
-    public Collection<ELResolver> getPreBeanELResolvers() {
-        return preBeanELResolvers;
-    }
-
-    public DmnEngineConfiguration setPreBeanELResolvers(Collection<ELResolver> preBeanELResolvers) {
-        this.preBeanELResolvers = preBeanELResolvers;
-        return this;
-    }
-
-    public DmnEngineConfiguration addPreBeanELResolver(ELResolver elResolver) {
-        if (this.preBeanELResolvers == null) {
-            this.preBeanELResolvers = new ArrayList<>();
-        }
-
-        this.preBeanELResolvers.add(elResolver);
-        return this;
-    }
-
-    public Collection<ELResolver> getPostDefaultELResolvers() {
-        return postDefaultELResolvers;
-    }
-
-    public DmnEngineConfiguration setPostDefaultELResolvers(Collection<ELResolver> postDefaultELResolvers) {
-        this.postDefaultELResolvers = postDefaultELResolvers;
-        return this;
-    }
-
-    public DmnEngineConfiguration addPostDefaultELResolver(ELResolver elResolver) {
-        if (this.postDefaultELResolvers == null) {
-            this.postDefaultELResolvers = new ArrayList<>();
-        }
-
-        this.postDefaultELResolvers.add(elResolver);
         return this;
     }
 
@@ -1157,6 +1050,11 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration
 
     public Map<String, AbstractHitPolicy> getCustomHitPolicyBehaviors() {
         return customHitPolicyBehaviors;
+    }
+
+    @Override
+    public ObjectMapper getObjectMapper() {
+        return dmnEngineObjectMapper;
     }
 
     public DecisionRequirementsDiagramGenerator getDecisionRequirementsDiagramGenerator() {

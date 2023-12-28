@@ -62,20 +62,14 @@ Template default Ingress rules
     paths:
     {{- if .Values.ui.enabled  }}
       - path: {{ .Values.ui.ingressPath }}
-        pathType: Prefix
         backend:
-          service:
-            name: {{ .Release.Name }}-{{ .Values.ui.service.name }}
-            port:
-              number: 8080
+          serviceName: {{ .Values.ui.service.name }}
+          servicePort: 8080
     {{- end }}
     {{- if .Values.rest.enabled }}
       - path: {{ .Values.rest.ingressPath }}
-        pathType: Prefix
         backend:
-          service:
-            name: {{ .Release.Name }}-{{ .Values.rest.service.name }}
-            port:
-              number: 8080
+          serviceName: {{ .Values.rest.service.name }}
+          servicePort: 8080
     {{- end }}
 {{- end -}}

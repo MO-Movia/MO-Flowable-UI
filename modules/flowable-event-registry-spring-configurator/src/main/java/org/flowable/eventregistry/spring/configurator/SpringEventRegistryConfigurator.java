@@ -17,6 +17,7 @@ import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.common.spring.SpringEngineConfiguration;
 import org.flowable.eventregistry.impl.EventRegistryEngine;
 import org.flowable.eventregistry.impl.configurator.EventRegistryEngineConfigurator;
+import org.flowable.eventregistry.spring.SpringEventExpressionManager;
 import org.flowable.eventregistry.spring.SpringEventRegistryEngineConfiguration;
 
 /**
@@ -40,8 +41,9 @@ public class SpringEventRegistryConfigurator extends EventRegistryEngineConfigur
         SpringEngineConfiguration springEngineConfiguration = (SpringEngineConfiguration) engineConfiguration;
         ((SpringEventRegistryEngineConfiguration) eventEngineConfiguration).setTransactionManager(springEngineConfiguration.getTransactionManager());
 
-        if (eventEngineConfiguration.getBeans() == null) {
-            eventEngineConfiguration.setBeans(engineConfiguration.getBeans());
+        if (eventEngineConfiguration.getExpressionManager() == null) {
+            eventEngineConfiguration.setExpressionManager(new SpringEventExpressionManager(
+                springEngineConfiguration.getApplicationContext(), springEngineConfiguration.getBeans()));
         }
 
         initEventRegistryEngine();

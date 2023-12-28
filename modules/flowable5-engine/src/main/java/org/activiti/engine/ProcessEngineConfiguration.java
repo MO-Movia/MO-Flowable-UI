@@ -30,7 +30,6 @@ import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.common.engine.impl.runtime.Clock;
 import org.flowable.image.ProcessDiagramGenerator;
 import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
-import org.flowable.mail.common.api.client.FlowableMailClient;
 
 /**
  * Configuration information from which a process engine can be build.
@@ -114,11 +113,16 @@ public abstract class ProcessEngineConfiguration {
     protected String history = HistoryLevel.AUDIT.getKey();
     protected boolean asyncExecutorActivate;
 
-    protected FlowableMailClient defaultMailClient;
-    protected MailServerInfo defaultMailServer;
+    protected String mailServerHost = "localhost";
+    protected String mailServerUsername; // by default no name and password are provided, which
+    protected String mailServerPassword; // means no authentication for mail server
+    protected int mailServerPort = 25;
+    protected int mailServerSSLPort = 465;
+    protected boolean useSSL;
+    protected boolean useTLS;
+    protected String mailServerDefaultFrom = "activiti@localhost";
     protected String mailSessionJndi;
     protected Map<String, MailServerInfo> mailServers = new HashMap<>();
-    protected Map<String, FlowableMailClient> mailClients = new HashMap<>();
     protected Map<String, String> mailSessionsJndi = new HashMap<>();
 
     protected String databaseType;
@@ -318,59 +322,30 @@ public abstract class ProcessEngineConfiguration {
         return this;
     }
 
-    public FlowableMailClient getDefaultMailClient() {
-        return defaultMailClient;
-    }
-
-    public ProcessEngineConfiguration setDefaultMailClient(FlowableMailClient defaultMailClient) {
-        this.defaultMailClient = defaultMailClient;
-        return this;
-    }
-
-    public MailServerInfo getDefaultMailServer() {
-        return getOrCreateDefaultMaiLServer();
-    }
-
-    public ProcessEngineConfiguration setDefaultMailServer(MailServerInfo defaultMailServer) {
-        this.defaultMailServer = defaultMailServer;
-        return this;
-    }
-
-    protected MailServerInfo getOrCreateDefaultMaiLServer() {
-        if (defaultMailServer == null) {
-            defaultMailServer = new MailServerInfo();
-            defaultMailServer.setMailServerHost("localhost");
-            defaultMailServer.setMailServerPort(25);
-            defaultMailServer.setMailServerSSLPort(465);
-            defaultMailServer.setMailServerDefaultFrom("flowable@localhost");
-        }
-        return defaultMailServer;
-    }
-
     public String getMailServerHost() {
-        return getOrCreateDefaultMaiLServer().getMailServerHost();
+        return mailServerHost;
     }
 
     public ProcessEngineConfiguration setMailServerHost(String mailServerHost) {
-        getOrCreateDefaultMaiLServer().setMailServerHost(mailServerHost);
+        this.mailServerHost = mailServerHost;
         return this;
     }
 
     public String getMailServerUsername() {
-        return getOrCreateDefaultMaiLServer().getMailServerUsername();
+        return mailServerUsername;
     }
 
     public ProcessEngineConfiguration setMailServerUsername(String mailServerUsername) {
-        getOrCreateDefaultMaiLServer().setMailServerUsername(mailServerUsername);
+        this.mailServerUsername = mailServerUsername;
         return this;
     }
 
     public String getMailServerPassword() {
-        return getOrCreateDefaultMaiLServer().getMailServerPassword();
+        return mailServerPassword;
     }
 
     public ProcessEngineConfiguration setMailServerPassword(String mailServerPassword) {
-        getOrCreateDefaultMaiLServer().setMailServerPassword(mailServerPassword);
+        this.mailServerPassword = mailServerPassword;
         return this;
     }
 
@@ -384,47 +359,47 @@ public abstract class ProcessEngineConfiguration {
     }
 
     public int getMailServerPort() {
-        return getOrCreateDefaultMaiLServer().getMailServerPort();
+        return mailServerPort;
     }
 
     public ProcessEngineConfiguration setMailServerPort(int mailServerPort) {
-        getOrCreateDefaultMaiLServer().setMailServerPort(mailServerPort);
+        this.mailServerPort = mailServerPort;
         return this;
     }
 
     public int getMailServerSSLPort() {
-        return getOrCreateDefaultMaiLServer().getMailServerSSLPort();
+        return mailServerSSLPort;
     }
 
     public ProcessEngineConfiguration setMailServerSSLPort(int mailServerSSLPort) {
-        getOrCreateDefaultMaiLServer().setMailServerSSLPort(mailServerSSLPort);
+        this.mailServerSSLPort = mailServerSSLPort;
         return this;
     }
 
     public boolean getMailServerUseSSL() {
-        return getOrCreateDefaultMaiLServer().isMailServerUseSSL();
+        return useSSL;
     }
 
     public ProcessEngineConfiguration setMailServerUseSSL(boolean useSSL) {
-        getOrCreateDefaultMaiLServer().setMailServerUseSSL(useSSL);
+        this.useSSL = useSSL;
         return this;
     }
 
     public boolean getMailServerUseTLS() {
-        return getOrCreateDefaultMaiLServer().isMailServerUseTLS();
+        return useTLS;
     }
 
     public ProcessEngineConfiguration setMailServerUseTLS(boolean useTLS) {
-        getOrCreateDefaultMaiLServer().setMailServerUseTLS(useTLS);
+        this.useTLS = useTLS;
         return this;
     }
 
     public String getMailServerDefaultFrom() {
-        return getOrCreateDefaultMaiLServer().getMailServerDefaultFrom();
+        return mailServerDefaultFrom;
     }
 
     public ProcessEngineConfiguration setMailServerDefaultFrom(String mailServerDefaultFrom) {
-        getOrCreateDefaultMaiLServer().setMailServerDefaultFrom(mailServerDefaultFrom);
+        this.mailServerDefaultFrom = mailServerDefaultFrom;
         return this;
     }
 
@@ -438,19 +413,6 @@ public abstract class ProcessEngineConfiguration {
 
     public ProcessEngineConfiguration setMailServers(Map<String, MailServerInfo> mailServers) {
         this.mailServers.putAll(mailServers);
-        return this;
-    }
-
-    public FlowableMailClient getMailClient(String tenantId) {
-        return mailClients.get(tenantId);
-    }
-
-    public Map<String, FlowableMailClient> getMailClients() {
-        return mailClients;
-    }
-
-    public ProcessEngineConfiguration setMailClients(Map<String, FlowableMailClient> mailClients) {
-        this.mailClients.putAll(mailClients);
         return this;
     }
 

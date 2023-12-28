@@ -35,12 +35,11 @@ import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEnt
 
 public abstract class AbstractHistoryManager extends AbstractManager implements HistoryManager {
 
-    public AbstractHistoryManager(ProcessEngineConfigurationImpl processEngineConfiguration) {
+    protected HistoryConfigurationSettings historyConfigurationSettings;
+
+    public AbstractHistoryManager(ProcessEngineConfigurationImpl processEngineConfiguration, HistoryConfigurationSettings historyConfigurationSettings) {
         super(processEngineConfiguration);
-    }
-    
-    protected HistoryConfigurationSettings getHistoryConfigurationSettings() {
-        return processEngineConfiguration.getHistoryConfigurationSettings();
+        this.historyConfigurationSettings = historyConfigurationSettings;
     }
     
     @Override
@@ -50,17 +49,17 @@ public abstract class AbstractHistoryManager extends AbstractManager implements 
 
     @Override
     public boolean isHistoryLevelAtLeast(HistoryLevel level, String processDefinitionId) {
-        return getHistoryConfigurationSettings().isHistoryLevelAtLeast(level, processDefinitionId);
+        return historyConfigurationSettings.isHistoryLevelAtLeast(level, processDefinitionId);
     }
 
     @Override
     public boolean isHistoryEnabled() {
-        return getHistoryConfigurationSettings().isHistoryEnabled();
+        return historyConfigurationSettings.isHistoryEnabled();
     }
     
     @Override
     public boolean isHistoryEnabled(String processDefinitionId) {
-        return getHistoryConfigurationSettings().isHistoryEnabled(processDefinitionId);
+        return historyConfigurationSettings.isHistoryEnabled(processDefinitionId);
     }
 
     @Override

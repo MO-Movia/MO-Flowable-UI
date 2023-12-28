@@ -12,7 +12,6 @@
  */
 package org.flowable.spring.job.service;
 
-import org.flowable.job.service.impl.asyncexecutor.AsyncJobExecutorConfiguration;
 import org.flowable.job.service.impl.asyncexecutor.ResetExpiredJobsRunnable;
 import org.flowable.job.service.impl.asyncexecutor.UnacquireAsyncHistoryJobExceptionHandler;
 
@@ -22,21 +21,11 @@ public class SpringAsyncHistoryExecutor extends SpringAsyncExecutor {
         super();
         init();
     }
-
-    public SpringAsyncHistoryExecutor(AsyncJobExecutorConfiguration configuration) {
-        super(configuration);
-        init();
-    }
      
     protected void init() {
         setTimerRunnableNeeded(false);
-        if (configuration.getAcquireRunnableThreadName() == null) {
-            setAcquireRunnableThreadName("flowable-acquire-history-jobs");
-        }
-
-        if (configuration.getResetExpiredRunnableName() == null) {
-            setResetExpiredRunnableName("flowable-reset-expired-history-jobs");
-        }
+        setAcquireRunnableThreadName("flowable-acquire-history-jobs");
+        setResetExpiredRunnableName("flowable-reset-expired-history-jobs");
         setAsyncRunnableExecutionExceptionHandler(new UnacquireAsyncHistoryJobExceptionHandler());
     }
     

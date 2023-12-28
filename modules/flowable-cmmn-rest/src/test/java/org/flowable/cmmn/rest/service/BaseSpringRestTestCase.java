@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -61,19 +62,14 @@ import org.flowable.cmmn.rest.util.TestServerUtil;
 import org.flowable.cmmn.rest.util.TestServerUtil.TestServer;
 import org.flowable.common.engine.impl.db.SchemaManager;
 import org.flowable.common.engine.impl.identity.Authentication;
-import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.common.engine.impl.test.EnsureCleanDbUtils;
+import org.flowable.form.api.FormRepositoryService;
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.idm.api.User;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.function.ThrowingRunnable;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -90,14 +86,14 @@ public abstract class BaseSpringRestTestCase extends TestCase {
     
     protected static final String EMPTY_LINE = "\n";
     protected static final List<String> TABLENAMES_EXCLUDED_FROM_DB_CLEAN_CHECK = Arrays.asList(
-        "ACT_GE_PROPERTY",
-        "ACT_ID_PROPERTY",
-        "ACT_CMMN_DATABASECHANGELOG",
-        "ACT_CMMN_DATABASECHANGELOGLOCK",
-        "ACT_FO_DATABASECHANGELOG",
-        "ACT_FO_DATABASECHANGELOGLOCK",
-        "FLW_EV_DATABASECHANGELOG",
-        "FLW_EV_DATABASECHANGELOGLOCK"
+                    "ACT_GE_PROPERTY",
+                    "ACT_ID_PROPERTY",
+                    "ACT_CMMN_DATABASECHANGELOG",
+                    "ACT_CMMN_DATABASECHANGELOGLOCK",
+                    "ACT_FO_DATABASECHANGELOG",
+                    "ACT_FO_DATABASECHANGELOGLOCK",
+                    "FLW_EV_DATABASECHANGELOG",
+                    "FLW_EV_DATABASECHANGELOGLOCK"
     );
 
     protected static String SERVER_URL_PREFIX;
@@ -119,6 +115,8 @@ public abstract class BaseSpringRestTestCase extends TestCase {
     protected static CmmnHistoryService historyService;
     protected static CmmnManagementService managementService;
     protected static IdmIdentityService identityService;
+    protected static FormRepositoryService formRepositoryService;
+    protected static org.flowable.form.api.FormService formEngineFormService;
 
     protected static CloseableHttpClient client;
     protected static LinkedList<CloseableHttpResponse> httpResponses = new LinkedList<>();
@@ -142,6 +140,8 @@ public abstract class BaseSpringRestTestCase extends TestCase {
         historyService = appContext.getBean(CmmnHistoryService.class);
         managementService = appContext.getBean(CmmnManagementService.class);
         identityService = appContext.getBean(IdmIdentityService.class);
+        formRepositoryService = appContext.getBean(FormRepositoryService.class);
+        formEngineFormService = appContext.getBean(org.flowable.form.api.FormService.class);
 
         // Create http client for all tests
         CredentialsProvider provider = new BasicCredentialsProvider();
@@ -336,7 +336,11 @@ public abstract class BaseSpringRestTestCase extends TestCase {
 
     protected String encode(String string) {
         if (string != null) {
-            return URLEncoder.encode(string, StandardCharsets.UTF_8);
+            try {
+                return URLEncoder.encode(string, "UTF-8");
+            } catch (UnsupportedEncodingException uee) {
+                throw new IllegalStateException("JVM does not support UTF-8 encoding.", uee);
+            }
         }
         return null;
     }
@@ -475,22 +479,5 @@ public abstract class BaseSpringRestTestCase extends TestCase {
 
     protected String buildUrl(String[] fragments, Object... arguments) {
         return URL_BUILDER.buildUrl(fragments, arguments);
-    }
-
-    protected void runUsingMocks(ThrowingRunnable runnable) {
-        MockitoSession mockitoSession = Mockito.mockitoSession()
-                .name(getName())
-                .strictness(Strictness.STRICT_STUBS)
-                .initMocks(this)
-                .startMocking();
-
-        try (AutoCloseable ignored = MockitoAnnotations.openMocks(this)) {
-            runnable.run();
-            mockitoSession.finishMocking();
-        } catch (Throwable exception) {
-            mockitoSession.finishMocking(exception);
-        } finally {
-            cmmnEngineConfiguration.getEngineConfigurations().remove(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG);
-        }
     }
 }

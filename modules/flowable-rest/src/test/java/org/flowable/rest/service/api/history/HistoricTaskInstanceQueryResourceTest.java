@@ -167,10 +167,6 @@ public class HistoricTaskInstanceQueryResourceTest extends BaseSpringRestTestCas
         requestNode = objectMapper.createObjectNode();
         requestNode.put("processInstanceIdWithChildren", "nonexisting");
         assertResultsPresentInPostDataResponse(url, requestNode, 0);
-        
-        requestNode = objectMapper.createObjectNode();
-        requestNode.put("withoutProcessInstanceId", true);
-        assertResultsPresentInPostDataResponse(url, requestNode, 0);
 
         requestNode = objectMapper.createObjectNode();
         requestNode.put("taskAssignee", "kermit");
@@ -259,10 +255,6 @@ public class HistoricTaskInstanceQueryResourceTest extends BaseSpringRestTestCas
         requestNode = objectMapper.createObjectNode();
         requestNode.putArray("taskDefinitionKeys").add("processTask").add("processTask2");
         assertResultsPresentInPostDataResponse(url, requestNode, task.getId(), finishedTaskProcess1.getId(), task2.getId());
-        
-        requestNode = objectMapper.createObjectNode();
-        requestNode.put("withoutScopeId", true);
-        assertResultsPresentInPostDataResponse(url, requestNode, 3, task.getId(), finishedTaskProcess1.getId(), task2.getId());
     }
 
     @Test

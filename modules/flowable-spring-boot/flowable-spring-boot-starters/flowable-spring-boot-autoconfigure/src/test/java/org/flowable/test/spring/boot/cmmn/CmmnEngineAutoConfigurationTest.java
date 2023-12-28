@@ -18,7 +18,6 @@ import static org.flowable.test.spring.boot.util.DeploymentCleanerUtil.deleteDep
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
@@ -42,17 +41,13 @@ import org.flowable.cmmn.spring.SpringCmmnEngineConfiguration;
 import org.flowable.cmmn.spring.autodeployment.DefaultAutoDeploymentStrategy;
 import org.flowable.cmmn.spring.autodeployment.ResourceParentFolderAutoDeploymentStrategy;
 import org.flowable.cmmn.spring.autodeployment.SingleResourceAutoDeploymentStrategy;
-import org.flowable.common.engine.api.async.AsyncTaskExecutor;
-import org.flowable.common.engine.impl.async.DefaultAsyncTaskExecutor;
 import org.flowable.common.spring.AutoDeploymentStrategy;
-import org.flowable.common.spring.async.SpringAsyncTaskExecutor;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.impl.util.EngineServiceUtil;
 import org.flowable.http.common.api.client.FlowableAsyncHttpClient;
 import org.flowable.http.common.api.client.FlowableHttpClient;
 import org.flowable.idm.spring.SpringIdmEngineConfiguration;
-import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
@@ -62,23 +57,17 @@ import org.flowable.spring.boot.cmmn.CmmnEngineAutoConfiguration;
 import org.flowable.spring.boot.cmmn.CmmnEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.idm.IdmEngineAutoConfiguration;
 import org.flowable.spring.boot.idm.IdmEngineServicesAutoConfiguration;
-import org.flowable.spring.job.service.SpringAsyncExecutor;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
-import org.springframework.core.task.TaskExecutor;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Filip Hrisafov
@@ -118,44 +107,6 @@ public class CmmnEngineAutoConfigurationTest {
             assertThat(httpClientConfig.getHttpClient()).isNull();
 
             deleteDeployments(cmmnEngine);
-        });
-    }
-
-    @Test
-    public void historyCleaningProperties() {
-        contextRunner.withPropertyValues(
-                "flowable.history-cleaning-cycle=0 2 * * * ?",
-                "flowable.history-cleaning-after=P90D",
-                "flowable.history-cleaning-batch-size=500",
-                "flowable.history-cleaning-sequential=true"
-        ).run(context -> {
-            CmmnEngine engine = context.getBean(CmmnEngine.class);
-            CmmnEngineConfiguration engineConfiguration = engine.getCmmnEngineConfiguration();
-
-            assertThat(engineConfiguration.getHistoryCleaningTimeCycleConfig()).isEqualTo("0 2 * * * ?");
-            assertThat(engineConfiguration.getCleanInstancesEndedAfter()).isEqualTo(Duration.ofDays(90));
-            assertThat(engineConfiguration.getCleanInstancesBatchSize()).isEqualTo(500);
-
-            deleteDeployments(engine);
-        });
-    }
-
-    @Test
-    public void historyCleaningPropertiesBackwardsCompatible() {
-        contextRunner.withPropertyValues(
-                "flowable.history-cleaning-cycle=0 2 * * * ?",
-                "flowable.history-cleaning-after-days=90",
-                "flowable.history-cleaning-batch-size=500",
-                "flowable.history-cleaning-sequential=true"
-        ).run(context -> {
-            CmmnEngine engine = context.getBean(CmmnEngine.class);
-            CmmnEngineConfiguration engineConfiguration = engine.getCmmnEngineConfiguration();
-
-            assertThat(engineConfiguration.getHistoryCleaningTimeCycleConfig()).isEqualTo("0 2 * * * ?");
-            assertThat(engineConfiguration.getCleanInstancesEndedAfter()).isEqualTo(Duration.ofDays(90));
-            assertThat(engineConfiguration.getCleanInstancesBatchSize()).isEqualTo(500);
-
-            deleteDeployments(engine);
         });
     }
 
@@ -211,29 +162,8 @@ public class CmmnEngineAutoConfigurationTest {
                     assertThat(strategy.getLockName()).isNull();
                 });
 
-            assertThat(engineConfiguration.getHistoryCleaningTimeCycleConfig()).isEqualTo("0 0 1 * * ?");
-            assertThat(engineConfiguration.getCleanInstancesEndedAfter()).isEqualTo(Duration.ofDays(365));
-            assertThat(engineConfiguration.getCleanInstancesBatchSize()).isEqualTo(100);
-
             deleteDeployments(cmmnEngine);
         });
-    }
-
-    @Test
-    public void standaloneCmmnEngineWithJackson() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class))
-                .run(context -> {
-                    assertThat(context).as("Cmmn engine")
-                            .hasSingleBean(CmmnEngine.class)
-                            .hasSingleBean(ObjectMapper.class);
-
-                    CmmnEngine processEngine = context.getBean(CmmnEngine.class);
-
-                    assertThat(processEngine.getCmmnEngineConfiguration().getObjectMapper()).isEqualTo(context.getBean(ObjectMapper.class));
-
-                    deleteDeployments(processEngine);
-                });
     }
 
     @Test
@@ -390,30 +320,6 @@ public class CmmnEngineAutoConfigurationTest {
             deleteDeployments(processEngine);
             deleteDeployments(cmmnEngine);
         });
-    }
-
-    @Test
-    public void cmmnEngineWithProcessEngineAndJackson() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(
-                        ProcessEngineServicesAutoConfiguration.class,
-                        ProcessEngineAutoConfiguration.class,
-                        JacksonAutoConfiguration.class
-                ))
-                .run(context -> {
-                    assertThat(context)
-                            .doesNotHaveBean(AppEngine.class)
-                            .hasSingleBean(ProcessEngine.class)
-                            .hasSingleBean(ObjectMapper.class);
-                    CmmnEngine cmmnEngine = context.getBean(CmmnEngine.class);
-                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
-
-                    assertThat(cmmnEngine.getCmmnEngineConfiguration().getObjectMapper()).isEqualTo(context.getBean(ObjectMapper.class));
-                    assertThat(cmmnEngine.getCmmnEngineConfiguration().getObjectMapper()).isEqualTo(processEngine.getProcessEngineConfiguration().getObjectMapper());
-
-                    deleteDeployments(cmmnEngine);
-                    deleteDeployments(processEngine);
-                });
     }
 
     @Test
@@ -574,222 +480,6 @@ public class CmmnEngineAutoConfigurationTest {
                     CmmnEngineConfiguration engineConfiguration = cmmnEngine.getCmmnEngineConfiguration();
                     assertThat(engineConfiguration.getHttpClientConfig().getHttpClient())
                             .isEqualTo(context.getBean(FlowableAsyncHttpClient.class));
-                });
-    }
-
-    @Test
-    void cmmnEngineShouldUseSpringTaskExecutor() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(TaskExecutionAutoConfiguration.class))
-                .run(context -> {
-                    assertThat(context)
-                            .hasSingleBean(CmmnEngineConfiguration.class)
-                            .hasSingleBean(TaskExecutor.class)
-                            .hasBean("flowableAsyncTaskInvokerTaskExecutor");
-
-                    CmmnEngineConfiguration configuration = context.getBean(CmmnEngineConfiguration.class);
-
-                    AsyncExecutor asyncExecutor = configuration.getAsyncExecutor();
-                    assertThat(asyncExecutor).isInstanceOf(SpringAsyncExecutor.class);
-
-                    AsyncTaskExecutor asyncTaskExecutor = configuration.getAsyncTaskExecutor();
-                    assertThat(asyncTaskExecutor).isInstanceOf(SpringAsyncTaskExecutor.class);
-                    assertThat(asyncExecutor.getTaskExecutor()).isEqualTo(asyncTaskExecutor);
-                    assertThat(configuration.getAsyncHistoryTaskExecutor()).isEqualTo(asyncTaskExecutor);
-                    assertThat(((SpringAsyncTaskExecutor) asyncTaskExecutor).getAsyncTaskExecutor())
-                            .isEqualTo(context.getBean(TaskExecutor.class));
-
-                    AsyncTaskExecutor taskInvokerTaskExecutor = context.getBean("flowableAsyncTaskInvokerTaskExecutor", AsyncTaskExecutor.class);
-                    assertThat(configuration.getAsyncTaskInvokerTaskExecutor())
-                            .isNotEqualTo(asyncTaskExecutor)
-                            .isEqualTo(taskInvokerTaskExecutor)
-                            .isInstanceOfSatisfying(DefaultAsyncTaskExecutor.class, taskExecutor -> {
-                                assertThat(taskExecutor.getCorePoolSize()).isEqualTo(8);
-                                assertThat(taskExecutor.getMaxPoolSize()).isEqualTo(8);
-                                assertThat(taskExecutor.getQueueSize()).isEqualTo(100);
-                                assertThat(taskExecutor.getThreadPoolNamingPattern()).isEqualTo("flowable-async-task-invoker-%d");
-                            });
-                });
-    }
-
-    @Test
-    void cmmnEngineDefaultMailProperties(){
-        contextRunner
-                .run(context -> {
-                    CmmnEngine cmmnEngine = context.getBean(CmmnEngine.class);
-                    CmmnEngineConfiguration engineConfiguration = cmmnEngine.getCmmnEngineConfiguration();
-
-                    assertThat(engineConfiguration).isNotNull();
-                    assertThat(engineConfiguration.getMailServerDefaultCharset()).isEqualTo(StandardCharsets.UTF_8);
-                    assertThat(engineConfiguration.getMailServerDefaultFrom()).isEqualTo("flowable@localhost");
-                    assertThat(engineConfiguration.getMailServerHost()).isEqualTo("localhost");
-                    assertThat(engineConfiguration.getMailServerUsername()).isNull();
-                    assertThat(engineConfiguration.getMailServerPassword()).isNull();
-                    assertThat(engineConfiguration.getMailServerPort()).isEqualTo(1025);
-                    assertThat(engineConfiguration.getMailServerSSLPort()).isEqualTo(1465);
-                    assertThat(engineConfiguration.getMailServerUseSSL()).isFalse();
-                    assertThat(engineConfiguration.getMailServerUseTLS()).isFalse();
-                });
-    }
-
-    @Test
-    void cmmnEngineMailProperties(){
-        contextRunner
-                .withPropertyValues(
-                        "flowable.mail.server.host=my-server",
-                        "flowable.mail.server.port=4040",
-                        "flowable.mail.server.sslPort=5050",
-                        "flowable.mail.server.username=username",
-                        "flowable.mail.server.password=password",
-                        "flowable.mail.server.defaultFrom=customfrom@localhost",
-                        "flowable.mail.server.forceTo=internal@localhost",
-                        "flowable.mail.server.defaultCharset=utf-16",
-                        "flowable.mail.server.useSsl=true",
-                        "flowable.mail.server.useTls=true"
-                )
-                .run(context -> {
-                    CmmnEngine cmmnEngine = context.getBean(CmmnEngine.class);
-                    CmmnEngineConfiguration engineConfiguration = cmmnEngine.getCmmnEngineConfiguration();
-
-                    assertThat(engineConfiguration).isNotNull();
-                    assertThat(engineConfiguration.getMailServerHost()).isEqualTo("my-server");
-                    assertThat(engineConfiguration.getMailServerPort()).isEqualTo(4040);
-                    assertThat(engineConfiguration.getMailServerSSLPort()).isEqualTo(5050);
-                    assertThat(engineConfiguration.getMailServerUsername()).isEqualTo("username");
-                    assertThat(engineConfiguration.getMailServerPassword()).isEqualTo("password");
-                    assertThat(engineConfiguration.getMailServerDefaultFrom()).isEqualTo("customfrom@localhost");
-                    assertThat(engineConfiguration.getMailServerForceTo()).isEqualTo("internal@localhost");
-                    assertThat(engineConfiguration.getMailServerDefaultCharset()).isEqualTo(StandardCharsets.UTF_16);
-                    assertThat(engineConfiguration.getMailServerUseSSL()).isTrue();
-                    assertThat(engineConfiguration.getMailServerUseTLS()).isTrue();
-                });
-    }
-
-    @Test
-    void customAsyncExecutorProperties() {
-        contextRunner
-                .withPropertyValues(
-                        "flowable.cmmn.deploy-resources=false",
-                        "flowable.cmmn.async.executor.move-timer-executor-pool-size=10",
-                        "flowable.cmmn.async.executor.max-timer-jobs-per-acquisition=1024",
-                        "flowable.cmmn.async.executor.max-async-jobs-due-per-acquisition=2048",
-                        "flowable.cmmn.async.executor.default-timer-job-acquire-wait-time-in-millis=20000",
-                        "flowable.cmmn.async.executor.default-async-job-acquire-wait-time-in-millis=30000",
-                        "flowable.cmmn.async.executor.default-queue-size-full-wait-time-in-millis=15000",
-                        "flowable.cmmn.async.executor.lock-owner=test-lock-owner",
-                        "flowable.cmmn.async.executor.timer-lock-time-in-millis=7200000",
-                        "flowable.cmmn.async.executor.async-job-lock-time-in-millis=10800000",
-                        "flowable.cmmn.async.executor.async-jobs-global-lock-wait-time=PT2M",
-                        "flowable.cmmn.async.executor.async-jobs-global-lock-poll-rate=PT1S",
-                        "flowable.cmmn.async.executor.timer-lock-wait-time=PT3M",
-                        "flowable.cmmn.async.executor.timer-lock-poll-rate=PT2S",
-                        "flowable.cmmn.async.executor.reset-expired-jobs-interval=300000",
-                        "flowable.cmmn.async.executor.reset-expired-jobs-page-size=5"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasBean("cmmnAsyncExecutor")
-                            .hasSingleBean(CmmnEngineConfiguration.class);
-
-                    CmmnEngineConfiguration configuration = context.getBean(CmmnEngineConfiguration.class);
-                    SpringAsyncExecutor executor = context.getBean("cmmnAsyncExecutor", SpringAsyncExecutor.class);
-
-                    assertThat(configuration.getAsyncExecutor()).isEqualTo(executor);
-
-                    assertThat(executor.getMoveTimerExecutorPoolSize()).isEqualTo(10);
-                    assertThat(executor.getMaxTimerJobsPerAcquisition()).isEqualTo(1024);
-                    assertThat(executor.getMaxAsyncJobsDuePerAcquisition()).isEqualTo(2048);
-                    assertThat(executor.getDefaultTimerJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(20).toMillis());
-                    assertThat(executor.getDefaultAsyncJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(30).toMillis());
-                    assertThat(executor.getDefaultQueueSizeFullWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(15).toMillis());
-                    assertThat(executor.getLockOwner()).isEqualTo("test-lock-owner");
-                    assertThat(executor.getTimerLockTimeInMillis()).isEqualTo(Duration.ofHours(2).toMillis());
-                    assertThat(executor.getAsyncJobLockTimeInMillis()).isEqualTo(Duration.ofHours(3).toMillis());
-                    assertThat(executor.getAsyncJobsGlobalLockWaitTime()).isEqualTo(Duration.ofMinutes(2));
-                    assertThat(executor.getAsyncJobsGlobalLockPollRate()).isEqualTo(Duration.ofSeconds(1));
-                    assertThat(executor.getTimerLockWaitTime()).isEqualTo(Duration.ofMinutes(3));
-                    assertThat(executor.getTimerLockPollRate()).isEqualTo(Duration.ofSeconds(2));
-                    assertThat(executor.getResetExpiredJobsInterval()).isEqualTo(Duration.ofMinutes(5).toMillis());
-                    assertThat(executor.getResetExpiredJobsPageSize()).isEqualTo(5);
-                });
-    }
-
-    @Test
-    void customAsyncExecutorPropertiesWithNewPropertiesWithDuration() {
-        contextRunner
-                .withPropertyValues(
-                        "flowable.cmmn.deploy-resources=false",
-                        "flowable.cmmn.async.executor.move-timer-executor-pool-size=10",
-                        "flowable.cmmn.async.executor.max-timer-jobs-per-acquisition=1024",
-                        "flowable.cmmn.async.executor.max-async-jobs-due-per-acquisition=2048",
-                        "flowable.cmmn.async.executor.default-timer-job-acquire-wait-time=PT20S",
-                        "flowable.cmmn.async.executor.default-async-job-acquire-wait-time=PT30S",
-                        "flowable.cmmn.async.executor.default-queue-size-full-wait-time=PT15S",
-                        "flowable.cmmn.async.executor.lock-owner=test-lock-owner",
-                        "flowable.cmmn.async.executor.timer-lock-time=PT2H",
-                        "flowable.cmmn.async.executor.async-job-lock-time=PT3H",
-                        "flowable.cmmn.async.executor.async-jobs-global-lock-wait-time=PT2M",
-                        "flowable.cmmn.async.executor.async-jobs-global-lock-poll-rate=PT1S",
-                        "flowable.cmmn.async.executor.timer-lock-wait-time=PT3M",
-                        "flowable.cmmn.async.executor.timer-lock-poll-rate=PT2S",
-                        "flowable.cmmn.async.executor.reset-expired-jobs-interval=PT5M",
-                        "flowable.cmmn.async.executor.reset-expired-jobs-page-size=5"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasBean("cmmnAsyncExecutor")
-                            .hasSingleBean(CmmnEngineConfiguration.class);
-
-                    CmmnEngineConfiguration configuration = context.getBean(CmmnEngineConfiguration.class);
-                    SpringAsyncExecutor executor = context.getBean("cmmnAsyncExecutor", SpringAsyncExecutor.class);
-
-                    assertThat(configuration.getAsyncExecutor()).isEqualTo(executor);
-
-                    assertThat(executor.getMoveTimerExecutorPoolSize()).isEqualTo(10);
-                    assertThat(executor.getMaxTimerJobsPerAcquisition()).isEqualTo(1024);
-                    assertThat(executor.getMaxAsyncJobsDuePerAcquisition()).isEqualTo(2048);
-                    assertThat(executor.getDefaultTimerJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(20).toMillis());
-                    assertThat(executor.getDefaultAsyncJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(30).toMillis());
-                    assertThat(executor.getDefaultQueueSizeFullWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(15).toMillis());
-                    assertThat(executor.getLockOwner()).isEqualTo("test-lock-owner");
-                    assertThat(executor.getTimerLockTimeInMillis()).isEqualTo(Duration.ofHours(2).toMillis());
-                    assertThat(executor.getAsyncJobLockTimeInMillis()).isEqualTo(Duration.ofHours(3).toMillis());
-                    assertThat(executor.getAsyncJobsGlobalLockWaitTime()).isEqualTo(Duration.ofMinutes(2));
-                    assertThat(executor.getAsyncJobsGlobalLockPollRate()).isEqualTo(Duration.ofSeconds(1));
-                    assertThat(executor.getTimerLockWaitTime()).isEqualTo(Duration.ofMinutes(3));
-                    assertThat(executor.getTimerLockPollRate()).isEqualTo(Duration.ofSeconds(2));
-                    assertThat(executor.getResetExpiredJobsInterval()).isEqualTo(Duration.ofMinutes(5).toMillis());
-                    assertThat(executor.getResetExpiredJobsPageSize()).isEqualTo(5);
-                });
-    }
-
-    @Test
-    void taskInvokerWithCustomProperties() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(TaskExecutionAutoConfiguration.class))
-                .withPropertyValues(
-                        "flowable.task-invoker.core-pool-size=2",
-                        "flowable.task-invoker.max-pool-size=3",
-                        "flowable.task-invoker.queue-size=15",
-                        "flowable.task-invoker.thread-name-prefix=test-"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasSingleBean(CmmnEngineConfiguration.class)
-                            .hasSingleBean(TaskExecutor.class)
-                            .hasBean("flowableAsyncTaskInvokerTaskExecutor");
-
-                    CmmnEngineConfiguration configuration = context.getBean(CmmnEngineConfiguration.class);
-
-                    AsyncTaskExecutor taskInvokerTaskExecutor = context.getBean("flowableAsyncTaskInvokerTaskExecutor", AsyncTaskExecutor.class);
-                    assertThat(configuration.getAsyncTaskInvokerTaskExecutor())
-                            .isEqualTo(taskInvokerTaskExecutor)
-                            .isInstanceOfSatisfying(DefaultAsyncTaskExecutor.class, taskExecutor -> {
-                                assertThat(taskExecutor.getCorePoolSize()).isEqualTo(2);
-                                assertThat(taskExecutor.getMaxPoolSize()).isEqualTo(3);
-                                assertThat(taskExecutor.getQueueSize()).isEqualTo(15);
-                                assertThat(taskExecutor.getThreadPoolNamingPattern()).isEqualTo("test-%d");
-                            });
                 });
     }
 

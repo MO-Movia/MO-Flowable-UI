@@ -21,13 +21,8 @@ import org.flowable.eventregistry.model.EventModel;
  * @author Joram Barrez
  * @author Filip Hrisafov
  */
-@FunctionalInterface
 public interface InboundEventPayloadExtractor<T> {
 
-    Collection<EventPayloadInstance> extractPayload(EventModel eventModel, T payload);
-
-    default Collection<EventPayloadInstance> extractPayload(EventModel eventModel, FlowableEventInfo<T> event) {
-        return extractPayload(eventModel, event.getPayload());
-    }
+    Collection<EventPayloadInstance> extractPayload(EventModel eventDefinition, T event);
 
 }

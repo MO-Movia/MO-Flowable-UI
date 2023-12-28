@@ -18,13 +18,11 @@ import java.util.Set;
 
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.query.CacheAwareQuery;
-import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.common.engine.impl.query.AbstractQuery;
 import org.flowable.dmn.api.DmnHistoricDecisionExecution;
 import org.flowable.dmn.api.DmnHistoricDecisionExecutionQuery;
-import org.flowable.dmn.engine.impl.cmd.DeleteHistoricDecisionExecutionsByQueryCmd;
 import org.flowable.dmn.engine.impl.persistence.entity.HistoricDecisionExecutionEntity;
 import org.flowable.dmn.engine.impl.util.CommandContextUtil;
 
@@ -44,7 +42,6 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
     protected String executionId;
     protected String activityId;
     protected String scopeType;
-    protected boolean withoutScopeType;
     protected String processInstanceIdWithChildren;
     protected String caseInstanceIdWithChildren;
     protected Boolean failed;
@@ -139,12 +136,6 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
     }
     
     @Override
-    public DmnHistoricDecisionExecutionQuery withoutScopeType() {
-        this.withoutScopeType = true;
-        return this;
-    }
-
-    @Override
     public DmnHistoricDecisionExecutionQuery processInstanceIdWithChildren(String processInstanceId) {
         this.processInstanceIdWithChildren = processInstanceId;
         return this;
@@ -218,21 +209,6 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
         return CommandContextUtil.getHistoricDecisionExecutionEntityManager().findHistoricDecisionExecutionsByQueryCriteria(this);
     }
 
-    @Override
-    public void delete() {
-        if (commandExecutor != null) {
-            commandExecutor.execute(new DeleteHistoricDecisionExecutionsByQueryCmd(this));
-        } else {
-            new DeleteHistoricDecisionExecutionsByQueryCmd(this).execute(Context.getCommandContext());
-        }
-    }
-
-    @Override
-    @Deprecated
-    public void deleteWithRelatedData() {
-        delete();
-    }
-
     // getters ////////////////////////////////////////////
 
     @Override
@@ -271,11 +247,7 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
     public String getScopeType() {
         return scopeType;
     }
-
-    public boolean isWithoutScopeType() {
-        return withoutScopeType;
-    }
-
+    
     public String getProcessInstanceIdWithChildren() {
         return processInstanceIdWithChildren;
     }

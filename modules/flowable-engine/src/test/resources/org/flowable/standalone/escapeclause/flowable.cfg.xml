@@ -34,9 +34,8 @@
     <property name="databaseSchemaUpdate" value="drop-create" />
 
     <!-- job executor configurations -->
+    <property name="asyncExecutor" ref="asyncExecutor" />
     <property name="asyncExecutorActivate" value="false" />
-    <property name="asyncExecutorDefaultAsyncJobAcquireWaitTime" value="1000" />
-    <property name="asyncExecutorDefaultTimerJobAcquireWaitTime" value="1000" />
 
     <property name="defaultFailedJobWaitTime" value="1" />
     <property name="asyncFailedJobWaitTime" value="1" />
@@ -47,7 +46,7 @@
     <property name="mailServers">
       <map>
         <entry key="myEmailTenant">
-          <bean class="org.flowable.common.engine.impl.cfg.mail.MailServerInfo">
+          <bean class="org.flowable.engine.cfg.MailServerInfo">
             <property name="mailServerHost" value="localhost" />
             <property name="mailServerPort" value="5025" />
             <property name="mailServerUseSSL" value="false" />
@@ -66,6 +65,11 @@
 
     <property name="databaseWildcardEscapeCharacter" value="|" />
     
+  </bean>
+
+  <bean id="asyncExecutor" class="org.flowable.job.service.impl.asyncexecutor.DefaultAsyncJobExecutor">
+    <property name="defaultAsyncJobAcquireWaitTimeInMillis" value="1000" />
+    <property name="defaultTimerJobAcquireWaitTimeInMillis" value="1000" />
   </bean>
 
 </beans>

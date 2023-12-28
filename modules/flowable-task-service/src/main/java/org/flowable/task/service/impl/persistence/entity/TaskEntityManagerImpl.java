@@ -48,7 +48,6 @@ public class TaskEntityManagerImpl extends AbstractTaskServiceEntityManager<Task
     public TaskEntity create() {
         TaskEntity taskEntity = super.create();
         taskEntity.setCreateTime(getClock().getCurrentTime());
-        taskEntity.setState(Task.CREATED);
         if (serviceConfiguration.isEnableTaskRelationshipCounts()) {
             ((CountingTaskEntity) taskEntity).setCountEnabled(true);
         }

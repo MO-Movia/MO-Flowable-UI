@@ -15,15 +15,15 @@ package org.flowable.common.engine.impl.interceptor;
 
 import java.lang.reflect.UndeclaredThrowableException;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.InvalidTransactionException;
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Status;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 
 import org.flowable.common.engine.impl.cfg.TransactionPropagation;
 import org.slf4j.Logger;
@@ -64,9 +64,12 @@ public class JtaTransactionInterceptor extends AbstractCommandInterceptor {
             T result;
             try {
                 result = next.execute(config, command, commandExecutor);
-            } catch (RuntimeException | Error ex) {
+            } catch (RuntimeException ex) {
                 doRollback(isNew, ex);
                 throw ex;
+            } catch (Error err) {
+                doRollback(isNew, err);
+                throw err;
             } catch (Exception ex) {
                 doRollback(isNew, ex);
                 throw new UndeclaredThrowableException(ex, "TransactionCallback threw undeclared checked exception");
@@ -83,7 +86,9 @@ public class JtaTransactionInterceptor extends AbstractCommandInterceptor {
     private void doBegin() {
         try {
             transactionManager.begin();
-        } catch (NotSupportedException | SystemException e) {
+        } catch (NotSupportedException e) {
+            throw new TransactionException("Unable to begin transaction", e);
+        } catch (SystemException e) {
             throw new TransactionException("Unable to begin transaction", e);
         }
     }
@@ -108,7 +113,9 @@ public class JtaTransactionInterceptor extends AbstractCommandInterceptor {
         if (tx != null) {
             try {
                 transactionManager.resume(tx);
-            } catch (SystemException | InvalidTransactionException e) {
+            } catch (SystemException e) {
+                throw new TransactionException("Unable to resume transaction", e);
+            } catch (InvalidTransactionException e) {
                 throw new TransactionException("Unable to resume transaction", e);
             }
         }
@@ -117,9 +124,18 @@ public class JtaTransactionInterceptor extends AbstractCommandInterceptor {
     private void doCommit() {
         try {
             transactionManager.commit();
-        } catch (HeuristicMixedException | SystemException | RollbackException | HeuristicRollbackException e) {
+        } catch (HeuristicMixedException e) {
             throw new TransactionException("Unable to commit transaction", e);
-        } catch (RuntimeException | Error e) {
+        } catch (HeuristicRollbackException e) {
+            throw new TransactionException("Unable to commit transaction", e);
+        } catch (RollbackException e) {
+            throw new TransactionException("Unable to commit transaction", e);
+        } catch (SystemException e) {
+            throw new TransactionException("Unable to commit transaction", e);
+        } catch (RuntimeException e) {
+            doRollback(true, e);
+            throw e;
+        } catch (Error e) {
             doRollback(true, e);
             throw e;
         }
@@ -135,7 +151,10 @@ public class JtaTransactionInterceptor extends AbstractCommandInterceptor {
             }
         } catch (SystemException e) {
             LOGGER.debug("Error when rolling back transaction", e);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
+            rollbackEx = e;
+            throw e;
+        } catch (Error e) {
             rollbackEx = e;
             throw e;
         } finally {

@@ -13,6 +13,7 @@
 package org.flowable.cmmn.engine.impl.behavior.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +24,6 @@ import org.flowable.cmmn.api.runtime.PlanItemInstanceState;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.behavior.CmmnActivityWithMigrationContextBehavior;
 import org.flowable.cmmn.engine.impl.behavior.PlanItemActivityBehavior;
-import org.flowable.cmmn.engine.impl.event.FlowableCmmnEventBuilder;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.task.TaskHelper;
 import org.flowable.cmmn.engine.impl.util.CmmnLoggingSessionUtil;
@@ -40,11 +40,8 @@ import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableIllegalStateException;
 import org.flowable.common.engine.api.constant.ReferenceTypes;
 import org.flowable.common.engine.api.delegate.Expression;
-import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
 import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.common.engine.impl.assignment.CandidateUtil;
 import org.flowable.common.engine.impl.el.ExpressionManager;
-import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.logging.CmmnLoggingSessionConstants;
 import org.flowable.common.engine.impl.logging.LoggingSessionUtil;
@@ -55,6 +52,8 @@ import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
@@ -159,11 +158,7 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
 
             cmmnEngineConfiguration.getListenerNotificationHelper().executeTaskListeners(
                     humanTask, taskEntity, TaskListener.EVENTNAME_CREATE);
-
-            FlowableEventDispatcher eventDispatcher = cmmnEngineConfiguration.getTaskServiceConfiguration().getEventDispatcher();
-            if (eventDispatcher != null  && eventDispatcher.isEnabled()) {
-                eventDispatcher.dispatchEvent(FlowableCmmnEventBuilder.createTaskCreatedEvent(taskEntity), cmmnEngineConfiguration.getEngineCfgKey());
-            }
+            
 
         } else {
             // if not blocking, treat as a manual task. No need to create a task entry.
@@ -262,7 +257,7 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
 
     protected void handleFormKey(PlanItemInstanceEntity planItemInstanceEntity, ExpressionManager expressionManager,
             TaskEntity taskEntity, CreateHumanTaskBeforeContext beforeContext) {
-
+        
         if (StringUtils.isNotEmpty(beforeContext.getFormKey())) {
             Object formKey = expressionManager.createExpression(beforeContext.getFormKey()).getValue(planItemInstanceEntity);
             if (formKey != null) {
@@ -326,7 +321,7 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
             for (String candidateUser : candidateUsers) {
                 Expression userIdExpr = expressionManager.createExpression(candidateUser);
                 Object value = userIdExpr.getValue(planItemInstanceEntity);
-                Collection<String> candidates = CandidateUtil.extractCandidates(value);
+                Collection<String> candidates = extractCandidates(value);
                 List<IdentityLinkEntity> identityLinkEntities = cmmnEngineConfiguration.getIdentityLinkServiceConfiguration()
                         .getIdentityLinkService().addCandidateUsers(taskEntity.getId(), candidates);
 
@@ -357,7 +352,7 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
             for (String candidateGroup : candidateGroups) {
                 Expression groupIdExpr = expressionManager.createExpression(candidateGroup);
                 Object value = groupIdExpr.getValue(planItemInstanceEntity);
-                Collection<String> candidates = CandidateUtil.extractCandidates(value);
+                Collection<String> candidates = extractCandidates(value);
                 List<IdentityLinkEntity> identityLinkEntities = cmmnEngineConfiguration.getIdentityLinkServiceConfiguration()
                         .getIdentityLinkService().addCandidateGroups(taskEntity.getId(), candidates);
 
@@ -374,6 +369,26 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
                             allIdentityLinkEntities, taskEntity, planItemInstanceEntity, cmmnEngineConfiguration.getObjectMapper());
                 }
             }
+        }
+    }
+
+    protected Collection<String> extractCandidates(Object value) {
+        if (value instanceof String) {
+            return Arrays.asList(value.toString().split("[\\s]*,[\\s]*"));
+
+        } else if (value instanceof Collection) {
+            return (Collection<String>) value;
+
+        } else if (value instanceof ArrayNode) {
+            ArrayNode valueArrayNode = (ArrayNode) value;
+            Collection<String> candidates = new ArrayList<>(valueArrayNode.size());
+            for (JsonNode node : valueArrayNode) {
+                candidates.add(node.asText());
+            }
+
+            return candidates;
+        } else {
+            throw new FlowableException("Expression did not resolve to a string, collection of strings or an array node");
         }
     }
 
@@ -397,13 +412,13 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
         TaskService taskService = cmmnEngineConfiguration.getTaskServiceConfiguration().getTaskService();
         List<TaskEntity> taskEntities = taskService.findTasksBySubScopeIdScopeType(planItemInstance.getId(), ScopeTypes.CMMN);
         if (taskEntities == null || taskEntities.isEmpty()) {
-            throw new FlowableException("No task entity found for " + planItemInstance);
+            throw new FlowableException("No task entity found for plan item instance " + planItemInstance.getId());
         }
 
         // Should be only one
         for (TaskEntity taskEntity : taskEntities) {
             if (!taskEntity.isDeleted()) {
-                TaskHelper.completeTask(taskEntity, taskEntity.getTempCompletedBy(), cmmnEngineConfiguration);
+                TaskHelper.deleteTask(taskEntity, null, false, true, cmmnEngineConfiguration);
             }
         }
 
@@ -418,16 +433,6 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
             List<TaskEntity> taskEntities = taskService.findTasksBySubScopeIdScopeType(planItemInstance.getId(), ScopeTypes.CMMN);
             for (TaskEntity taskEntity : taskEntities) {
                 TaskHelper.deleteTask(taskEntity, "cmmn-state-transition-" + transition, false, true, cmmnEngineConfiguration);
-            }
-        } else if (PlanItemTransition.COMPLETE.equals(transition)) {
-            if (humanTask.getTaskCompleterVariableName() != null) {
-
-                ExpressionManager expressionManager = CommandContextUtil.getExpressionManager(commandContext);
-                Expression expression = expressionManager.createExpression(humanTask.getTaskCompleterVariableName());
-                String completerVariableName = (String) expression.getValue(planItemInstance);
-                String completer = Authentication.getAuthenticatedUserId();
-
-                planItemInstance.setVariable(completerVariableName, completer);
             }
         }
     }

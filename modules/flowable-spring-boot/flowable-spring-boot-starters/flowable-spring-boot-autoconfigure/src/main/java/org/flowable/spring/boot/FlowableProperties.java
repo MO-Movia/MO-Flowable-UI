@@ -13,14 +13,12 @@
 package org.flowable.spring.boot;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 
 import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
-import org.springframework.boot.convert.DurationUnit;
 
 /**
  * @author Josh Long
@@ -127,9 +125,7 @@ public class FlowableProperties {
 
     private boolean enableHistoryCleaning = false;
     private String historyCleaningCycle = "0 0 1 * * ?";
-    @DurationUnit(ChronoUnit.DAYS)
-    private Duration historyCleaningAfter = Duration.ofDays(365);
-    private int historyCleaningBatchSize = 100;
+    private int historyCleaningAfterDays = 365;
 
     public boolean isAsyncExecutorActivate() {
         return asyncExecutorActivate;
@@ -365,25 +361,10 @@ public class FlowableProperties {
     public void setHistoryCleaningCycle(String historyCleaningCycle) {
         this.historyCleaningCycle = historyCleaningCycle;
     }
-    @Deprecated
-    @DeprecatedConfigurationProperty(replacement = "flowable.history-cleaning-after", reason = "Switched to using a Duration that allows more flexible configuration")
+    public int getHistoryCleaningAfterDays() {
+        return historyCleaningAfterDays;
+    }
     public void setHistoryCleaningAfterDays(int historyCleaningAfterDays) {
-        this.historyCleaningAfter = Duration.ofDays(historyCleaningAfterDays);
-    }
-
-    public Duration getHistoryCleaningAfter() {
-        return historyCleaningAfter;
-    }
-
-    public void setHistoryCleaningAfter(Duration historyCleaningAfter) {
-        this.historyCleaningAfter = historyCleaningAfter;
-    }
-
-    public int getHistoryCleaningBatchSize() {
-        return historyCleaningBatchSize;
-    }
-
-    public void setHistoryCleaningBatchSize(int historyCleaningBatchSize) {
-        this.historyCleaningBatchSize = historyCleaningBatchSize;
+        this.historyCleaningAfterDays = historyCleaningAfterDays;
     }
 }

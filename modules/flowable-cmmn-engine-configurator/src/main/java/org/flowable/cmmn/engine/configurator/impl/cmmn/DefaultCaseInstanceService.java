@@ -20,7 +20,6 @@ import org.flowable.cmmn.api.CallbackTypes;
 import org.flowable.cmmn.api.CmmnRuntimeService;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstanceBuilder;
-import org.flowable.cmmn.api.runtime.CaseInstanceState;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.persistence.entity.CaseInstanceEntity;
@@ -96,9 +95,9 @@ public class DefaultCaseInstanceService implements CaseInstanceService {
     }
 
     @Override
-    public void handleSignalEvent(EventSubscriptionEntity eventSubscription, Map<String, Object> variables) {
+    public void handleSignalEvent(EventSubscriptionEntity eventSubscription) {
         if (StringUtils.isEmpty(eventSubscription.getSubScopeId())) {
-            throw new FlowableException("Plan item instance for " + eventSubscription + " can not be found with empty sub scope id value");
+            throw new FlowableException("Plan item instance for event subscription can not be found with empty sub scope id value");
         }
         
         CmmnRuntimeService cmmnRuntimeService = cmmnEngineConfiguration.getCmmnRuntimeService();
@@ -107,19 +106,17 @@ public class DefaultCaseInstanceService implements CaseInstanceService {
                         .singleResult();
         
         if (planItemInstance == null) {
-            throw new FlowableException("Plan item instance for " + eventSubscription + " can not be found with sub scope id " + eventSubscription.getSubScopeId());
+            throw new FlowableException("Plan item instance for event subscription can not be found with sub scope id " + eventSubscription.getSubScopeId());
         }
-
-        cmmnRuntimeService.createPlanItemInstanceTransitionBuilder(planItemInstance.getId())
-            .variables(variables)
-            .trigger();
+        
+        cmmnRuntimeService.triggerPlanItemInstance(planItemInstance.getId());
     }
 
     @Override
     public void deleteCaseInstance(String caseInstanceId) {
         cmmnEngineConfiguration.getCommandExecutor().execute(commandContext -> {
             CaseInstanceEntity caseInstanceEntity = CommandContextUtil.getCaseInstanceEntityManager(commandContext).findById(caseInstanceId);
-            if (caseInstanceEntity == null || caseInstanceEntity.isDeleted() || CaseInstanceState.isInTerminalState(caseInstanceEntity)) {
+            if (caseInstanceEntity == null || caseInstanceEntity.isDeleted()) {
                 return null;
             }
 
@@ -141,20 +138,4 @@ public class DefaultCaseInstanceService implements CaseInstanceService {
         }
     }
 
-    @Override
-    public void deleteCaseInstanceWithoutAgenda(String caseInstanceId) {
-        cmmnEngineConfiguration.getCommandExecutor().execute(commandContext -> {
-            CaseInstanceEntity caseInstanceEntity = CommandContextUtil.getCaseInstanceEntityManager(commandContext).findById(caseInstanceId);
-            if (caseInstanceEntity == null || caseInstanceEntity.isDeleted()) {
-                return null;
-            }
-
-            cmmnEngineConfiguration.getCmmnHistoryManager().recordCaseInstanceEnd(
-                    caseInstanceEntity, CaseInstanceState.TERMINATED, cmmnEngineConfiguration.getClock().getCurrentTime());
-            
-            cmmnEngineConfiguration.getCaseInstanceEntityManager().delete(caseInstanceEntity.getId(), false, "cmmn-state-transition-delete-case");
-            
-            return null;
-        });
-    }
 }

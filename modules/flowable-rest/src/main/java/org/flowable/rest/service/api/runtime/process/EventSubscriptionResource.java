@@ -13,6 +13,8 @@
 
 package org.flowable.rest.service.api.runtime.process;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.engine.RuntimeService;
 import org.flowable.eventsubscription.api.EventSubscription;
@@ -52,7 +54,7 @@ public class EventSubscriptionResource {
             @ApiResponse(code = 404, message = "Indicates the requested event subscription does not exist.")
     })
     @GetMapping(value = "/runtime/event-subscriptions/{eventSubscriptionId}", produces = "application/json")
-    public EventSubscriptionResponse getEventSubscription(@ApiParam(name = "eventSubscriptionId") @PathVariable String eventSubscriptionId) {
+    public EventSubscriptionResponse getEventSubscription(@ApiParam(name = "eventSubscriptionId") @PathVariable String eventSubscriptionId, HttpServletRequest request) {
         EventSubscription eventSubscription = runtimeService.createEventSubscriptionQuery().id(eventSubscriptionId).singleResult();
 
         if (eventSubscription == null) {

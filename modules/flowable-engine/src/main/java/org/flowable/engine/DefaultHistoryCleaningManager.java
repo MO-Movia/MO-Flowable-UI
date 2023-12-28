@@ -12,13 +12,10 @@
  */
 package org.flowable.engine;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
-import org.flowable.batch.api.Batch;
-import org.flowable.batch.api.BatchQuery;
-import org.flowable.engine.history.HistoricProcessInstanceQuery;
+import org.flowable.engine.impl.HistoricProcessInstanceQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 
 public class DefaultHistoryCleaningManager implements HistoryCleaningManager {
@@ -30,22 +27,13 @@ public class DefaultHistoryCleaningManager implements HistoryCleaningManager {
     }
 
     @Override
-    public HistoricProcessInstanceQuery createHistoricProcessInstanceCleaningQuery() {
-        return processEngineConfiguration.getHistoryService()
-                .createHistoricProcessInstanceQuery()
-                .finishedBefore(getEndedBefore());
-    }
-
-    @Override
-    public BatchQuery createBatchCleaningQuery() {
-        return processEngineConfiguration.getManagementService().createBatchQuery()
-                .completeTimeLowerThan(getEndedBefore())
-                .batchType(Batch.HISTORIC_PROCESS_DELETE_TYPE);
-    }
-
-    protected Date getEndedBefore() {
-        Duration endedAfterDuration = processEngineConfiguration.getCleanInstancesEndedAfter();
-        Instant endedBefore = Instant.now().minus(endedAfterDuration);
-        return Date.from(endedBefore);
+    public HistoricProcessInstanceQueryImpl createHistoricProcessInstanceCleaningQuery() {
+        int days = processEngineConfiguration.getCleanInstancesEndedAfterNumberOfDays();
+        Calendar cal = new GregorianCalendar();
+        cal.add(Calendar.DAY_OF_YEAR, -days);
+        HistoricProcessInstanceQueryImpl historicProcessInstanceQuery = new HistoricProcessInstanceQueryImpl(
+                processEngineConfiguration.getCommandExecutor(), processEngineConfiguration);
+        historicProcessInstanceQuery.finishedBefore(cal.getTime());
+        return historicProcessInstanceQuery;
     }
 }

@@ -33,9 +33,8 @@ public enum HitPolicy {
     private static final Map<String, HitPolicy> lookup = new HashMap<>();
 
     static {
-        for (HitPolicy hitPolicy : EnumSet.allOf(HitPolicy.class)) {
+        for (HitPolicy hitPolicy : EnumSet.allOf(HitPolicy.class))
             lookup.put(hitPolicy.getValue(), hitPolicy);
-        }
     }
 
     private final String value;

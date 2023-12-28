@@ -28,8 +28,7 @@ public interface FormService {
      *     submitted variables
      * @throws org.flowable.common.engine.api.FlowableException in the case when validation failed
      */
-    void validateFormFields(String elementId, String elementType, String scopeId, String scopeDefinitionId, 
-            String scopeType, FormInfo formInfo, Map<String, Object> values);
+    void validateFormFields(FormInfo formInfo, Map<String, Object> values);
 
     /**
      * @param formInfo
@@ -41,8 +40,7 @@ public interface FormService {
      *
      * @return raw variables that can be used in the process engine, based on the filled in values and selected outcome.
      */
-    Map<String, Object> getVariablesFromFormSubmission(String elementId, String elementType, String scopeId, 
-            String scopeDefinitionId, String scopeType, FormInfo formInfo, Map<String, Object> values, String outcome);
+    Map<String, Object> getVariablesFromFormSubmission(FormInfo formInfo, Map<String, Object> values, String outcome);
 
     /**
      * Store the submitted form values.

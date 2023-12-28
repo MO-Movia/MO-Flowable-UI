@@ -38,13 +38,10 @@ public class EventDefinitionQueryImpl extends AbstractQuery<EventDefinitionQuery
     protected String categoryNotEquals;
     protected String name;
     protected String nameLike;
-    protected String nameLikeIgnoreCase;
     protected String deploymentId;
     protected Set<String> deploymentIds;
-    protected String parentDeploymentId;
     protected String key;
     protected String keyLike;
-    protected String keyLikeIgnoreCase;
     protected Integer version;
     protected Integer versionGt;
     protected Integer versionGte;
@@ -126,15 +123,6 @@ public class EventDefinitionQueryImpl extends AbstractQuery<EventDefinitionQuery
     }
 
     @Override
-    public EventDefinitionQueryImpl eventDefinitionNameLikeIgnoreCase(String nameLikeIgnoreCase) {
-        if (nameLikeIgnoreCase == null) {
-            throw new FlowableIllegalArgumentException("nameLikeIgnoreCase is null");
-        }
-        this.nameLikeIgnoreCase = nameLikeIgnoreCase;
-        return this;
-    }
-
-    @Override
     public EventDefinitionQueryImpl deploymentId(String deploymentId) {
         if (deploymentId == null) {
             throw new FlowableIllegalArgumentException("id is null");
@@ -149,15 +137,6 @@ public class EventDefinitionQueryImpl extends AbstractQuery<EventDefinitionQuery
             throw new FlowableIllegalArgumentException("ids are null");
         }
         this.deploymentIds = deploymentIds;
-        return this;
-    }
-
-    @Override
-    public EventDefinitionQueryImpl parentDeploymentId(String parentDeploymentId) {
-        if (parentDeploymentId == null) {
-            throw new FlowableIllegalArgumentException("parentDeploymentId is null");
-        }
-        this.parentDeploymentId = parentDeploymentId;
         return this;
     }
 
@@ -179,15 +158,6 @@ public class EventDefinitionQueryImpl extends AbstractQuery<EventDefinitionQuery
         return this;
     }
     
-    @Override
-    public EventDefinitionQueryImpl eventDefinitionKeyLikeIgnoreCase(String keyLikeIgnoreCase) {
-        if (keyLikeIgnoreCase == null) {
-            throw new FlowableIllegalArgumentException("keyLikeIgnoreCase is null");
-        }
-        this.keyLikeIgnoreCase = keyLikeIgnoreCase;
-        return this;
-    }
-
     @Override
     public EventDefinitionQueryImpl eventVersion(Integer version) {
         checkVersion(version);
@@ -333,10 +303,6 @@ public class EventDefinitionQueryImpl extends AbstractQuery<EventDefinitionQuery
         return deploymentIds;
     }
 
-    public String getParentDeploymentId() {
-        return parentDeploymentId;
-    }
-
     public String getId() {
         return id;
     }
@@ -353,20 +319,12 @@ public class EventDefinitionQueryImpl extends AbstractQuery<EventDefinitionQuery
         return nameLike;
     }
 
-    public String getNameLikeIgnoreCase() {
-        return nameLikeIgnoreCase;
-    }
-
     public String getKey() {
         return key;
     }
 
     public String getKeyLike() {
         return keyLike;
-    }
-
-    public String getKeyLikeIgnoreCase() {
-        return keyLikeIgnoreCase;
     }
 
     public String getCategory() {

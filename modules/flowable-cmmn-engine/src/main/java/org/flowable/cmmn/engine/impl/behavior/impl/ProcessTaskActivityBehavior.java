@@ -69,7 +69,7 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
         CmmnEngineConfiguration cmmnEngineConfiguration = CommandContextUtil.getCmmnEngineConfiguration(commandContext);
         ProcessInstanceService processInstanceService = cmmnEngineConfiguration.getProcessInstanceService();
         if (processInstanceService == null) {
-            throw new FlowableException("Could not start process instance: no " + ProcessInstanceService.class + " implementation found for " + planItemInstanceEntity);
+            throw new FlowableException("Could not start process instance: no " + ProcessInstanceService.class + " implementation found");
         }
 
         String externalRef = null;
@@ -81,7 +81,7 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
             externalRef = processRef;
         }
         if (StringUtils.isEmpty(externalRef)) {
-            throw new FlowableException("Could not start process instance: no externalRef defined for " + planItemInstanceEntity);
+            throw new FlowableException("Could not start process instance: no externalRef defined");
         }
 
         Map<String, Object> inParametersMap = new HashMap<>();
@@ -112,6 +112,11 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
         planItemInstanceEntity.setReferenceType(ReferenceTypes.PLAN_ITEM_CHILD_PROCESS);
         planItemInstanceEntity.setReferenceId(processInstanceId);
 
+        if (CommandContextUtil.getCmmnEngineConfiguration(commandContext).isEnableEntityLinks()) {
+            EntityLinkUtil.createEntityLinks(planItemInstanceEntity.getCaseInstanceId(), planItemInstanceEntity.getId(),
+                    planItemInstanceEntity.getPlanItemDefinitionId(), processInstanceId, ScopeTypes.BPMN, cmmnEngineConfiguration);
+        }
+
         String businessKey = getBusinessKey(cmmnEngineConfiguration, planItemInstanceEntity, processTask);
 
         boolean blocking = evaluateIsBlocking(planItemInstanceEntity);
@@ -119,12 +124,6 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
         String parentDeploymentId = getParentDeploymentIfSameDeployment(cmmnEngineConfiguration, planItemInstanceEntity);
 
         if (blocking) {
-
-            if (CommandContextUtil.getCmmnEngineConfiguration(commandContext).isEnableEntityLinks()) {
-                EntityLinkUtil.createEntityLinks(planItemInstanceEntity.getCaseInstanceId(), planItemInstanceEntity.getId(),
-                        planItemInstanceEntity.getPlanItemDefinitionId(), processInstanceId, ScopeTypes.BPMN, cmmnEngineConfiguration);
-            }
-
             processInstanceService.startProcessInstanceByKey(externalRef, processInstanceId, planItemInstanceEntity.getId(), planItemInstanceEntity.getStageInstanceId(),
                     planItemInstanceEntity.getTenantId(), fallbackToDefaultTenant, parentDeploymentId, inParametersMap, businessKey, variableFormVariables, variableFormInfo, variableFormOutcome);
         } else {
@@ -147,7 +146,7 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
         }
         if (!ReferenceTypes.PLAN_ITEM_CHILD_PROCESS.equals(planItemInstance.getReferenceType())) {
             throw new FlowableException("Cannot trigger process task plan item instance : reference type '"
-                    + planItemInstance.getReferenceType() + "' not supported for " + planItemInstance);
+                    + planItemInstance.getReferenceType() + "' not supported");
         }
 
         // Need to be set before planning the complete operation
@@ -182,7 +181,7 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
             delegatePlanItemInstance.setState(PlanItemInstanceState.TERMINATED); // This is not the regular termination, but the state still needs to be correct
             deleteProcessInstance(commandContext, delegatePlanItemInstance);
         } else {
-            throw new FlowableException("Can only delete a child entity for a plan item with reference type " + ReferenceTypes.PLAN_ITEM_CHILD_PROCESS + " for " + delegatePlanItemInstance);
+            throw new FlowableException("Can only delete a child entity for a plan item with reference type " + ReferenceTypes.PLAN_ITEM_CHILD_PROCESS);
         }
     }
 
@@ -219,7 +218,7 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
                 variableValue = processInstanceService.getVariable(planItemInstance.getReferenceId(), outParameter.getSource());
 
             }
-            planItemInstance.setVariable(variableName, variableValue);
+            caseInstance.setVariable(variableName, variableValue);
         }
     }
 

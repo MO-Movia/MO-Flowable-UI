@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.Collections;
 
-import org.flowable.bpmn.model.BpmnDiEdge;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.FlowableListener;
@@ -41,7 +40,6 @@ class UserTaskConverterTest {
                     assertThat(userTask.isSameDeployment()).isTrue();
                     assertThat(userTask.getPriority()).isEqualTo("40");
                     assertThat(userTask.getTaskIdVariableName()).isEqualTo("myTaskId");
-                    assertThat(userTask.getTaskCompleterVariableName()).isEqualTo("completer");
                     assertThat(userTask.getDueDate()).isEqualTo("2012-11-01");
 
                     assertThat(userTask.getBusinessCalendarName()).isEqualTo("customCalendarName");
@@ -86,28 +84,6 @@ class UserTaskConverterTest {
                             .extracting(FlowableListener::getEvent, FlowableListener::getOnTransaction,
                                     FlowableListener::getCustomPropertiesResolverImplementation)
                             .containsExactly(tuple("end", "before-commit", "org.test.TestResolverClass"));
-                });
-
-        assertThat(model.getEdgeInfo("flow2")).isNotNull();
-        BpmnDiEdge edgeInfo = model.getEdgeInfo("flow2");
-        assertThat(edgeInfo.getSourceDockerInfo().getX()).isEqualTo(50.0);
-        assertThat(edgeInfo.getSourceDockerInfo().getY()).isEqualTo(10.0);
-        assertThat(edgeInfo.getTargetDockerInfo().getX()).isEqualTo(40.0);
-        assertThat(edgeInfo.getTargetDockerInfo().getY()).isEqualTo(30.0);
-        assertThat(edgeInfo.getWaypoints()).hasSize(2);
-
-        assertThat(model.getEdgeInfo("flow1")).isNull();
-    }
-
-    @BpmnXmlConverterTest("userTaskWithStringCommaSeparatedExpressionCandidates.bpmn")
-    void validateModelWithCommaSeparatedStringExpressionCandidates(BpmnModel model) {
-        FlowElement flowElement = model.getMainProcess().getFlowElement("usertask");
-        assertThat(flowElement)
-                .isInstanceOfSatisfying(UserTask.class, userTask -> {
-                    assertThat(userTask.getId()).isEqualTo("usertask");
-
-                    assertThat(userTask.getCandidateUsers()).containsExactlyInAnyOrder("${'kermit, fozzie'}");
-                    assertThat(userTask.getCandidateGroups()).containsExactlyInAnyOrder("${'management, sales'}");
                 });
     }
 }

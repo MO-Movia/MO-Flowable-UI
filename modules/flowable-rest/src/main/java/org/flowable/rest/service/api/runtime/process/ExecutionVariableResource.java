@@ -13,9 +13,8 @@
 
 package org.flowable.rest.service.api.runtime.process;
 
-import java.util.Collections;
-
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
@@ -24,7 +23,7 @@ import org.flowable.engine.runtime.Execution;
 import org.flowable.rest.service.api.RestResponseFactory;
 import org.flowable.rest.service.api.engine.variable.RestVariable;
 import org.flowable.rest.service.api.engine.variable.RestVariable.RestVariableScope;
-import org.flowable.variable.api.persistence.entity.VariableInstance;
+import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +31,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -57,10 +55,6 @@ public class ExecutionVariableResource extends BaseExecutionVariableResource {
     @Autowired
     protected ObjectMapper objectMapper;
 
-    public ExecutionVariableResource() {
-        super(RestResponseFactory.VARIABLE_EXECUTION);
-    }
-
     @ApiOperation(value = "Get a variable for an execution", tags = { "Executions" }, nickname = "getExecutionVariable")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Indicates both the execution and variable were found and variable is returned."),
@@ -69,9 +63,10 @@ public class ExecutionVariableResource extends BaseExecutionVariableResource {
     })
     @GetMapping(value = "/runtime/executions/{executionId}/variables/{variableName}", produces = "application/json")
     public RestVariable getVariable(@ApiParam(name = "executionId") @PathVariable("executionId") String executionId, @ApiParam(name = "variableName") @PathVariable("variableName") String variableName,
-            @RequestParam(value = "scope", required = false) String scope) {
+            @RequestParam(value = "scope", required = false) String scope,
+            HttpServletRequest request) {
 
-        Execution execution = getExecutionFromRequestWithoutAccessCheck(executionId);
+        Execution execution = getExecutionFromRequest(executionId);
         return getVariableFromRequest(execution, variableName, scope, false);
     }
 
@@ -99,11 +94,11 @@ public class ExecutionVariableResource extends BaseExecutionVariableResource {
     @PutMapping(value = "/runtime/executions/{executionId}/variables/{variableName}", produces = "application/json", consumes = {"application/json", "multipart/form-data"})
     public RestVariable updateVariable(@ApiParam(name = "executionId") @PathVariable("executionId") String executionId, @ApiParam(name = "variableName") @PathVariable("variableName") String variableName, HttpServletRequest request) {
 
-        Execution execution = getExecutionFromRequestWithoutAccessCheck(executionId);
+        Execution execution = getExecutionFromRequest(executionId);
 
         RestVariable result = null;
         if (request instanceof MultipartHttpServletRequest) {
-            result = setBinaryVariable((MultipartHttpServletRequest) request, execution, false);
+            result = setBinaryVariable((MultipartHttpServletRequest) request, execution, RestResponseFactory.VARIABLE_EXECUTION, false);
 
             if (!result.getName().equals(variableName)) {
                 throw new FlowableIllegalArgumentException("Variable name in the body should be equal to the name used in the requested URL.");
@@ -131,17 +126,17 @@ public class ExecutionVariableResource extends BaseExecutionVariableResource {
         return result;
     }
 
-    @ApiOperation(value = "Delete a variable for an execution", tags = { "Executions" }, nickname = "deletedExecutionVariable", code = 204)
+    @ApiOperation(value = "Delete a variable for an execution", tags = { "Executions" }, nickname = "deletedExecutionVariable")
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates both the execution and variable were found and variable has been deleted."),
             @ApiResponse(code = 404, message = "Indicates the requested execution was not found or the execution does not have a variable with the given name in the requested scope. Status description contains additional information about the error.")
     })
     @DeleteMapping(value = "/runtime/executions/{executionId}/variables/{variableName}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteVariable(@ApiParam(name = "executionId") @PathVariable("executionId") String executionId, @ApiParam(name = "variableName") @PathVariable("variableName") String variableName,
-            @RequestParam(value = "scope", required = false) String scope) {
+            @RequestParam(value = "scope", required = false) String scope,
+            HttpServletResponse response) {
 
-        Execution execution = getExecutionFromRequestWithoutAccessCheck(executionId);
+        Execution execution = getExecutionFromRequest(executionId);
         // Determine scope
         RestVariableScope variableScope = RestVariableScope.LOCAL;
         if (scope != null) {
@@ -150,11 +145,7 @@ public class ExecutionVariableResource extends BaseExecutionVariableResource {
 
         if (!hasVariableOnScope(execution, variableName, variableScope)) {
             throw new FlowableObjectNotFoundException("Execution '" + execution.getId() + "' does not have a variable '" + variableName + "' in scope " + variableScope.name().toLowerCase(),
-                    VariableInstance.class);
-        }
-
-        if (restApiInterceptor != null) {
-            restApiInterceptor.deleteExecutionVariables(execution, Collections.singleton(variableName), variableScope);
+                    VariableInstanceEntity.class);
         }
 
         if (variableScope == RestVariableScope.LOCAL) {
@@ -164,5 +155,6 @@ public class ExecutionVariableResource extends BaseExecutionVariableResource {
             // stopped a global-var update on a root-execution
             runtimeService.removeVariable(execution.getParentId(), variableName);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 }

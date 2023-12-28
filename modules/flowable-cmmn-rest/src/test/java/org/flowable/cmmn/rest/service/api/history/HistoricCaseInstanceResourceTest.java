@@ -57,8 +57,6 @@ public class HistoricCaseInstanceResourceTest extends BaseSpringRestTestCase {
                 .callbackId("testCallbackId")
                 .callbackType("testCallbackType")
                 .start();
-        
-        runtimeService.updateBusinessStatus(caseInstance.getId(), "myBusinessStatus");
 
         CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(
                 CmmnRestUrls.URL_HISTORIC_CASE_INSTANCE, caseInstance.getId())), HttpStatus.SC_OK);
@@ -73,7 +71,6 @@ public class HistoricCaseInstanceResourceTest extends BaseSpringRestTestCase {
                 .isEqualTo("{"
                         + " id: '" + caseInstance.getId() + "',"
                         + " businessKey: 'myBusinessKey',"
-                        + " businessStatus: 'myBusinessStatus',"
                         + " referenceId: 'testReferenceId',"
                         + " referenceType: 'testReferenceType',"
                         + " callbackId: 'testCallbackId',"

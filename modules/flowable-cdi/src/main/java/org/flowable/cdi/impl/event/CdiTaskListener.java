@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Date;
 
-import jakarta.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.BeanManager;
 
 import org.flowable.cdi.BusinessProcessEvent;
 import org.flowable.cdi.BusinessProcessEventType;
@@ -71,7 +71,7 @@ public class CdiTaskListener implements TaskListener, Serializable {
 
         BusinessProcessEvent event = createEvent(task);
         Annotation[] qualifiers = getQualifiers(event);
-        getBeanManager().getEvent().select(qualifiers).fire(event);
+        getBeanManager().fireEvent(event, qualifiers);
     }
 
     protected BusinessProcessEvent createEvent(DelegateTask task) {

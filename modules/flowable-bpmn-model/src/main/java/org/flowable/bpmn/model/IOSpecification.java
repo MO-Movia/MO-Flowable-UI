@@ -62,7 +62,6 @@ public class IOSpecification extends BaseElement {
     }
 
     public void setValues(IOSpecification otherSpec) {
-        super.setValues(otherSpec);
         dataInputs = new ArrayList<>();
         if (otherSpec.getDataInputs() != null && !otherSpec.getDataInputs().isEmpty()) {
             for (DataSpec dataSpec : otherSpec.getDataInputs()) {

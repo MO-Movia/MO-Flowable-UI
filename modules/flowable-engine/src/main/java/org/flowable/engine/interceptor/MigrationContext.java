@@ -15,7 +15,6 @@ package org.flowable.engine.interceptor;
 public class MigrationContext {
 
     protected String assignee;
-    protected String owner;
 
     public String getAssignee() {
         return assignee;
@@ -23,13 +22,5 @@ public class MigrationContext {
 
     public void setAssignee(String assignee) {
         this.assignee = assignee;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
     }
 }

@@ -12,9 +12,6 @@
  */
 package org.flowable.dmn.engine.impl.hitpolicy;
 
-import java.util.List;
-import java.util.Map;
-
 import org.flowable.dmn.engine.impl.el.ELExecutionContext;
 
 /**
@@ -23,5 +20,4 @@ import org.flowable.dmn.engine.impl.el.ELExecutionContext;
 public interface ComposeDecisionResultBehavior {
 
     void composeDecisionResults(ELExecutionContext executionContext);
-    void updateStackWithDecisionResults(List<Map<String, Object>> decisionResults, ELExecutionContext executionContext);
 }

@@ -37,7 +37,7 @@ public class SpringConfigurationHelper {
         ApplicationContext applicationContext = new GenericXmlApplicationContext(new UrlResource(resource));
         Map<String, ProcessEngine> beansOfType = applicationContext.getBeansOfType(ProcessEngine.class);
         if ((beansOfType == null) || (beansOfType.isEmpty())) {
-            throw new ActivitiException("no " + ProcessEngine.class.getName() + " defined in the application context " + resource);
+            throw new ActivitiException("no " + ProcessEngine.class.getName() + " defined in the application context " + resource.toString());
         }
 
         ProcessEngine processEngine = beansOfType.values().iterator().next();

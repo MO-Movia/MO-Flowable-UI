@@ -15,6 +15,7 @@ package org.flowable.dmn.rest.service.api;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -191,6 +193,8 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
             httpResponses.add(response);
             return response;
 
+        } catch (ClientProtocolException e) {
+            fail(e.getMessage());
         } catch (IOException e) {
             fail(e.getMessage());
         }
@@ -222,7 +226,11 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
 
     protected String encode(String string) {
         if (string != null) {
-            return URLEncoder.encode(string, StandardCharsets.UTF_8);
+            try {
+                return URLEncoder.encode(string, "UTF-8");
+            } catch (UnsupportedEncodingException uee) {
+                throw new IllegalStateException("JVM does not support UTF-8 encoding.", uee);
+            }
         }
         return null;
     }

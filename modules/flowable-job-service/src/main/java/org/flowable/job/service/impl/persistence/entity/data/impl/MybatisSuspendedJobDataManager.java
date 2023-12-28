@@ -93,7 +93,7 @@ public class MybatisSuspendedJobDataManager extends AbstractDataManager<Suspende
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateSuspendedJobTenantIdForDeployment", params);
+        getDbSqlSession().update("updateSuspendedJobTenantIdForDeployment", params);
     }
     
     @Override

@@ -12,6 +12,8 @@
  */
 package org.flowable.app.rest.service.api.repository;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.app.api.AppRepositoryService;
 import org.flowable.app.api.repository.AppDeployment;
 import org.flowable.app.rest.AppRestApiInterceptor;
@@ -22,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -68,14 +69,13 @@ public class AppDeploymentResource {
         return appRestResponseFactory.createAppDeploymentResponse(deployment);
     }
 
-    @ApiOperation(value = "Delete an app deployment", tags = { "App Deployments" }, code = 204)
+    @ApiOperation(value = "Delete an app deployment", tags = { "App Deployments" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the App deployment was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested app deployment was not found.")
     })
     @DeleteMapping(value = "/app-repository/deployments/{deploymentId}", produces = "application/json")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteAppDeployment(@ApiParam(name = "deploymentId") @PathVariable String deploymentId) {
+    public void deleteAppDeployment(@ApiParam(name = "deploymentId") @PathVariable String deploymentId, HttpServletResponse response) {
         AppDeployment deployment = appRepositoryService.createDeploymentQuery().deploymentId(deploymentId).singleResult();
 
         if (deployment == null) {
@@ -87,5 +87,6 @@ public class AppDeploymentResource {
         }
         
         appRepositoryService.deleteDeployment(deploymentId, true);
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 }

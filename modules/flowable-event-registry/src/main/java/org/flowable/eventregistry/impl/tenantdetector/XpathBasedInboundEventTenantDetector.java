@@ -33,13 +33,13 @@ public class XpathBasedInboundEventTenantDetector implements InboundEventTenantD
     }
 
     @Override
-    public String detectTenantId(Document payload) {
+    public String detectTenantId(Document document) {
         try {
             XPath xPath = XPathFactory.newInstance().newXPath();
-            Node result = (Node) xPath.compile(xpathExpression).evaluate(payload, XPathConstants.NODE);
+            Node result = (Node) xPath.compile(xpathExpression).evaluate(document, XPathConstants.NODE);
             return result.getTextContent();
         } catch (Exception e) {
-            throw new FlowableException("Could not evaluate xpath expression " + xpathExpression, e);
+            throw new FlowableException("Could not evaluate xpath expression ", e);
         }
     }
 

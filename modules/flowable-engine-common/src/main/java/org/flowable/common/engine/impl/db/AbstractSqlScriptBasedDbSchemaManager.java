@@ -47,10 +47,10 @@ public abstract class AbstractSqlScriptBasedDbSchemaManager implements SchemaMan
     
     protected static final String SCHEMA_VERSION_PROPERTY = "schema.version";
     
-    protected void dbSchemaUpgradeUntil6120(final String component, final int currentDatabaseVersionsIndex, final String dbVersion) {
+    protected void dbSchemaUpgradeUntil6120(final String component, final int currentDatabaseVersionsIndex) {
         FlowableVersion version = FlowableVersions.FLOWABLE_VERSIONS.get(currentDatabaseVersionsIndex);
-        String currentVersion = version.getMainVersion();
-        logger.info("upgrading flowable {} schema from {} to {}", component, currentVersion, FlowableVersions.LAST_V6_VERSION_BEFORE_SERVICES);
+        String dbVersion = version.getMainVersion();
+        logger.info("upgrading flowable {} schema from {} to {}", component, dbVersion, FlowableVersions.LAST_V6_VERSION_BEFORE_SERVICES);
         
         // Actual execution of schema DDL SQL
         for (int i = currentDatabaseVersionsIndex + 1; i < FlowableVersions.getFlowableVersionIndexForDbVersion(FlowableVersions.LAST_V6_VERSION_BEFORE_SERVICES); i++) {
@@ -61,28 +61,23 @@ public abstract class AbstractSqlScriptBasedDbSchemaManager implements SchemaMan
                 nextVersion = nextVersion.substring(0, nextVersion.length() - "-SNAPSHOT".length());
             }
 
-            currentVersion = currentVersion.replace("cam", "");
-            currentVersion = currentVersion.replace(".", "");
-            if ("fox".equalsIgnoreCase(dbVersion) && FlowableVersions.hasCamMigrationVersion(nextVersion)) {
-                nextVersion = "cam" + nextVersion;
-            }
+            dbVersion = dbVersion.replace(".", "");
             nextVersion = nextVersion.replace(".", "");
-            
-            logger.info("Upgrade needed: {} -> {}. Looking for schema update resource for component '{}'", currentVersion, nextVersion, component);
+            logger.info("Upgrade needed: {} -> {}. Looking for schema update resource for component '{}'", dbVersion, nextVersion, component);
             String databaseType = getDbSqlSession().getDbSqlSessionFactory().getDatabaseType();
-            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + currentVersion + ".to." + nextVersion, component, databaseType), true);
+            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + dbVersion + ".to." + nextVersion, component, databaseType), true);
             
             // To avoid having too much similar scripts, for upgrades the 'all' database is supported and executed for every database type
-            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + currentVersion + ".to." + nextVersion, component, "all"), true);
+            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + dbVersion + ".to." + nextVersion, component, "all"), true);
             
-            currentVersion = nextVersion;
+            dbVersion = nextVersion;
         }
     }
     
-    protected void dbSchemaUpgrade(final String component, final int currentDatabaseVersionsIndex, final String engineDbVersion) {
+    protected void dbSchemaUpgrade(final String component, final int currentDatabaseVersionsIndex) {
         FlowableVersion version = FlowableVersions.FLOWABLE_VERSIONS.get(currentDatabaseVersionsIndex);
-        String currentVersion = version.getMainVersion();
-        logger.info("upgrading flowable {} schema from {} to {}", component, currentVersion, FlowableVersions.CURRENT_VERSION);
+        String dbVersion = version.getMainVersion();
+        logger.info("upgrading flowable {} schema from {} to {}", component, dbVersion, FlowableVersions.CURRENT_VERSION);
 
         // Actual execution of schema DDL SQL
         for (int i = currentDatabaseVersionsIndex + 1; i < FlowableVersions.FLOWABLE_VERSIONS.size(); i++) {
@@ -93,22 +88,16 @@ public abstract class AbstractSqlScriptBasedDbSchemaManager implements SchemaMan
                 nextVersion = nextVersion.substring(0, nextVersion.length() - "-SNAPSHOT".length());
             }
 
-            currentVersion = currentVersion.replace("cam", "");
-            currentVersion = currentVersion.replace(".", "");
-            if ("fox".equalsIgnoreCase(engineDbVersion) && FlowableVersions.hasCamMigrationVersion(nextVersion)) {
-                nextVersion = "cam" + nextVersion;
-            }
+            dbVersion = dbVersion.replace(".", "");
             nextVersion = nextVersion.replace(".", "");
-            
-            logger.info("Upgrade needed: {} -> {}. Looking for schema update resource for component '{}'", currentVersion, nextVersion, component);
+            logger.info("Upgrade needed: {} -> {}. Looking for schema update resource for component '{}'", dbVersion, nextVersion, component);
             String databaseType = getDbSqlSession().getDbSqlSessionFactory().getDatabaseType();
-            
-            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + currentVersion + ".to." + nextVersion, component, databaseType), true);
+            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + dbVersion + ".to." + nextVersion, component, databaseType), true);
             
             // To avoid having too much similar scripts, for upgrades the 'all' database is supported and executed for every database type
-            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + currentVersion + ".to." + nextVersion, component, "all"), true);
+            executeSchemaResource("upgrade", component, getResourceForDbOperation("upgrade", "upgradestep." + dbVersion + ".to." + nextVersion, component, "all"), true);
             
-            currentVersion = nextVersion;
+            dbVersion = nextVersion;
         }
     }
 

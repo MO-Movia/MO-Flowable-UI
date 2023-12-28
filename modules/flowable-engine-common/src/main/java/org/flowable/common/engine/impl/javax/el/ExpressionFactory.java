@@ -152,7 +152,9 @@ public abstract class ExpressionFactory {
 						className = props.getProperty(ExpressionFactory.class.getName());
 					}
 				}
-			} catch (IOException | SecurityException e) {
+			} catch (IOException e) {
+				// do nothing
+			} catch (SecurityException e) {
 				// do nothing
 			} finally {
 				if (input != null) {

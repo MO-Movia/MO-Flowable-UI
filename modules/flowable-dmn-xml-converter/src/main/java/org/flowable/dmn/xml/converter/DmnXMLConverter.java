@@ -18,13 +18,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
@@ -50,7 +46,6 @@ import org.flowable.dmn.model.DecisionTable;
 import org.flowable.dmn.model.DmnDefinition;
 import org.flowable.dmn.model.DmnElement;
 import org.flowable.dmn.model.DmnElementReference;
-import org.flowable.dmn.model.DmnExtensionAttribute;
 import org.flowable.dmn.model.DmnExtensionElement;
 import org.flowable.dmn.model.HitPolicy;
 import org.flowable.dmn.model.InformationItem;
@@ -75,9 +70,6 @@ import org.xml.sax.SAXException;
  */
 public class DmnXMLConverter implements DmnXMLConstants {
 
-    protected static final Set<String> defaultNamespaces = new HashSet<>(
-            Arrays.asList(XSI_PREFIX, DMNDI_PREFIX, OMGDC_PREFIX, OMGDI_PREFIX));
-
     protected static final Logger LOGGER = LoggerFactory.getLogger(DmnXMLConverter.class);
 
     protected static final String DMN_XSD = "org/flowable/impl/dmn/parser/DMN13.xsd";
@@ -86,20 +78,6 @@ public class DmnXMLConverter implements DmnXMLConstants {
     protected static final String DMN_12_TARGET_NAMESPACE = "http://www.omg.org/spec/DMN/20180521/MODEL/";
     protected static final String DMN_13_TARGET_NAMESPACE = "https://www.omg.org/spec/DMN/20191111/MODEL/";
     protected static final String DEFAULT_ENCODING = "UTF-8";
-
-    protected static final Collection<DmnExtensionAttribute> KNOWN_DEFINITION_ATTRIBUTES = Arrays.asList(
-            new DmnExtensionAttribute(ATTRIBUTE_ID),
-            new DmnExtensionAttribute(ATTRIBUTE_NAME),
-            new DmnExtensionAttribute(ATTRIBUTE_EXPORTER),
-            new DmnExtensionAttribute(ATTRIBUTE_EXPORTER_VERSION),
-            new DmnExtensionAttribute(ATTRIBUTE_NAMESPACE)
-    );
-
-    protected static final Collection<DmnExtensionAttribute> KNOWN_DECISION_ATTRIBUTES = Arrays.asList(
-            new DmnExtensionAttribute(FLOWABLE_EXTENSIONS_NAMESPACE, ATTRIBUTE_FORCE_DMN_11),
-            new DmnExtensionAttribute(ATTRIBUTE_ID),
-            new DmnExtensionAttribute(ATTRIBUTE_NAME)
-    );
 
     protected static Map<String, BaseDmnXMLConverter> convertersToDmnMap = new HashMap<>();
 
@@ -283,17 +261,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                 if (ELEMENT_DEFINITIONS.equals(xtr.getLocalName())) {
                     model.setId(xtr.getAttributeValue(null, ATTRIBUTE_ID));
                     model.setName(xtr.getAttributeValue(null, ATTRIBUTE_NAME));
-                    model.setExporter(xtr.getAttributeValue(null, ATTRIBUTE_EXPORTER));
-                    model.setExporterVersion(xtr.getAttributeValue(null, ATTRIBUTE_EXPORTER_VERSION));
                     model.setNamespace(MODEL_NAMESPACE);
-                    for (int i = 0; i < xtr.getNamespaceCount(); i++) {
-                        String prefix = xtr.getNamespacePrefix(i);
-                        if (StringUtils.isNotEmpty(prefix)) {
-                            model.addNamespace(prefix, xtr.getNamespaceURI(i));
-                        }
-                    }
-
-                    DmnXMLUtil.parseAttributes(model, xtr, KNOWN_DEFINITION_ATTRIBUTES);
                     parentElement = model;
                 } else if (ELEMENT_DECISION.equals(xtr.getLocalName())) {
 
@@ -311,7 +279,6 @@ public class DmnXMLConverter implements DmnXMLConstants {
                     if (Boolean.parseBoolean(xtr.getAttributeValue(FLOWABLE_EXTENSIONS_NAMESPACE, ATTRIBUTE_FORCE_DMN_11))) {
                         currentDecision.setForceDMN11(true);
                     }
-                    DmnXMLUtil.parseAttributes(currentDecision, xtr, KNOWN_DECISION_ATTRIBUTES);
 
                     parentElement = currentDecision;
                     conversionHelper.setCurrentDecision(currentDecision);
@@ -407,26 +374,14 @@ public class DmnXMLConverter implements DmnXMLConstants {
             xtw.writeNamespace(DMNDI_PREFIX, DMNDI_NAMESPACE);
             xtw.writeNamespace(OMGDC_PREFIX, OMGDC_NAMESPACE);
             xtw.writeNamespace(OMGDI_PREFIX, OMGDI_NAMESPACE);
-            for (Map.Entry<String, String> entry : model.getNamespaces().entrySet()) {
-                if (!defaultNamespaces.contains(entry.getKey())) {
-                    xtw.writeNamespace(entry.getKey(), entry.getValue());
-                }
-            }
             xtw.writeAttribute(ATTRIBUTE_ID, model.getId());
             if (StringUtils.isNotEmpty(model.getName())) {
                 xtw.writeAttribute(ATTRIBUTE_NAME, model.getName());
             }
             xtw.writeAttribute(ATTRIBUTE_NAMESPACE, MODEL_NAMESPACE);
-            if (StringUtils.isNotEmpty(model.getExporter())) {
-                xtw.writeAttribute(DmnXMLConstants.ATTRIBUTE_EXPORTER, model.getExporter());
-            }
-            if (StringUtils.isNotEmpty(model.getExporterVersion())) {
-                xtw.writeAttribute(DmnXMLConstants.ATTRIBUTE_EXPORTER_VERSION, model.getExporterVersion());
-            }
 
-            DmnXMLUtil.writeAttributes(model, model.getNamespaces(), xtw);
             DmnXMLUtil.writeElementDescription(model, xtw);
-            DmnXMLUtil.writeExtensionElements(model, model.getNamespaces(), xtw);
+            DmnXMLUtil.writeExtensionElements(model, xtw);
 
             for (InputData inputData : model.getInputData()) {
                 xtw.writeStartElement(ELEMENT_INPUT_DATA);
@@ -447,12 +402,12 @@ public class DmnXMLConverter implements DmnXMLConstants {
                 }
 
                 DmnXMLUtil.writeElementDescription(inputData, xtw);
-                DmnXMLUtil.writeExtensionElements(inputData, model.getNamespaces(), xtw);
+                DmnXMLUtil.writeExtensionElements(inputData, xtw);
 
                 xtw.writeEndElement();
             }
 
-            writeItemDefinition(model.getItemDefinitions(), model, xtw);
+            writeItemDefinition(model.getItemDefinitions(), xtw);
 
             for (Decision decision : model.getDecisions()) {
                 xtw.writeStartElement(ELEMENT_DECISION);
@@ -462,15 +417,12 @@ public class DmnXMLConverter implements DmnXMLConstants {
                 }
 
                 if (decision.isForceDMN11()) {
-                    if (!model.getNamespaces().containsKey(FLOWABLE_EXTENSIONS_PREFIX)) {
-                        xtw.writeNamespace(FLOWABLE_EXTENSIONS_PREFIX, FLOWABLE_EXTENSIONS_NAMESPACE);
-                    }
+                    xtw.writeNamespace(FLOWABLE_EXTENSIONS_PREFIX, FLOWABLE_EXTENSIONS_NAMESPACE);
                     xtw.writeAttribute(FLOWABLE_EXTENSIONS_PREFIX, FLOWABLE_EXTENSIONS_NAMESPACE, ATTRIBUTE_FORCE_DMN_11, "true");
                 }
 
-                DmnXMLUtil.writeAttributes(decision, model.getNamespaces(), xtw);
                 DmnXMLUtil.writeElementDescription(decision, xtw);
-                DmnXMLUtil.writeExtensionElements(decision, model.getNamespaces(), xtw);
+                DmnXMLUtil.writeExtensionElements(decision, xtw);
 
                 if (decision.getVariable() != null) {
                     xtw.writeStartElement(ELEMENT_VARIABLE);
@@ -541,7 +493,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                     }
 
                     DmnXMLUtil.writeElementDescription(decisionTable, xtw);
-                    DmnXMLUtil.writeExtensionElements(decisionTable, model.getNamespaces(), xtw);
+                    DmnXMLUtil.writeExtensionElements(decisionTable, xtw);
 
                     for (InputClause clause : decisionTable.getInputs()) {
                         xtw.writeStartElement(ELEMENT_INPUT_CLAUSE);
@@ -553,7 +505,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         }
 
                         DmnXMLUtil.writeElementDescription(clause, xtw);
-                        DmnXMLUtil.writeExtensionElements(clause, model.getNamespaces(), xtw);
+                        DmnXMLUtil.writeExtensionElements(clause, xtw);
 
                         if (clause.getInputExpression() != null) {
                             xtw.writeStartElement(ELEMENT_INPUT_EXPRESSION);
@@ -610,7 +562,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         }
 
                         DmnXMLUtil.writeElementDescription(clause, xtw);
-                        DmnXMLUtil.writeExtensionElements(clause, model.getNamespaces(), xtw);
+                        DmnXMLUtil.writeExtensionElements(clause, xtw);
 
                         xtw.writeEndElement();
                     }
@@ -622,13 +574,13 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         }
 
                         DmnXMLUtil.writeElementDescription(rule, xtw);
-                        DmnXMLUtil.writeExtensionElements(rule, model.getNamespaces(), xtw);
+                        DmnXMLUtil.writeExtensionElements(rule, xtw);
 
                         for (RuleInputClauseContainer container : rule.getInputEntries()) {
                             xtw.writeStartElement(ELEMENT_INPUT_ENTRY);
                             xtw.writeAttribute(ATTRIBUTE_ID, container.getInputEntry().getId());
 
-                            DmnXMLUtil.writeExtensionElements(container.getInputEntry(), model.getNamespaces(), xtw);
+                            DmnXMLUtil.writeExtensionElements(container.getInputEntry(), xtw);
 
                             if (StringUtils.isNotEmpty(container.getInputEntry().getText())) {
                                 xtw.writeStartElement(ELEMENT_TEXT);
@@ -707,11 +659,11 @@ public class DmnXMLConverter implements DmnXMLConstants {
         }
     }
 
-    protected void writeItemDefinition(List<ItemDefinition> itemDefinitions, DmnDefinition model, XMLStreamWriter xtw) throws Exception {
-        writeItemDefinition(itemDefinitions, false, model, xtw);
+    protected void writeItemDefinition(List<ItemDefinition> itemDefinitions, XMLStreamWriter xtw) throws Exception {
+        writeItemDefinition(itemDefinitions, false, xtw);
     }
 
-    protected void writeItemDefinition(List<ItemDefinition> itemDefinitions, boolean isItemComponent, DmnDefinition model, XMLStreamWriter xtw) throws Exception {
+    protected void writeItemDefinition(List<ItemDefinition> itemDefinitions, boolean isItemComponent, XMLStreamWriter xtw) throws Exception {
         if (itemDefinitions == null) {
             return;
         }
@@ -736,7 +688,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
             }
 
             DmnXMLUtil.writeElementDescription(itemDefinition, xtw);
-            DmnXMLUtil.writeExtensionElements(itemDefinition, model.getNamespaces(), xtw);
+            DmnXMLUtil.writeExtensionElements(itemDefinition, xtw);
 
             if (itemDefinition.getTypeRef() != null) {
                 xtw.writeStartElement(ELEMENT_TYPE_REF);
@@ -753,7 +705,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
             }
 
             if (itemDefinition.getItemComponents().size() > 0) {
-                writeItemDefinition(itemDefinition.getItemComponents(), true, model, xtw);
+                writeItemDefinition(itemDefinition.getItemComponents(), true, xtw);
             }
 
             xtw.writeEndElement();

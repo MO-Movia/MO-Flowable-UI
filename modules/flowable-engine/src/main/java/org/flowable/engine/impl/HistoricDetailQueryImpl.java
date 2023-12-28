@@ -221,7 +221,4 @@ public class HistoricDetailQueryImpl extends AbstractQuery<HistoricDetailQuery, 
         return activityInstanceId;
     }
 
-    public boolean isExcludeTaskRelated() {
-        return excludeTaskRelated;
-    }
 }

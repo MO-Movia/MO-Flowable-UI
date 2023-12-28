@@ -28,6 +28,9 @@ import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.eventsubscription.service.impl.persistence.entity.EventSubscriptionEntity;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
+import org.flowable.job.service.impl.persistence.entity.JobEntity;
+import org.flowable.job.service.impl.persistence.entity.TimerJobEntity;
+import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 
 /**
@@ -44,8 +47,6 @@ public interface ExecutionEntity extends DelegateExecution, Execution, ProcessIn
 
     void setBusinessKey(String businessKey);
 
-    void setBusinessStatus(String businessStatus);
-
     void setProcessDefinitionId(String processDefinitionId);
 
     void setProcessDefinitionKey(String processDefinitionKey);
@@ -53,8 +54,6 @@ public interface ExecutionEntity extends DelegateExecution, Execution, ProcessIn
     void setProcessDefinitionName(String processDefinitionName);
 
     void setProcessDefinitionVersion(Integer processDefinitionVersion);
-
-    void setProcessDefinitionCategory(String processDefinitionCategory);
 
     void setDeploymentId(String deploymentId);
 
@@ -86,7 +85,13 @@ public interface ExecutionEntity extends DelegateExecution, Execution, ProcessIn
 
     void addChildExecution(ExecutionEntity executionEntity);
 
+    List<TaskEntity> getTasks();
+
     List<EventSubscriptionEntity> getEventSubscriptions();
+
+    List<JobEntity> getJobs();
+
+    List<TimerJobEntity> getTimerJobs();
 
     List<IdentityLinkEntity> getIdentityLinks();
 

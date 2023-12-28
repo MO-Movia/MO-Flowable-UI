@@ -21,7 +21,6 @@ import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.dmn.api.DecisionExecutionAuditContainer;
 import org.flowable.dmn.api.ExecuteDecisionContext;
-import org.flowable.dmn.engine.DmnEngineConfiguration;
 import org.flowable.dmn.engine.RuleEngineExecutor;
 import org.flowable.dmn.engine.impl.el.ELExecutionContext;
 import org.flowable.dmn.engine.impl.el.ELExecutionContextBuilder;
@@ -54,15 +53,11 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
     protected Map<String, AbstractHitPolicy> hitPolicyBehaviors;
     protected ExpressionManager expressionManager;
     protected ObjectMapper objectMapper;
-    protected DmnEngineConfiguration dmnEngineConfiguration;
 
-    public RuleEngineExecutorImpl(Map<String, AbstractHitPolicy> hitPolicyBehaviors, ExpressionManager expressionManager, 
-            ObjectMapper objectMapper, DmnEngineConfiguration dmnEngineConfiguration) {
-        
+    public RuleEngineExecutorImpl(Map<String, AbstractHitPolicy> hitPolicyBehaviors, ExpressionManager expressionManager, ObjectMapper objectMapper) {
         this.hitPolicyBehaviors = hitPolicyBehaviors;
         this.expressionManager = expressionManager;
         this.objectMapper = objectMapper;
-        this.dmnEngineConfiguration = dmnEngineConfiguration;
     }
 
     /**
@@ -100,7 +95,7 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
 
         } finally {
             // end audit trail
-            executionContext.getAuditContainer().stopAudit(dmnEngineConfiguration.getClock().getCurrentTime());
+            executionContext.getAuditContainer().stopAudit();
         }
 
         return executionContext.getAuditContainer();

@@ -28,10 +28,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
  */
 public class TaskQueryRequest extends PaginateRequest {
 
-    protected String taskId;
     protected String name;
     protected String nameLike;
-    protected String nameLikeIgnoreCase;
     protected String description;
     protected String descriptionLike;
     protected Integer priority;
@@ -50,7 +48,6 @@ public class TaskQueryRequest extends PaginateRequest {
     protected String involvedUser;
     protected String processInstanceId;
     protected String processInstanceIdWithChildren;
-    protected Boolean withoutProcessInstanceId;
     protected String processInstanceBusinessKey;
     protected String processInstanceBusinessKeyLike;
     protected String processDefinitionId;
@@ -75,7 +72,6 @@ public class TaskQueryRequest extends PaginateRequest {
     protected Boolean includeProcessVariables;
     protected String scopeDefinitionId;
     protected String scopeId;
-    protected Boolean withoutScopeId;
     protected String scopeType;
     protected String propagatedStageInstanceId;
     protected String tenantId;
@@ -83,22 +79,9 @@ public class TaskQueryRequest extends PaginateRequest {
     protected Boolean withoutTenantId;
     protected String candidateOrAssigned;
     protected String category;
-    protected List<String> categoryIn;
-    protected List<String> categoryNotIn;
-    protected Boolean withoutCategory;
-    protected String rootScopeId;
-    protected String parentScopeId;
 
     private List<QueryVariable> taskVariables;
     private List<QueryVariable> processInstanceVariables;
-
-    public String getTaskId() {
-        return taskId;
-    }
-
-    public void setTaskId(String taskId) {
-        this.taskId = taskId;
-    }
 
     public String getName() {
         return name;
@@ -114,14 +97,6 @@ public class TaskQueryRequest extends PaginateRequest {
 
     public void setNameLike(String nameLike) {
         this.nameLike = nameLike;
-    }
-
-    public String getNameLikeIgnoreCase() {
-        return nameLikeIgnoreCase;
-    }
-
-    public void setNameLikeIgnoreCase(String nameLikeIgnoreCase) {
-        this.nameLikeIgnoreCase = nameLikeIgnoreCase;
     }
 
     public String getDescription() {
@@ -266,14 +241,6 @@ public class TaskQueryRequest extends PaginateRequest {
 
     public void setProcessInstanceIdWithChildren(String processInstanceIdWithChildren) {
         this.processInstanceIdWithChildren = processInstanceIdWithChildren;
-    }
-
-    public Boolean getWithoutProcessInstanceId() {
-        return withoutProcessInstanceId;
-    }
-
-    public void setWithoutProcessInstanceId(Boolean withoutProcessInstanceId) {
-        this.withoutProcessInstanceId = withoutProcessInstanceId;
     }
 
     public String getProcessInstanceBusinessKey() {
@@ -486,14 +453,6 @@ public class TaskQueryRequest extends PaginateRequest {
         this.scopeId = scopeId;
     }
 
-    public Boolean getWithoutScopeId() {
-        return withoutScopeId;
-    }
-
-    public void setWithoutScopeId(Boolean withoutScopeId) {
-        this.withoutScopeId = withoutScopeId;
-    }
-
     public String getScopeType() {
         return scopeType;
     }
@@ -548,45 +507,5 @@ public class TaskQueryRequest extends PaginateRequest {
 
     public void setCategory(String category) {
         this.category = category;
-    }
-
-    public List<String> getCategoryIn() {
-        return categoryIn;
-    }
-
-    public void setCategoryIn(List<String> categoryIn) {
-        this.categoryIn = categoryIn;
-    }
-
-    public List<String> getCategoryNotIn() {
-        return categoryNotIn;
-    }
-
-    public void setCategoryNotIn(List<String> categoryNotIn) {
-        this.categoryNotIn = categoryNotIn;
-    }
-
-    public Boolean getWithoutCategory() {
-        return withoutCategory;
-    }
-
-    public void setWithoutCategory(Boolean withoutCategory) {
-        this.withoutCategory = withoutCategory;
-    }
-
-    public String getRootScopeId() {
-        return rootScopeId;
-    }
-
-    public void setRootScopeId(String rootScopeId) {
-        this.rootScopeId = rootScopeId;
-    }
-
-    public String getParentScopeId() {
-        return parentScopeId;
-    }
-
-    public void setParentScopeId(String parentScopeId) {
-        this.parentScopeId = parentScopeId;
     }
 }

@@ -14,13 +14,9 @@ package org.flowable.engine.impl.webservice;
 
 import java.util.Date;
 
-import jakarta.jws.WebMethod;
-import jakarta.jws.WebParam;
-import jakarta.jws.WebResult;
-import jakarta.jws.WebService;
-import jakarta.xml.ws.Holder;
-import jakarta.xml.ws.RequestWrapper;
-import jakarta.xml.ws.ResponseWrapper;
+import javax.jws.WebParam;
+import javax.jws.WebResult;
+import javax.jws.WebService;
 
 /**
  * A simple WS for unit test purpose
@@ -111,14 +107,4 @@ public interface WebServiceMock {
 
     @WebResult(name = "static")
     String reservedWordAsName(@WebParam(name = "prefix") String prefix, @WebParam(name = "suffix") String suffix);
-
-    @WebMethod(action = "http://flowable.org/test/unit/returnsSeveralParams")
-    @RequestWrapper(localName = "returnsSeveralParams", className = "org.flowable.engine.impl.webservice.wrappers.ReturnsSeveralParams")
-    @ResponseWrapper(localName = "returnsSeveralParamsResponse", className = "org.flowable.engine.impl.webservice.wrappers.ReturnsSeveralParamsResponse")
-    public void returnsSeveralParams(
-
-            @WebParam(name = "in-param-1", targetNamespace = "") final String inParam,
-            @WebParam(mode = WebParam.Mode.OUT, name = "out-param-1", targetNamespace = "") final Holder<String> outParam1,
-            @WebParam(mode = WebParam.Mode.OUT, name = "out-param-2", targetNamespace = "") final Holder<Integer> outParam2,
-            @WebParam(mode = WebParam.Mode.OUT, name = "out-param-3", targetNamespace = "") final Holder<String> outParam3);
 }

@@ -15,7 +15,7 @@ package org.flowable.eventregistry.spring.jms;
 import java.lang.reflect.Field;
 import java.util.Map;
 
-import jakarta.jms.MessageListener;
+import javax.jms.MessageListener;
 
 import org.flowable.eventregistry.api.ChannelModelProcessor;
 import org.flowable.eventregistry.api.EventRegistry;
@@ -25,8 +25,6 @@ import org.flowable.eventregistry.model.ChannelModel;
 import org.flowable.eventregistry.model.InboundChannelModel;
 import org.flowable.eventregistry.model.JmsInboundChannelModel;
 import org.flowable.eventregistry.model.JmsOutboundChannelModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -48,8 +46,6 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * @author Filip Hrisafov
  */
@@ -62,8 +58,6 @@ public class JmsChannelModelProcessor implements BeanFactoryAware, ApplicationCo
      */
     static final String DEFAULT_JMS_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "jmsListenerContainerFactory";
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
-
     protected JmsOperations jmsOperations;
 
     protected JmsListenerEndpointRegistry endpointRegistry;
@@ -75,41 +69,26 @@ public class JmsChannelModelProcessor implements BeanFactoryAware, ApplicationCo
     protected BeanFactory beanFactory;
     protected ApplicationContext applicationContext;
     protected boolean contextRefreshed;
-    protected ObjectMapper objectMapper;
 
     protected StringValueResolver embeddedValueResolver;
-    
-    public JmsChannelModelProcessor(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     public boolean canProcess(ChannelModel channelModel) {
         return channelModel instanceof JmsInboundChannelModel || channelModel instanceof JmsOutboundChannelModel;
     }
-    
-    @Override
-    public boolean canProcessIfChannelModelAlreadyRegistered(ChannelModel channelModel) {
-        return channelModel instanceof JmsOutboundChannelModel;
-    }
 
     @Override
     public void registerChannelModel(ChannelModel channelModel, String tenantId, EventRegistry eventRegistry, 
-            EventRepositoryService eventRepositoryService,
-            boolean fallbackToDefaultTenant) {
+                    EventRepositoryService eventRepositoryService, boolean fallbackToDefaultTenant) {
         
         if (channelModel instanceof JmsInboundChannelModel) {
             JmsInboundChannelModel jmsChannelModel = (JmsInboundChannelModel) channelModel;
-            logger.info("Starting to register inbound channel {} in tenant {}", channelModel.getKey(), tenantId);
 
             JmsListenerEndpoint endpoint = createJmsListenerEndpoint(jmsChannelModel, tenantId, eventRegistry);
             registerEndpoint(endpoint, null);
-            logger.info("Finished registering inbound channel {} in tenant {}", channelModel.getKey(), tenantId);
             
         } else if (channelModel instanceof JmsOutboundChannelModel) {
-            logger.info("Starting to register outbound channel {} in tenant {}", channelModel.getKey(), tenantId);
             processOutboundDefinition((JmsOutboundChannelModel) channelModel);
-            logger.info("Finished registering outbound channel {} in tenant {}", channelModel.getKey(), tenantId);
         }
     }
 
@@ -153,26 +132,22 @@ public class JmsChannelModelProcessor implements BeanFactoryAware, ApplicationCo
     }
 
     protected OutboundEventChannelAdapter createOutboundEventChannelAdapter(JmsOutboundChannelModel channelModel) {
-        String destination = resolve(channelModel.getDestination());
-        return new JmsOperationsOutboundEventChannelAdapter(jmsOperations, destination);
+        return new JmsOperationsOutboundEventChannelAdapter(jmsOperations, channelModel.getDestination());
     }
 
     @Override
     public void unregisterChannelModel(ChannelModel channelModel, String tenantId, EventRepositoryService eventRepositoryService) {
-        logger.info("Starting to unregister channel {} in tenant {}", channelModel.getKey(), tenantId);
-        String endpointId = getEndpointId(channelModel, tenantId);
+        String endpointId = getEndpointId(channelModel,tenantId);
         // currently it is not possible to unregister a listener container
         // In order not to do a lot of the logic that Spring does we are manually accessing the containers to remove them
         // see https://github.com/spring-projects/spring-framework/issues/24228
         MessageListenerContainer listenerContainer = endpointRegistry.getListenerContainer(endpointId);
         if (listenerContainer != null) {
-            logger.debug("Stopping message listener {} for channel {} in tenant {}", listenerContainer, channelModel.getKey(), tenantId);
             listenerContainer.stop();
         }
 
         if (listenerContainer instanceof DisposableBean) {
             try {
-                logger.debug("Destroying message listener {} for channel {} in tenant {}", listenerContainer, channelModel.getKey(), tenantId);
                 ((DisposableBean) listenerContainer).destroy();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to destroy listener container", e);
@@ -190,8 +165,6 @@ public class JmsChannelModelProcessor implements BeanFactoryAware, ApplicationCo
         } else {
             throw new IllegalStateException("Endpoint registry " + endpointRegistry + " does not have listenerContainers field");
         }
-
-        logger.info("Finished unregistering channel {} in tenant {}", channelModel.getKey(), tenantId);
     }
 
     /**
@@ -211,11 +184,8 @@ public class JmsChannelModelProcessor implements BeanFactoryAware, ApplicationCo
         // If we do not do that then it is possible that @JmsListener will not be started
         // We also need to start immediately if the application context has already been refreshed.
         // If we don't and the endpoint has no registered containers then our endpoint will never be started.
-        // This also makes sure that we are not going to start our listener earlier than the JmsListenerEndpointRegistry
         boolean startImmediately = contextRefreshed || endpointRegistry.isRunning();
-        logger.info("Registering endpoint {} with start immediately {}", endpoint, startImmediately);
         endpointRegistry.registerListenerContainer(endpoint, resolveContainerFactory(endpoint, factory), startImmediately);
-        logger.info("Finished registering endpoint {}", endpoint);
     }
 
     protected JmsListenerContainerFactory<?> resolveContainerFactory(JmsListenerEndpoint endpoint, JmsListenerContainerFactory<?> containerFactory) {

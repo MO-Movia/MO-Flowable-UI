@@ -58,7 +58,7 @@ public class GetTaskFormCmd implements Command<TaskFormData>, Serializable {
         FormHandlerHelper formHandlerHelper = processEngineConfiguration.getFormHandlerHelper();
         TaskFormHandler taskFormHandler = formHandlerHelper.getTaskFormHandlder(task);
         if (taskFormHandler == null) {
-            throw new FlowableException("No taskFormHandler specified for '" + task + "'");
+            throw new FlowableException("No taskFormHandler specified for task '" + taskId + "'");
         }
 
         return taskFormHandler.createTaskForm(task);

@@ -10,7 +10,7 @@
 		<groupId>org.flowable</groupId>
 		<artifactId>flowable-root</artifactId>
 		<relativePath>../..</relativePath>
-		<version>7.1.0-SNAPSHOT</version>
+		<version>6.6.0.20</version>
 	</parent>
 
 	<dependencies>
@@ -31,8 +31,8 @@
 			<artifactId>flowable-image-generator</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.flowable</groupId>
-			<artifactId>flowable-mail</artifactId>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-email</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -53,7 +53,7 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.groovy</groupId>
+			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-jsr223</artifactId>
 			<scope>provided</scope>
 		</dependency>
@@ -68,23 +68,18 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.drools</groupId>
-			<artifactId>drools-mvel</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>jakarta.persistence</groupId>
-			<artifactId>jakarta.persistence-api</artifactId>
+			<groupId>javax.persistence</groupId>
+			<artifactId>javax.persistence-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>jakarta.transaction</groupId>
-			<artifactId>jakarta.transaction-api</artifactId>
+			<groupId>org.apache.geronimo.specs</groupId>
+			<artifactId>geronimo-jta_1.1_spec</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>jakarta.enterprise.concurrent</groupId>
-			<artifactId>jakarta.enterprise.concurrent-api</artifactId>
+			<groupId>javax.enterprise.concurrent</groupId>
+			<artifactId>javax.enterprise.concurrent-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -93,13 +88,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.github.davidmoten</groupId>
-			<artifactId>subethasmtp</artifactId>
+			<groupId>org.subethamail</groupId>
+			<artifactId>subethasmtp-wiser</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -167,8 +162,8 @@
 			junit*;resolution:=optional,
 			org.junit*;resolution:=optional,
 			com.sun*;resolution:=optional,
-			jakarta.persistence*;resolution:=optional,
-			jakarta.mail*;resolution:=optional,
+			javax.persistence*;resolution:=optional,
+			org.apache.commons.mail*;resolution:=optional,
 			org.apache.xerces*;resolution:=optional,
 			org.activiti.camel;resolution:=optional,
 			org.activiti.camel.impl;resolution:=optional,
@@ -176,8 +171,8 @@
 			org.drools*;resolution:=optional,
 			org.kie*;resolution:=optional,
 			com.fasterxml*;resolution:=optional,
-			jakarta.transaction;resolution:=optional,
-			jakarta.enterprise.concurrent;resolution:=optional,
+			javax.transaction;resolution:=optional,
+			javax.enterprise.concurrent;resolution:=optional,
 		</flowable.osgi.import.additional>
 	</properties>
 
@@ -331,8 +326,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -381,8 +378,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -432,8 +431,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -464,8 +465,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>configExecution</id>
@@ -529,8 +532,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>configExecution</id>
@@ -597,8 +602,8 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -640,8 +645,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -689,8 +696,8 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -733,8 +740,8 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -793,8 +800,8 @@
 						</configuration>
 					</plugin>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -849,7 +856,7 @@
 			</activation>
 			<dependencies>
 				<dependency>
-					<groupId>com.oracle.database.jdbc</groupId>
+					<groupId>com.oracle.jdbc</groupId>
 					<artifactId>${oracle.jdbc.artifact}</artifactId>
 					<scope>test</scope>
 				</dependency>
@@ -866,7 +873,7 @@
 			</activation>
 			<dependencies>
 				<dependency>
-					<groupId>com.oracle.database.jdbc</groupId>
+					<groupId>com.oracle.jdbc</groupId>
 					<artifactId>${oracle.jdbc.artifact}</artifactId>
 					<scope>test</scope>
 				</dependency>
@@ -917,8 +924,8 @@
 			</activation>
 			<dependencies>
 				<dependency>
-					<groupId>com.mysql</groupId>
-					<artifactId>mysql-connector-j</artifactId>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
 					<scope>test</scope>
 				</dependency>
 			</dependencies>

@@ -14,7 +14,6 @@
 package org.flowable.job.service.impl;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -34,12 +33,11 @@ import org.flowable.job.service.JobServiceConfiguration;
 public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJob> implements HistoryJobQuery, Serializable {
 
     private static final long serialVersionUID = 1L;
-
+    
     protected JobServiceConfiguration jobServiceConfiguration;
-
+    
     protected String id;
     protected String handlerType;
-    protected Collection<String> handlerTypes;
     protected boolean withException;
     protected String exceptionMessage;
     protected String scopeType;
@@ -49,7 +47,6 @@ public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJ
     protected String lockOwner;
     protected boolean onlyLocked;
     protected boolean onlyUnlocked;
-    protected boolean withoutScopeType;
 
     public HistoryJobQueryImpl() {
     }
@@ -83,15 +80,6 @@ public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJ
     }
 
     @Override
-    public HistoryJobQuery handlerTypes(Collection<String> handlerTypes) {
-        if (handlerTypes == null) {
-            throw new FlowableIllegalArgumentException("Provided handlerTypes are null");
-        }
-        this.handlerTypes = handlerTypes;
-        return this;
-    }
-
-    @Override
     public HistoryJobQuery withException() {
         this.withException = true;
         return this;
@@ -105,11 +93,11 @@ public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJ
         this.exceptionMessage = exceptionMessage;
         return this;
     }
-
+    
     @Override
     public HistoryJobQuery scopeType(String scopeType) {
         if (scopeType == null) {
-            throw new FlowableIllegalArgumentException("Provided scope type is null");
+            throw new FlowableIllegalArgumentException("Provided scope type is null"); 
         }
         this.scopeType = scopeType;
         return this;
@@ -154,12 +142,6 @@ public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJ
     @Override
     public HistoryJobQuery unlocked() {
         this.onlyUnlocked = true;
-        return this;
-    }
-
-    @Override
-    public HistoryJobQuery withoutScopeType() {
-        this.withoutScopeType = true;
         return this;
     }
 
@@ -209,7 +191,7 @@ public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJ
     public String getExceptionMessage() {
         return exceptionMessage;
     }
-
+    
     public String getScopeType() {
         return scopeType;
     }
@@ -244,10 +226,6 @@ public class HistoryJobQueryImpl extends AbstractQuery<HistoryJobQuery, HistoryJ
 
     public boolean isOnlyUnlocked() {
         return onlyUnlocked;
-    }
-
-    public boolean isWithoutScopeType() {
-        return withoutScopeType;
     }
 
 }

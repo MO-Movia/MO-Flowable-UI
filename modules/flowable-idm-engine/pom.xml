@@ -11,7 +11,7 @@
 		<groupId>org.flowable</groupId>
 		<artifactId>flowable-root</artifactId>
 		<relativePath>../..</relativePath>
-		<version>7.1.0-SNAPSHOT</version>
+		<version>6.6.0.20</version>
 	</parent>
 
 	<properties>
@@ -48,6 +48,10 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -248,8 +252,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -298,8 +304,10 @@
             <build>
                 <plugins>
                     <plugin>
-						<groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <!-- only worked with this version, there might be a bug with antrun 
+                            see http://jira.codehaus.org/browse/MANTRUN-109 -->
+                        <version>1.4</version>
                         <executions>
                             <execution>
                                 <id>database-test-create-schema</id>
@@ -348,8 +356,10 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-antrun-plugin</artifactId>
+						<!-- only worked with this version, there might be a bug with antrun 
+							see http://jira.codehaus.org/browse/MANTRUN-109 -->
+						<version>1.4</version>
 						<executions>
 							<execution>
 								<id>database-test-create-schema</id>
@@ -398,7 +408,7 @@
 			</activation>
 			<dependencies>
 				<dependency>
-					<groupId>com.oracle.database.jdbc</groupId>
+					<groupId>com.oracle.jdbc</groupId>
 					<artifactId>${oracle.jdbc.artifact}</artifactId>
 					<scope>test</scope>
 				</dependency>
@@ -415,7 +425,7 @@
 			</activation>
 			<dependencies>
 				<dependency>
-					<groupId>com.oracle.database.jdbc</groupId>
+					<groupId>com.oracle.jdbc</groupId>
 					<artifactId>${oracle.jdbc.artifact}</artifactId>
 					<scope>test</scope>
 				</dependency>
@@ -466,8 +476,8 @@
 			</activation>
 			<dependencies>
 				<dependency>
-					<groupId>com.mysql</groupId>
-					<artifactId>mysql-connector-j</artifactId>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
 					<scope>test</scope>
 				</dependency>
 			</dependencies>
@@ -495,8 +505,10 @@
             <build>
                 <plugins>
                     <plugin>
-						<groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <!-- only worked with this version, there might be a bug with antrun 
+                            see http://jira.codehaus.org/browse/MANTRUN-109 -->
+                        <version>1.4</version>
                         <executions>
                             <execution>
                                 <id>database-copy-logging</id>

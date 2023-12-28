@@ -38,6 +38,4 @@ public interface TimerJobDataManager extends JobInfoDataManager<TimerJobEntity> 
 
     long findJobCountByQueryCriteria(TimerJobQueryImpl jobQuery);
 
-    void bulkDeleteWithoutRevision(List<TimerJobEntity> timerJobEntities);
-
 }

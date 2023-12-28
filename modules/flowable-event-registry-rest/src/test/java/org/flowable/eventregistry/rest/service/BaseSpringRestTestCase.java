@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -244,14 +245,6 @@ public abstract class BaseSpringRestTestCase extends TestCase {
         idmIdentityService.createMembership(user.getId(), group.getId());
     }
 
-    public JsonNode executeAndReadGetRequest(String url) {
-        try (CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + url), HttpStatus.SC_OK)) {
-            return objectMapper.readTree(response.getEntity().getContent());
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to close request", e);
-        }
-    }
-
     /**
      * IMPORTANT: calling method is responsible for calling close() on returned {@link HttpResponse} to free the connection.
      */
@@ -342,7 +335,11 @@ public abstract class BaseSpringRestTestCase extends TestCase {
 
     protected String encode(String string) {
         if (string != null) {
-            return URLEncoder.encode(string, StandardCharsets.UTF_8);
+            try {
+                return URLEncoder.encode(string, "UTF-8");
+            } catch (UnsupportedEncodingException uee) {
+                throw new IllegalStateException("JVM does not support UTF-8 encoding.", uee);
+            }
         }
         return null;
     }

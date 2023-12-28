@@ -56,7 +56,7 @@ public class ProcessInstanceMigrationStatusJobHandler extends AbstractProcessIns
         }
         
         if (completedBatchParts == batchParts.size()) {
-            batchService.completeBatch(batch.getId(), ProcessInstanceBatchMigrationResult.STATUS_COMPLETED);
+            updateBatchStatus(batch, ProcessInstanceBatchMigrationResult.STATUS_COMPLETED, batchService);
             job.setRepeat(null);
         
         } else {

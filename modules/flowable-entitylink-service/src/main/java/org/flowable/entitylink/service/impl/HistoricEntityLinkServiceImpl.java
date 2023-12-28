@@ -12,7 +12,6 @@
  */
 package org.flowable.entitylink.service.impl;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.common.engine.impl.service.CommonServiceImpl;
@@ -44,11 +43,6 @@ public class HistoricEntityLinkServiceImpl extends CommonServiceImpl<EntityLinkS
     @Override
     public List<HistoricEntityLink> findHistoricEntityLinksWithSameRootScopeForScopeIdAndScopeType(String scopeId, String scopeType, String linkType) {
         return getHistoricEntityLinkEntityManager().findHistoricEntityLinksWithSameRootScopeForScopeIdAndScopeType(scopeId, scopeType, linkType);
-    }
-
-    @Override
-    public List<HistoricEntityLink> findHistoricEntityLinksWithSameRootScopeForScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType, String linkType) {
-        return getHistoricEntityLinkEntityManager().findHistoricEntityLinksWithSameRootScopeForScopeIdsAndScopeType(scopeIds, scopeType, linkType);
     }
 
     @Override
@@ -91,11 +85,6 @@ public class HistoricEntityLinkServiceImpl extends CommonServiceImpl<EntityLinkS
         getHistoricEntityLinkEntityManager().deleteHistoricEntityLinksByScopeDefinitionIdAndScopeType(scopeDefinitionId, scopeType);
     }
     
-    @Override
-    public void bulkDeleteHistoricEntityLinksForScopeTypeAndScopeIds(String scopeType, Collection<String> scopeIds) {
-        getHistoricEntityLinkEntityManager().bulkDeleteHistoricEntityLinksForScopeTypeAndScopeIds(scopeType, scopeIds);
-    }
-
     @Override
     public void deleteHistoricEntityLinksForNonExistingProcessInstances() {
         getHistoricEntityLinkEntityManager().deleteHistoricEntityLinksForNonExistingProcessInstances();

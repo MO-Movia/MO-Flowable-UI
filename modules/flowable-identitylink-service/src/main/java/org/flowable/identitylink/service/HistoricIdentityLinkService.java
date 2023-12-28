@@ -12,7 +12,6 @@
  */
 package org.flowable.identitylink.service;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.identitylink.service.impl.persistence.entity.HistoricIdentityLinkEntity;
@@ -47,12 +46,6 @@ public interface HistoricIdentityLinkService {
     void deleteHistoricIdentityLinksByTaskId(String taskId);
     
     void deleteHistoricIdentityLinksByScopeIdAndScopeType(String scopeId, String scopeType);
-    
-    void bulkDeleteHistoricIdentityLinksForProcessInstanceIds(Collection<String> processInstanceIds);
-    
-    void bulkDeleteHistoricIdentityLinksForTaskIds(Collection<String> taskIds);
-    
-    void bulkDeleteHistoricIdentityLinksByScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType);
     
     void deleteHistoricProcessIdentityLinksForNonExistingInstances();
     

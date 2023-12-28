@@ -16,7 +16,8 @@ package org.flowable.rest.service.api.form;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
@@ -63,7 +64,7 @@ public class FormDataResource {
             @ApiResponse(code = 404, message = "Indicates that form data could not be found.") })
     @GetMapping(value = "/form/form-data", produces = "application/json")
     public FormDataResponse getFormData(@RequestParam(value = "taskId", required = false) String taskId,
-            @RequestParam(value = "processDefinitionId", required = false) String processDefinitionId) {
+            @RequestParam(value = "processDefinitionId", required = false) String processDefinitionId, HttpServletRequest request) {
 
         if (taskId == null && processDefinitionId == null) {
             throw new FlowableIllegalArgumentException("The taskId or processDefinitionId parameter has to be provided");
@@ -100,7 +101,7 @@ public class FormDataResource {
             @ApiResponse(code = 204, message = "If TaskId has been provided, Indicates request was successful and the form data was submitted. Returns empty"),
             @ApiResponse(code = 400, message = "Indicates an parameter was passed in the wrong format. The status-message contains additional information.") })
     @PostMapping(value = "/form/form-data", produces = "application/json")
-    public ProcessInstanceResponse submitForm(@RequestBody SubmitFormRequest submitRequest, HttpServletResponse response) {
+    public ProcessInstanceResponse submitForm(@RequestBody SubmitFormRequest submitRequest, HttpServletRequest request, HttpServletResponse response) {
 
         if (submitRequest == null) {
             throw new FlowableException("A request body was expected when executing the form submit.");

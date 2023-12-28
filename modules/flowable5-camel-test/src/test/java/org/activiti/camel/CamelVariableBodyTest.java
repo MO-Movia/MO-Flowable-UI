@@ -51,7 +51,7 @@ public class CamelVariableBodyTest extends SpringFlowableTestCase {
     public void tearDown() throws Exception {
         List<Route> routes = camelContext.getRoutes();
         for (Route r : routes) {
-            camelContext.getRouteController().stopRoute(r.getId());
+            camelContext.stopRoute(r.getId());
             camelContext.removeRoute(r.getId());
         }
     }

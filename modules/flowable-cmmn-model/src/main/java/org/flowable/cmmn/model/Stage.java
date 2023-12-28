@@ -17,8 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * @author Joram Barrez
  */
@@ -33,19 +31,10 @@ public class Stage extends PlanFragment implements HasExitCriteria {
     protected String validateFormFields;
     protected Integer displayOrder;
     protected String includeInStageOverview;
-    protected List<PlanItemDefinition> planItemDefinitionList = new ArrayList<>();
     protected Map<String, PlanItemDefinition> planItemDefinitionMap = new LinkedHashMap<>();
-    protected String businessStatus;
 
     public void addPlanItemDefinition(PlanItemDefinition planItemDefinition) {
-        planItemDefinitionList.add(planItemDefinition);
-        addPlanItemDefinitionToMap(planItemDefinition);
-    }
-
-    protected void addPlanItemDefinitionToMap(PlanItemDefinition planItemDefinition) {
-        if (planItemDefinition != null && StringUtils.isNotEmpty(planItemDefinition.getId())) {
-            planItemDefinitionMap.put(planItemDefinition.getId(), planItemDefinition);
-        }
+        planItemDefinitionMap.put(planItemDefinition.getId(), planItemDefinition);
     }
 
     public PlanItemDefinition findPlanItemDefinitionInStageOrUpwards(String planItemDefinitionId) {
@@ -106,7 +95,7 @@ public class Stage extends PlanFragment implements HasExitCriteria {
     }
 
     public List<PlanItemDefinition> getPlanItemDefinitions() {
-        return planItemDefinitionList;
+        return new ArrayList<>(planItemDefinitionMap.values());
     }
 
     public Map<String, PlanItemDefinition> getPlanItemDefinitionMap() {
@@ -194,14 +183,6 @@ public class Stage extends PlanFragment implements HasExitCriteria {
     @Override
     public void setExitCriteria(List<Criterion> exitCriteria) {
         this.exitCriteria = exitCriteria;
-    }
-
-    public String getBusinessStatus() {
-        return businessStatus;
-    }
-
-    public void setBusinessStatus(String businessStatus) {
-        this.businessStatus = businessStatus;
     }
 
 }

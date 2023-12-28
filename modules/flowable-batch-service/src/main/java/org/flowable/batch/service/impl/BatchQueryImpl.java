@@ -14,7 +14,6 @@
 package org.flowable.batch.service.impl;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +23,6 @@ import org.flowable.batch.service.BatchServiceConfiguration;
 import org.flowable.batch.service.impl.persistence.entity.BatchEntity;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.query.CacheAwareQuery;
-import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.common.engine.impl.query.AbstractQuery;
@@ -37,7 +35,6 @@ public class BatchQueryImpl extends AbstractQuery<BatchQuery, Batch> implements 
     
     protected String id;
     protected String batchType;
-    protected Collection<String> batchTypes;
     protected String searchKey;
     protected String searchKey2;
     protected Date createTimeHigherThan;
@@ -77,15 +74,6 @@ public class BatchQueryImpl extends AbstractQuery<BatchQuery, Batch> implements 
             throw new FlowableIllegalArgumentException("Provided batch type is null");
         }
         this.batchType = batchType;
-        return this;
-    }
-
-    @Override
-    public BatchQuery batchTypes(Collection<String> batchTypes) {
-        if (batchTypes == null || batchTypes.isEmpty()) {
-            throw new FlowableIllegalArgumentException("Provided batch types must be provided and not empty");
-        }
-        this.batchTypes = batchTypes;
         return this;
     }
 
@@ -204,28 +192,6 @@ public class BatchQueryImpl extends AbstractQuery<BatchQuery, Batch> implements 
     public List<Batch> executeList(CommandContext commandContext) {
         return batchServiceConfiguration.getBatchEntityManager().findBatchesByQueryCriteria(this);
     }
-
-    @Override
-    public void delete() {
-        if (commandExecutor != null) {
-            commandExecutor.execute(context -> {
-                executeDelete(context);
-                return null;
-            });
-        } else {
-            executeDelete(Context.getCommandContext());
-        }
-    }
-
-    protected void executeDelete(CommandContext commandContext) {
-        batchServiceConfiguration.getBatchEntityManager().deleteBatches(this);
-    }
-
-    @Override
-    @Deprecated
-    public void deleteWithRelatedData() {
-        delete();
-    }
     
     // getters //////////////////////////////////////////
 
@@ -236,10 +202,6 @@ public class BatchQueryImpl extends AbstractQuery<BatchQuery, Batch> implements 
 
     public String getBatchType() {
         return batchType;
-    }
-
-    public Collection<String> getBatchTypes() {
-        return batchTypes;
     }
 
     public String getSearchKey() {
@@ -256,10 +218,6 @@ public class BatchQueryImpl extends AbstractQuery<BatchQuery, Batch> implements 
 
     public Date getCreateTimeLowerThan() {
         return createTimeLowerThan;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     public String getTenantId() {

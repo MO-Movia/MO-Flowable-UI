@@ -47,33 +47,11 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
-import org.apache.ibatis.type.ArrayTypeHandler;
-import org.apache.ibatis.type.BigDecimalTypeHandler;
-import org.apache.ibatis.type.BlobInputStreamTypeHandler;
-import org.apache.ibatis.type.BlobTypeHandler;
-import org.apache.ibatis.type.BooleanTypeHandler;
-import org.apache.ibatis.type.ByteTypeHandler;
-import org.apache.ibatis.type.ClobTypeHandler;
-import org.apache.ibatis.type.DateOnlyTypeHandler;
-import org.apache.ibatis.type.DateTypeHandler;
-import org.apache.ibatis.type.DoubleTypeHandler;
-import org.apache.ibatis.type.FloatTypeHandler;
-import org.apache.ibatis.type.IntegerTypeHandler;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.LongTypeHandler;
-import org.apache.ibatis.type.NClobTypeHandler;
-import org.apache.ibatis.type.NStringTypeHandler;
-import org.apache.ibatis.type.ShortTypeHandler;
-import org.apache.ibatis.type.SqlxmlTypeHandler;
-import org.apache.ibatis.type.StringTypeHandler;
-import org.apache.ibatis.type.TimeOnlyTypeHandler;
-import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
 import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
 import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.common.engine.api.engine.EngineLifecycleListener;
-import org.flowable.common.engine.impl.agenda.AgendaOperationExecutionListener;
 import org.flowable.common.engine.impl.agenda.AgendaOperationRunner;
 import org.flowable.common.engine.impl.cfg.CommandExecutorImpl;
 import org.flowable.common.engine.impl.cfg.IdGenerator;
@@ -128,7 +106,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 public abstract class AbstractEngineConfiguration {
 
@@ -194,7 +171,6 @@ public abstract class AbstractEngineConfiguration {
     protected CommandInterceptor commandInvoker;
 
     protected AgendaOperationRunner agendaOperationRunner = (commandContext, runnable) -> runnable.run();
-    protected Collection<AgendaOperationExecutionListener> agendaOperationExecutionListeners;
 
     protected List<CommandInterceptor> customPreCommandInterceptors;
     protected List<CommandInterceptor> customPostCommandInterceptors;
@@ -397,7 +373,6 @@ public abstract class AbstractEngineConfiguration {
         databaseTypeMappings.setProperty("DB2/LINUXX8664", DATABASE_TYPE_DB2);
         databaseTypeMappings.setProperty("DB2/LINUXZ64", DATABASE_TYPE_DB2);
         databaseTypeMappings.setProperty("DB2/LINUXPPC64", DATABASE_TYPE_DB2);
-        databaseTypeMappings.setProperty("DB2/LINUXPPC64LE", DATABASE_TYPE_DB2);
         databaseTypeMappings.setProperty("DB2/400 SQL", DATABASE_TYPE_DB2);
         databaseTypeMappings.setProperty("DB2/6000", DATABASE_TYPE_DB2);
         databaseTypeMappings.setProperty("DB2 UDB iSeries", DATABASE_TYPE_DB2);
@@ -419,7 +394,7 @@ public abstract class AbstractEngineConfiguration {
     protected boolean usePrefixId;
 
     protected Clock clock;
-    protected ObjectMapper objectMapper;
+    protected ObjectMapper objectMapper = new ObjectMapper();
 
     // Variables
 
@@ -627,7 +602,6 @@ public abstract class AbstractEngineConfiguration {
                 CommandContextInterceptor commandContextInterceptor = new CommandContextInterceptor(commandContextFactory, 
                         classLoader, useClassForNameClassLoading, clock, objectMapper);
                 engineConfigurations.put(engineCfgKey, this);
-                commandContextInterceptor.setEngineCfgKey(engineCfgKey);
                 commandContextInterceptor.setEngineConfigurations(engineConfigurations);
                 interceptors.add(commandContextInterceptor);
             }
@@ -686,13 +660,6 @@ public abstract class AbstractEngineConfiguration {
     public void initIdGenerator() {
         if (idGenerator == null) {
             idGenerator = new StrongUuidGenerator();
-        }
-    }
-
-    public void initObjectMapper() {
-        if (objectMapper == null) {
-            objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
     }
 
@@ -852,8 +819,9 @@ public abstract class AbstractEngineConfiguration {
                 properties.put("limitBefore", "");
                 properties.put("limitAfter", "");
                 properties.put("limitBetween", "");
+                properties.put("limitBetweenNoDistinct", "");
+                properties.put("limitOuterJoinBetween", "");
                 properties.put("limitBeforeNativeQuery", "");
-                properties.put("limitAfterNativeQuery", "");
                 properties.put("blobType", "BLOB");
                 properties.put("boolValue", "TRUE");
 
@@ -869,10 +837,6 @@ public abstract class AbstractEngineConfiguration {
             } finally {
                 IoUtil.closeSilently(inputStream);
             }
-        } else {
-            // This is needed when the SQL Session Factory is created by another engine.
-            // When custom XML Mappers are registered with this engine they need to be loaded in the configuration as well
-            applyCustomMybatisCustomizations(sqlSessionFactory.getConfiguration());
         }
     }
 
@@ -890,6 +854,7 @@ public abstract class AbstractEngineConfiguration {
 
         configuration.setEnvironment(environment);
 
+        initCustomMybatisMappers(configuration);
         initMybatisTypeHandlers(configuration);
         initCustomMybatisInterceptors(configuration);
         if (isEnableLogSqlExecutionTime()) {
@@ -903,57 +868,13 @@ public abstract class AbstractEngineConfiguration {
     public void initCustomMybatisMappers(Configuration configuration) {
         if (getCustomMybatisMappers() != null) {
             for (Class<?> clazz : getCustomMybatisMappers()) {
-                if (!configuration.hasMapper(clazz)) {
-                    configuration.addMapper(clazz);
-                }
+                configuration.addMapper(clazz);
             }
         }
     }
 
     public void initMybatisTypeHandlers(Configuration configuration) {
-        // When mapping into Map<String, Object> there is currently a problem with MyBatis.
-        // It will return objects which are driver specific.
-        // Therefore we are registering the mappings between Object.class and the specific jdbc type here.
-        // see https://github.com/mybatis/mybatis-3/issues/2216 for more info
-        TypeHandlerRegistry handlerRegistry = configuration.getTypeHandlerRegistry();
-
-        handlerRegistry.register(Object.class, JdbcType.BOOLEAN, new BooleanTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.BIT, new BooleanTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.TINYINT, new ByteTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.SMALLINT, new ShortTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.INTEGER, new IntegerTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.FLOAT, new FloatTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.DOUBLE, new DoubleTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.CHAR, new StringTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.CLOB, new ClobTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.VARCHAR, new StringTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.LONGVARCHAR, new StringTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.NVARCHAR, new NStringTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.NCHAR, new NStringTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.NCLOB, new NClobTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.ARRAY, new ArrayTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.BIGINT, new LongTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.REAL, new BigDecimalTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.DECIMAL, new BigDecimalTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.NUMERIC, new BigDecimalTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.BLOB, new BlobInputStreamTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.LONGVARBINARY, new BlobTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.DATE, new DateOnlyTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.TIME, new TimeOnlyTypeHandler());
-        handlerRegistry.register(Object.class, JdbcType.TIMESTAMP, new DateTypeHandler());
-
-        handlerRegistry.register(Object.class, JdbcType.SQLXML, new SqlxmlTypeHandler());
+        // To be extended
     }
 
     public void initCustomMybatisInterceptors(Configuration configuration) {
@@ -971,13 +892,6 @@ public abstract class AbstractEngineConfiguration {
     public Configuration parseMybatisConfiguration(XMLConfigBuilder parser) {
         Configuration configuration = parser.parse();
 
-        applyCustomMybatisCustomizations(configuration);
-        return configuration;
-    }
-
-    protected void applyCustomMybatisCustomizations(Configuration configuration) {
-        initCustomMybatisMappers(configuration);
-
         if (dependentEngineMybatisTypeAliasConfigs != null) {
             for (MybatisTypeAliasConfigurator typeAliasConfig : dependentEngineMybatisTypeAliasConfigs) {
                 typeAliasConfig.configure(configuration.getTypeAliasRegistry());
@@ -991,6 +905,7 @@ public abstract class AbstractEngineConfiguration {
 
         parseDependentEngineMybatisXMLMappers(configuration);
         parseCustomMybatisXMLMappers(configuration);
+        return configuration;
     }
 
     public void parseCustomMybatisXMLMappers(Configuration configuration) {
@@ -1427,33 +1342,8 @@ public abstract class AbstractEngineConfiguration {
         return this;
     }
 
-    public Collection<AgendaOperationExecutionListener> getAgendaOperationExecutionListeners() {
-        return agendaOperationExecutionListeners;
-    }
-
-    public AbstractEngineConfiguration addAgendaOperationExecutionListener(AgendaOperationExecutionListener listener) {
-        if (this.agendaOperationExecutionListeners == null) {
-            this.agendaOperationExecutionListeners = new ArrayList<>();
-        }
-        this.agendaOperationExecutionListeners.add(listener);
-        return this;
-    }
-
-    public AbstractEngineConfiguration setAgendaOperationExecutionListeners(Collection<AgendaOperationExecutionListener> agendaOperationExecutionListeners) {
-        this.agendaOperationExecutionListeners = agendaOperationExecutionListeners;
-        return this;
-    }
-
     public List<CommandInterceptor> getCustomPreCommandInterceptors() {
         return customPreCommandInterceptors;
-    }
-
-    public AbstractEngineConfiguration addCustomPreCommandInterceptor(CommandInterceptor commandInterceptor) {
-        if (this.customPreCommandInterceptors == null) {
-            this.customPreCommandInterceptors = new ArrayList<>();
-        }
-        this.customPreCommandInterceptors.add(commandInterceptor);
-        return this;
     }
 
     public AbstractEngineConfiguration setCustomPreCommandInterceptors(List<CommandInterceptor> customPreCommandInterceptors) {
@@ -1463,14 +1353,6 @@ public abstract class AbstractEngineConfiguration {
 
     public List<CommandInterceptor> getCustomPostCommandInterceptors() {
         return customPostCommandInterceptors;
-    }
-
-    public AbstractEngineConfiguration addCustomPostCommandInterceptor(CommandInterceptor commandInterceptor) {
-        if (this.customPostCommandInterceptors == null) {
-            this.customPostCommandInterceptors = new ArrayList<>();
-        }
-        this.customPostCommandInterceptors.add(commandInterceptor);
-        return this;
     }
 
     public AbstractEngineConfiguration setCustomPostCommandInterceptors(List<CommandInterceptor> customPostCommandInterceptors) {
@@ -1754,6 +1636,15 @@ public abstract class AbstractEngineConfiguration {
     public AbstractEngineConfiguration setFallbackToDefaultTenant(boolean fallbackToDefaultTenant) {
         this.fallbackToDefaultTenant = fallbackToDefaultTenant;
         return this;
+    }
+
+    /**
+     * @return name of the default tenant
+     * @deprecated use {@link AbstractEngineConfiguration#getDefaultTenantProvider()} instead
+     */
+    @Deprecated
+    public String getDefaultTenantValue() {
+        return getDefaultTenantProvider().getDefaultTenant(null, null, null);
     }
 
     public AbstractEngineConfiguration setDefaultTenantValue(String defaultTenantValue) {

@@ -13,7 +13,7 @@
 
 package org.flowable.common.rest.filter;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Allows enabling/disabling authentication on specific requests and allows authorisation of request after successful authentication.

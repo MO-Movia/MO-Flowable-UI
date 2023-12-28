@@ -20,12 +20,8 @@ import java.util.Map;
 
 import org.flowable.cmmn.api.migration.ActivatePlanItemDefinitionMapping;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationDocument;
-import org.flowable.cmmn.api.migration.ChangePlanItemIdMapping;
-import org.flowable.cmmn.api.migration.ChangePlanItemIdWithDefinitionIdMapping;
 import org.flowable.cmmn.api.migration.MoveToAvailablePlanItemDefinitionMapping;
-import org.flowable.cmmn.api.migration.RemoveWaitingForRepetitionPlanItemDefinitionMapping;
 import org.flowable.cmmn.api.migration.TerminatePlanItemDefinitionMapping;
-import org.flowable.cmmn.api.migration.WaitingForRepetitionPlanItemDefinitionMapping;
 
 /**
  * @author Valentin Zickner
@@ -39,12 +35,6 @@ public class CaseInstanceMigrationDocumentImpl implements CaseInstanceMigrationD
     protected List<ActivatePlanItemDefinitionMapping> activatePlanItemDefinitionMappings = new ArrayList<>();
     protected List<TerminatePlanItemDefinitionMapping> terminatePlanItemDefinitionMappings = new ArrayList<>();
     protected List<MoveToAvailablePlanItemDefinitionMapping> moveToAvailablePlanItemDefinitionMappings = new ArrayList<>();
-    protected List<WaitingForRepetitionPlanItemDefinitionMapping> waitingForRepetitionPlanItemDefinitionMappings = new ArrayList<>();
-    protected List<RemoveWaitingForRepetitionPlanItemDefinitionMapping> removeWaitingForRepetitionPlanItemDefinitionMappings = new ArrayList<>();
-    protected List<ChangePlanItemIdMapping> changePlanItemIdMappings = new ArrayList<>();
-    protected List<ChangePlanItemIdWithDefinitionIdMapping> changePlanItemIdWithDefinitionIdMappings = new ArrayList<>();
-    protected String preUpgradeExpression;
-    protected String postUpgradeExpression;
     protected Map<String, Object> caseInstanceVariables = new HashMap<>();
     protected Map<String, Map<String, Object>> planItemLocalVariables = new HashMap<>();
 
@@ -79,32 +69,8 @@ public class CaseInstanceMigrationDocumentImpl implements CaseInstanceMigrationD
         this.moveToAvailablePlanItemDefinitionMappings = planItemDefinitionMappings;
     }
 
-    public void setWaitingForRepetitionPlanItemDefinitionMappings(List<WaitingForRepetitionPlanItemDefinitionMapping> waitingForRepetitionPlanItemDefinitionMappings) {
-        this.waitingForRepetitionPlanItemDefinitionMappings = waitingForRepetitionPlanItemDefinitionMappings;
-    }
-    
-    public void setRemoveWaitingForRepetitionPlanItemDefinitionMappings(List<RemoveWaitingForRepetitionPlanItemDefinitionMapping> removeWaitingForRepetitionPlanItemDefinitionMappings) {
-        this.removeWaitingForRepetitionPlanItemDefinitionMappings = removeWaitingForRepetitionPlanItemDefinitionMappings;
-    }
-    
-    public void setChangePlanItemIdMappings(List<ChangePlanItemIdMapping> changePlanItemIdMappings) {
-        this.changePlanItemIdMappings = changePlanItemIdMappings;
-    }
-    
-    public void setChangePlanItemIdWithDefinitionIdMappings(List<ChangePlanItemIdWithDefinitionIdMapping> changePlanItemIdWithDefinitionIdMappings) {
-        this.changePlanItemIdWithDefinitionIdMappings = changePlanItemIdWithDefinitionIdMappings;
-    }
-
     public void setCaseInstanceVariables(Map<String, Object> caseInstanceVariables) {
         this.caseInstanceVariables = caseInstanceVariables;
-    }
-
-    public void setPreUpgradeExpression(String preUpgradeExpression) {
-        this.preUpgradeExpression = preUpgradeExpression;
-    }
-
-    public void setPostUpgradeExpression(String postUpgradeExpression) {
-        this.postUpgradeExpression = postUpgradeExpression;
     }
 
     @Override
@@ -140,36 +106,6 @@ public class CaseInstanceMigrationDocumentImpl implements CaseInstanceMigrationD
     @Override
     public List<MoveToAvailablePlanItemDefinitionMapping> getMoveToAvailablePlanItemDefinitionMappings() {
         return moveToAvailablePlanItemDefinitionMappings;
-    }
-    
-    @Override
-    public List<WaitingForRepetitionPlanItemDefinitionMapping> getWaitingForRepetitionPlanItemDefinitionMappings() {
-        return waitingForRepetitionPlanItemDefinitionMappings;
-    }
-    
-    @Override
-    public List<RemoveWaitingForRepetitionPlanItemDefinitionMapping> getRemoveWaitingForRepetitionPlanItemDefinitionMappings() {
-        return removeWaitingForRepetitionPlanItemDefinitionMappings;
-    }
-    
-    @Override
-    public List<ChangePlanItemIdMapping> getChangePlanItemIdMappings() {
-        return changePlanItemIdMappings;
-    }
-
-    @Override
-    public List<ChangePlanItemIdWithDefinitionIdMapping> getChangePlanItemIdWithDefinitionIdMappings() {
-        return changePlanItemIdWithDefinitionIdMappings;
-    }
-
-    @Override
-    public String getPreUpgradeExpression() {
-        return preUpgradeExpression;
-    }
-
-    @Override
-    public String getPostUpgradeExpression() {
-        return postUpgradeExpression;
     }
 
     @Override

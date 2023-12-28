@@ -12,7 +12,6 @@
  */
 package org.flowable.eventsubscription.service.impl.persistence.entity.data;
 
-import java.util.Date;
 import java.util.List;
 
 import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
@@ -52,8 +51,6 @@ public interface EventSubscriptionDataManager extends DataManager<EventSubscript
     List<SignalEventSubscriptionEntity> findSignalEventSubscriptionsByNameAndExecution(final String name, final String executionId);
 
     List<EventSubscriptionEntity> findEventSubscriptionsByExecutionAndType(final String executionId, final String type);
-    
-    List<EventSubscriptionEntity> findEventSubscriptionsByProcessInstanceAndType(final String processInstanceId, final String type);
 
     List<EventSubscriptionEntity> findEventSubscriptionsByProcessInstanceAndActivityId(final String processInstanceId, final String activityId, final String type);
 
@@ -62,8 +59,6 @@ public interface EventSubscriptionDataManager extends DataManager<EventSubscript
     List<EventSubscriptionEntity> findEventSubscriptionsBySubScopeId(final String subScopeId);
 
     List<EventSubscriptionEntity> findEventSubscriptionsByTypeAndProcessDefinitionId(String type, String processDefinitionId, String tenantId);
-    
-    List<EventSubscriptionEntity> findEventSubscriptionsByScopeIdAndType(final String scopeId, final String type);
 
     List<EventSubscriptionEntity> findEventSubscriptionsByName(final String type, final String eventName, final String tenantId);
 
@@ -72,12 +67,6 @@ public interface EventSubscriptionDataManager extends DataManager<EventSubscript
     MessageEventSubscriptionEntity findMessageStartEventSubscriptionByName(String messageName, String tenantId);
 
     void updateEventSubscriptionTenantId(String oldTenantId, String newTenantId);
-
-    void updateEventSubscriptionProcessDefinitionId(String oldProcessDefinitionId, String newProcessDefinitionId, String eventType, String activityId, String scopeDefinitionKey, String configuration);
-
-    boolean updateEventSubscriptionLockTime(String eventSubscriptionId, Date lockDate, String lockOwner, Date currentTime);
-
-    void clearEventSubscriptionLockTime(String eventSubscriptionId);
 
     void deleteEventSubscriptionsForProcessDefinition(String processDefinitionId);
     
@@ -88,7 +77,5 @@ public interface EventSubscriptionDataManager extends DataManager<EventSubscript
     void deleteEventSubscriptionsForScopeDefinitionIdAndType(String scopeDefinitionId, String scopeType);
 
     void deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(String scopeDefinitionId, String scopeType);
-
-    void deleteEventSubscriptionsForProcessDefinitionAndProcessStartEvent(String processDefinitionId, String eventType, String activityId, String configuration);
 
 }

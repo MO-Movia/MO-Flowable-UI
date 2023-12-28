@@ -28,6 +28,7 @@ import org.flowable.cmmn.model.FlowableListener;
 import org.flowable.cmmn.model.HumanTask;
 import org.flowable.cmmn.model.ImplementationType;
 import org.flowable.cmmn.model.PlanItemDefinition;
+import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.task.service.delegate.TaskListener;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
@@ -59,6 +60,8 @@ public class CmmnListenerNotificationHelper {
 
                 try {
                     taskListener.notify(taskEntity);
+                } catch (Exception e) {
+                    throw new FlowableException("Exception while invoking TaskListener: " + e.getMessage(), e);
                 } finally {
                     taskEntity.setEventName(null);
                 }
@@ -78,9 +81,8 @@ public class CmmnListenerNotificationHelper {
             taskListener = listenerFactory.createDelegateExpressionTaskListener(listener);
         } else if (ImplementationType.IMPLEMENTATION_TYPE_INSTANCE.equalsIgnoreCase(listener.getImplementationType())) {
             taskListener = (TaskListener) listener.getInstance();
-        } else if (ImplementationType.IMPLEMENTATION_TYPE_SCRIPT.equalsIgnoreCase(listener.getImplementationType())) {
-            taskListener = listenerFactory.createScriptTypeTaskListener(listener);
         }
+
         return taskListener;
     }
 

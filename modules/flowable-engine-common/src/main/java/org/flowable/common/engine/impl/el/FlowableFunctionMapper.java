@@ -14,7 +14,9 @@
 package org.flowable.common.engine.impl.el;
 
 import java.lang.reflect.Method;
+import java.util.function.BiFunction;
 
+import org.flowable.common.engine.api.delegate.FlowableFunctionDelegate;
 import org.flowable.common.engine.impl.javax.el.FunctionMapper;
 
 /**
@@ -25,21 +27,22 @@ import org.flowable.common.engine.impl.javax.el.FunctionMapper;
  */
 public class FlowableFunctionMapper extends FunctionMapper {
 
-    protected FlowableFunctionResolver functionResolver;
+    protected BiFunction<String, String, FlowableFunctionDelegate> functionResolver; // first parameter = prefix, second parameter = localName
 
-    public FlowableFunctionMapper(FlowableFunctionResolver functionResolver) {
+    public FlowableFunctionMapper(BiFunction<String, String, FlowableFunctionDelegate> functionResolver) {
         setFunctionResolver(functionResolver);
 
     }
 
-    public void setFunctionResolver(FlowableFunctionResolver functionResolver) {
+    public void setFunctionResolver(BiFunction<String, String, FlowableFunctionDelegate> functionResolver) {
         this.functionResolver = functionResolver;
     }
 
     @Override
     public Method resolveFunction(String prefix, String localName) {
         if (functionResolver != null) {
-            return functionResolver.resolveFunction(prefix, localName);
+            FlowableFunctionDelegate functionDelegate = functionResolver.apply(prefix, localName);
+            return functionDelegate != null ? functionDelegate.functionMethod() : null;
         }
         return null;
     }

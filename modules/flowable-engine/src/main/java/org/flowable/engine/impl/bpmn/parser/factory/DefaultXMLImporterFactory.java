@@ -34,7 +34,7 @@ public class DefaultXMLImporterFactory implements XMLImporterFactory {
         try {
             Class<?> wsdlImporterClass = Class.forName(DEFAULT_XML_IMPORTER_FACTORY_CLASSNAME, true,
                     Thread.currentThread().getContextClassLoader());
-            return (XMLImporter) wsdlImporterClass.getConstructor().newInstance();
+            return (XMLImporter) wsdlImporterClass.newInstance();
         } catch (ClassNotFoundException e) {
             throw new FlowableException("Could not find importer class for type " + theImport.getImportType(), e);
         } catch (Exception e) {

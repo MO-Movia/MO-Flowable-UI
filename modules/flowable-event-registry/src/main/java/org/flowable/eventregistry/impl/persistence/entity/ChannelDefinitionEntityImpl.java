@@ -32,8 +32,6 @@ public class ChannelDefinitionEntityImpl extends AbstractEventRegistryNoRevision
     protected String key;
     protected int version;
     protected String category;
-    protected String type;
-    protected String implementation;
     protected String deploymentId;
     protected Date createTime;
     protected String resourceName;
@@ -87,26 +85,6 @@ public class ChannelDefinitionEntityImpl extends AbstractEventRegistryNoRevision
     @Override
     public String getDescription() {
         return description;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
-
-    @Override
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    @Override
-    public String getImplementation() {
-        return implementation;
-    }
-
-    @Override
-    public void setImplementation(String implementation) {
-        this.implementation = implementation;
     }
 
     @Override

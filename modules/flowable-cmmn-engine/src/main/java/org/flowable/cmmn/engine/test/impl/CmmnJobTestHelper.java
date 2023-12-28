@@ -16,7 +16,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 
-import org.flowable.cmmn.api.CmmnManagementService;
 import org.flowable.cmmn.engine.CmmnEngine;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.common.engine.api.FlowableException;
@@ -46,19 +45,6 @@ public class CmmnJobTestHelper {
             public Boolean call() {
                 return cmmnEngineConfiguration.getCmmnManagementService().createJobQuery().count() > 0
                 || cmmnEngineConfiguration.getCmmnManagementService().createTimerJobQuery().count() > 0;
-            }
-
-        }, maxMillisToWait, intervalMillis, shutdownExecutorWhenFinished);
-    }
-
-    public static void waitForJobExecutorToProcessAllAsyncJobs(final CmmnEngineConfiguration cmmnEngineConfiguration, final long maxMillisToWait,
-            final long intervalMillis, final boolean shutdownExecutorWhenFinished) {
-
-        waitForExecutorToProcessAllJobs(cmmnEngineConfiguration.getAsyncExecutor(), new Callable<Boolean>() {
-
-            @Override
-            public Boolean call() {
-                return cmmnEngineConfiguration.getCmmnManagementService().createJobQuery().count() > 0;
             }
 
         }, maxMillisToWait, intervalMillis, shutdownExecutorWhenFinished);
@@ -142,10 +128,6 @@ public class CmmnJobTestHelper {
                 asyncExecutor.shutdown();
             }
         }
-    }
-
-    public static boolean areJobsAvailable(CmmnManagementService managementService) {
-        return !managementService.createJobQuery().list().isEmpty();
     }
 
     public static class InterruptTask extends TimerTask {

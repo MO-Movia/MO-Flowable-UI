@@ -374,6 +374,11 @@ public class RepositoryServiceImpl extends CommonEngineServiceImpl<ProcessEngine
     }
 
     @Override
+    public List<DmnDecision> getDecisionTablesForProcessDefinition(String processDefinitionId) {
+        return getDecisionsForProcessDefinition(processDefinitionId);
+    }
+
+    @Override
     public List<FormDefinition> getFormDefinitionsForProcessDefinition(String processDefinitionId) {
         return commandExecutor.execute(new GetFormDefinitionsForProcessDefinitionCmd(processDefinitionId));
     }

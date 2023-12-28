@@ -26,7 +26,7 @@ public class InboundEventStaticKeyDetector<T> implements InboundEventKeyDetector
     }
 
     @Override
-    public String detectEventDefinitionKey(T payload) {
+    public String detectEventDefinitionKey(T event) {
         return staticKey;
     }
 

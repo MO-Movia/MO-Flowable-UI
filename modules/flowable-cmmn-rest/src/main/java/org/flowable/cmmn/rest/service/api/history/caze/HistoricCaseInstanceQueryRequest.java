@@ -30,25 +30,10 @@ public class HistoricCaseInstanceQueryRequest extends PaginateRequest {
 
     private String caseInstanceId;
     private List<String> caseInstanceIds;
+    private String caseBusinessKey;
     private String caseDefinitionId;
     private String caseDefinitionKey;
-    private Set<String> caseDefinitionKeys;
-    private String caseDefinitionCategory;
-    private String caseDefinitionName;
-    private String caseBusinessKey;
-    private String caseInstanceName;
-    private String caseInstanceNameLike;
-    private String caseInstanceNameLikeIgnoreCase;
-    private String caseInstanceRootScopeId;
-    private String caseInstanceParentScopeId;
-    private String caseInstanceBusinessKey;
-    private String caseInstanceBusinessStatus;
-    private String caseInstanceParentId;
-    private String caseInstanceState;
-    private String caseInstanceCallbackId;
-    private String caseInstanceCallbackType;
-    private String caseInstanceReferenceId;
-    private String caseInstanceReferenceType;
+    private Boolean excludeSubprocesses;
     private Boolean finished;
     private String involvedUser;
     private Date finishedAfter;
@@ -56,18 +41,13 @@ public class HistoricCaseInstanceQueryRequest extends PaginateRequest {
     private Date startedAfter;
     private Date startedBefore;
     private String startedBy;
-    private String lastReactivatedBy;
-    private Date lastReactivatedBefore;
-    private Date lastReactivatedAfter;
     private String activePlanItemDefinitionId;
     private Set<String> activePlanItemDefinitionIds;
     private Boolean includeCaseVariables;
     private List<QueryVariable> variables;
     private String tenantId;
     private Boolean withoutTenantId;
-    private Boolean withoutCaseInstanceParentId;
-    private Boolean withoutCaseInstanceCallbackId;
-    
+
     public String getCaseInstanceId() {
         return caseInstanceId;
     }
@@ -82,6 +62,14 @@ public class HistoricCaseInstanceQueryRequest extends PaginateRequest {
 
     public void setCaseInstanceIds(List<String> caseInstanceIds) {
         this.caseInstanceIds = caseInstanceIds;
+    }
+
+    public String getCaseBusinessKey() {
+        return caseBusinessKey;
+    }
+
+    public void setCaseBusinessKey(String caseBusinessKey) {
+        this.caseBusinessKey = caseBusinessKey;
     }
 
     public String getCaseDefinitionId() {
@@ -99,141 +87,13 @@ public class HistoricCaseInstanceQueryRequest extends PaginateRequest {
     public void setCaseDefinitionKey(String caseDefinitionKey) {
         this.caseDefinitionKey = caseDefinitionKey;
     }
-    
-    public Set<String> getCaseDefinitionKeys() {
-        return caseDefinitionKeys;
+
+    public Boolean getExcludeSubprocesses() {
+        return excludeSubprocesses;
     }
 
-    public void setCaseDefinitionKeys(Set<String> caseDefinitionKeys) {
-        this.caseDefinitionKeys = caseDefinitionKeys;
-    }
-
-    public String getCaseDefinitionCategory() {
-        return caseDefinitionCategory;
-    }
-
-    public void setCaseDefinitionCategory(String caseDefinitionCategory) {
-        this.caseDefinitionCategory = caseDefinitionCategory;
-    }
-
-    public String getCaseDefinitionName() {
-        return caseDefinitionName;
-    }
-
-    public void setCaseDefinitionName(String caseDefinitionName) {
-        this.caseDefinitionName = caseDefinitionName;
-    }
-
-    public String getCaseBusinessKey() {
-        return caseBusinessKey;
-    }
-
-    public void setCaseBusinessKey(String caseBusinessKey) {
-        this.caseBusinessKey = caseBusinessKey;
-    }
-    
-    public String getCaseInstanceName() {
-        return caseInstanceName;
-    }
-
-    public void setCaseInstanceName(String caseInstanceName) {
-        this.caseInstanceName = caseInstanceName;
-    }
-
-    public String getCaseInstanceNameLike() {
-        return caseInstanceNameLike;
-    }
-
-    public void setCaseInstanceNameLike(String caseInstanceNameLike) {
-        this.caseInstanceNameLike = caseInstanceNameLike;
-    }
-
-    public String getCaseInstanceNameLikeIgnoreCase() {
-        return caseInstanceNameLikeIgnoreCase;
-    }
-
-    public void setCaseInstanceNameLikeIgnoreCase(String caseInstanceNameLikeIgnoreCase) {
-        this.caseInstanceNameLikeIgnoreCase = caseInstanceNameLikeIgnoreCase;
-    }
-    
-    public String getCaseInstanceRootScopeId() {
-        return caseInstanceRootScopeId;
-    }
-
-    public void setCaseInstanceRootScopeId(String caseInstanceRootScopeId) {
-        this.caseInstanceRootScopeId = caseInstanceRootScopeId;
-    }
-
-    public String getCaseInstanceParentScopeId() {
-        return caseInstanceParentScopeId;
-    }
-
-    public void setCaseInstanceParentScopeId(String caseInstanceParentScopeId) {
-        this.caseInstanceParentScopeId = caseInstanceParentScopeId;
-    }
-
-    public String getCaseInstanceBusinessKey() {
-        return caseInstanceBusinessKey;
-    }
-
-    public void setCaseInstanceBusinessKey(String caseInstanceBusinessKey) {
-        this.caseInstanceBusinessKey = caseInstanceBusinessKey;
-    }
-
-    public String getCaseInstanceBusinessStatus() {
-        return caseInstanceBusinessStatus;
-    }
-
-    public void setCaseInstanceBusinessStatus(String caseInstanceBusinessStatus) {
-        this.caseInstanceBusinessStatus = caseInstanceBusinessStatus;
-    }
-
-    public String getCaseInstanceParentId() {
-        return caseInstanceParentId;
-    }
-
-    public void setCaseInstanceParentId(String caseInstanceParentId) {
-        this.caseInstanceParentId = caseInstanceParentId;
-    }
-
-    public String getCaseInstanceState() {
-        return caseInstanceState;
-    }
-
-    public void setCaseInstanceState(String caseInstanceState) {
-        this.caseInstanceState = caseInstanceState;
-    }
-
-    public String getCaseInstanceCallbackId() {
-        return caseInstanceCallbackId;
-    }
-
-    public void setCaseInstanceCallbackId(String caseInstanceCallbackId) {
-        this.caseInstanceCallbackId = caseInstanceCallbackId;
-    }
-
-    public String getCaseInstanceCallbackType() {
-        return caseInstanceCallbackType;
-    }
-
-    public void setCaseInstanceCallbackType(String caseInstanceCallbackType) {
-        this.caseInstanceCallbackType = caseInstanceCallbackType;
-    }
-
-    public String getCaseInstanceReferenceId() {
-        return caseInstanceReferenceId;
-    }
-
-    public void setCaseInstanceReferenceId(String caseInstanceReferenceId) {
-        this.caseInstanceReferenceId = caseInstanceReferenceId;
-    }
-
-    public String getCaseInstanceReferenceType() {
-        return caseInstanceReferenceType;
-    }
-
-    public void setCaseInstanceReferenceType(String caseInstanceReferenceType) {
-        this.caseInstanceReferenceType = caseInstanceReferenceType;
+    public void setExcludeSubprocesses(Boolean excludeSubprocesses) {
+        this.excludeSubprocesses = excludeSubprocesses;
     }
 
     public Boolean getFinished() {
@@ -292,30 +152,6 @@ public class HistoricCaseInstanceQueryRequest extends PaginateRequest {
         this.startedBy = startedBy;
     }
     
-    public String getLastReactivatedBy() {
-        return lastReactivatedBy;
-    }
-
-    public void setLastReactivatedBy(String lastReactivatedBy) {
-        this.lastReactivatedBy = lastReactivatedBy;
-    }
-
-    public Date getLastReactivatedBefore() {
-        return lastReactivatedBefore;
-    }
-
-    public void setLastReactivatedBefore(Date lastReactivatedBefore) {
-        this.lastReactivatedBefore = lastReactivatedBefore;
-    }
-
-    public Date getLastReactivatedAfter() {
-        return lastReactivatedAfter;
-    }
-
-    public void setLastReactivatedAfter(Date lastReactivatedAfter) {
-        this.lastReactivatedAfter = lastReactivatedAfter;
-    }
-
     public String getActivePlanItemDefinitionId() {
         return activePlanItemDefinitionId;
     }
@@ -364,20 +200,5 @@ public class HistoricCaseInstanceQueryRequest extends PaginateRequest {
     public void setWithoutTenantId(Boolean withoutTenantId) {
         this.withoutTenantId = withoutTenantId;
     }
-    
-    public Boolean getWithoutCaseInstanceParentId() {
-        return withoutCaseInstanceParentId;
-    }
-    
-    public void setWithoutCaseInstanceParentId(Boolean withoutCaseInstanceParentId) {
-        this.withoutCaseInstanceParentId = withoutCaseInstanceParentId;
-    }
-    
-    public Boolean getWithoutCaseInstanceCallbackId() {
-        return withoutCaseInstanceCallbackId;
-    }
-    
-    public void setWithoutCaseInstanceCallbackId(Boolean withoutCaseInstanceCallbackId) {
-        this.withoutCaseInstanceCallbackId = withoutCaseInstanceCallbackId;
-    }
+
 }

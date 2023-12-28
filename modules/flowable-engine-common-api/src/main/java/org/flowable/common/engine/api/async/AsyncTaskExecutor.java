@@ -55,6 +55,4 @@ public interface AsyncTaskExecutor {
      * Potentially shutdown the resources used by the async task executor.
      */
     void shutdown();
-
-    int getRemainingCapacity();
 }

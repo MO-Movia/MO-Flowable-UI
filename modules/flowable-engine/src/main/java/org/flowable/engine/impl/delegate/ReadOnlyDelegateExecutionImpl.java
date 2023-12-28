@@ -14,7 +14,6 @@ package org.flowable.engine.impl.delegate;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -30,7 +29,6 @@ public class ReadOnlyDelegateExecutionImpl implements ReadOnlyDelegateExecution 
     protected final String rootProcessInstanceId;
     protected final String eventName;
     protected final String processInstanceBusinessKey;
-    protected final String processInstanceBusinessStatus;
     protected final String processDefinitionId;
     protected final String propagatedStageInstanceId;
     protected final String parentId;
@@ -52,7 +50,6 @@ public class ReadOnlyDelegateExecutionImpl implements ReadOnlyDelegateExecution 
         this.rootProcessInstanceId = execution.getRootProcessInstanceId();
         this.eventName = execution.getEventName();
         this.processInstanceBusinessKey = execution.getProcessInstanceBusinessKey();
-        this.processInstanceBusinessStatus = execution.getProcessInstanceBusinessStatus();
         this.processDefinitionId = execution.getProcessDefinitionId();
         this.propagatedStageInstanceId = execution.getPropagatedStageInstanceId();
         this.parentId = execution.getParentId();
@@ -92,11 +89,6 @@ public class ReadOnlyDelegateExecutionImpl implements ReadOnlyDelegateExecution 
     @Override
     public String getProcessInstanceBusinessKey() {
         return processInstanceBusinessKey;
-    }
-
-    @Override
-    public String getProcessInstanceBusinessStatus() {
-        return processInstanceBusinessStatus;
     }
 
     @Override
@@ -172,16 +164,5 @@ public class ReadOnlyDelegateExecutionImpl implements ReadOnlyDelegateExecution 
     @Override
     public boolean hasVariable(String variableName) {
         return variables.containsKey(variableName);
-    }
-
-    @Override
-    public String toString() {
-        return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
-                .add("id='" + id + "'")
-                .add("currentActivityId='" + currentActivityId + "'")
-                .add("processInstanceId='" + processInstanceId + "'")
-                .add("processDefinitionId='" + processDefinitionId + "'")
-                .add("tenantId='" + tenantId + "'")
-                .toString();
     }
 }

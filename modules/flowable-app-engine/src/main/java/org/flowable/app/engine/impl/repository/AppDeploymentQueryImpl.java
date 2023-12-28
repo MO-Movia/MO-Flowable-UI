@@ -215,10 +215,6 @@ public class AppDeploymentQueryImpl extends AbstractQuery<AppDeploymentQuery, Ap
         return key;
     }
 
-    public boolean isLatest() {
-        return latest;
-    }
-
     public String getTenantId() {
         return tenantId;
     }

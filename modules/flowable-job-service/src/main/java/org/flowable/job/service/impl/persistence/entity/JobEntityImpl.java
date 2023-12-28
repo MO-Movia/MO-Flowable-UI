@@ -60,4 +60,9 @@ public class JobEntityImpl extends AbstractJobEntityImpl implements JobEntity {
         this.lockExpirationTime = claimedUntil;
     }
 
+    @Override
+    public String toString() {
+        return "JobEntity [id=" + id + "]";
+    }
+
 }

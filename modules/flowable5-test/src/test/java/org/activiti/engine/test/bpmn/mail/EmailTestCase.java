@@ -29,7 +29,8 @@ public abstract class EmailTestCase extends PluggableFlowableTestCase {
 
         boolean serverUpAndRunning = false;
         while (!serverUpAndRunning) {
-            wiser = Wiser.port(5025);
+            wiser = new Wiser();
+            wiser.setPort(5025);
 
             try {
                 wiser.start();
@@ -50,12 +51,6 @@ public abstract class EmailTestCase extends PluggableFlowableTestCase {
         Thread.sleep(250L);
 
         super.tearDown();
-    }
-
-    protected void reinitilizeMailClients() {
-        processEngineConfiguration.setDefaultMailClient(null);
-        processEngineConfiguration.getMailClients().clear();
-        processEngineConfiguration.initMailClients();
     }
 
 }

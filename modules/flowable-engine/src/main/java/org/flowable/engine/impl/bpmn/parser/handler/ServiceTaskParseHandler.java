@@ -36,11 +36,14 @@ public class ServiceTaskParseHandler extends AbstractActivityBpmnParseHandler<Se
     @Override
     protected void executeParse(BpmnParse bpmnParse, ServiceTask serviceTask) {
 
-        // Email, Http and Shell service tasks
+        // Email, Mule, Http and Shell service tasks
         if (StringUtils.isNotEmpty(serviceTask.getType())) {
 
             if ("mail".equalsIgnoreCase(serviceTask.getType())) {
                 serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createMailActivityBehavior(serviceTask));
+
+            } else if ("mule".equalsIgnoreCase(serviceTask.getType())) {
+                serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createMuleActivityBehavior(serviceTask));
 
             } else if ("camel".equalsIgnoreCase(serviceTask.getType())) {
                 serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createCamelActivityBehavior(serviceTask));
@@ -54,27 +57,21 @@ public class ServiceTaskParseHandler extends AbstractActivityBpmnParseHandler<Se
             } else if ("http".equalsIgnoreCase(serviceTask.getType())) {
                 serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createHttpActivityBehavior(serviceTask));
 
-            } else if (ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION.equalsIgnoreCase(serviceTask.getImplementationType())) {
-                serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createServiceTaskDelegateExpressionActivityBehavior(serviceTask));
-                
-            } else if (ImplementationType.IMPLEMENTATION_TYPE_EXPRESSION.equalsIgnoreCase(serviceTask.getImplementationType())) {
-                serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createServiceTaskExpressionActivityBehavior(serviceTask));
-                
             } else {
                 LOGGER.warn("Invalid type: '{}' for service task {}", serviceTask.getType(), serviceTask.getId());
             }
 
-            // flowable:class
+            // activiti:class
         } else if (ImplementationType.IMPLEMENTATION_TYPE_CLASS.equalsIgnoreCase(serviceTask.getImplementationType())) {
 
             serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createClassDelegateServiceTask(serviceTask));
 
-            // flowable:delegateExpression
+            // activiti:delegateExpression
         } else if (ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION.equalsIgnoreCase(serviceTask.getImplementationType())) {
 
             serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createServiceTaskDelegateExpressionActivityBehavior(serviceTask));
 
-            // flowable:expression
+            // activiti:expression
         } else if (ImplementationType.IMPLEMENTATION_TYPE_EXPRESSION.equalsIgnoreCase(serviceTask.getImplementationType())) {
 
             serviceTask.setBehavior(bpmnParse.getActivityBehaviorFactory().createServiceTaskExpressionActivityBehavior(serviceTask));

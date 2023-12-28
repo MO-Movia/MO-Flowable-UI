@@ -170,7 +170,6 @@ public class IdmEngineConfiguration extends AbstractEngineConfiguration implemen
     protected void init() {
         initEngineConfigurations();
         initClock();
-        initObjectMapper();
         initCommandContextFactory();
         initTransactionContextFactory();
         initCommandExecutors();

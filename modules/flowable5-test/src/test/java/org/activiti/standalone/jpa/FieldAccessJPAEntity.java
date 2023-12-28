@@ -13,9 +13,9 @@
 
 package org.activiti.standalone.jpa;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 /**
  * Simple JPA entity, id is set on a field.
@@ -29,7 +29,6 @@ public class FieldAccessJPAEntity {
     @Column(name = "ID_")
     private Long id;
 
-    @Column(name = "VALUE_")
     private String value;
 
     public FieldAccessJPAEntity() {

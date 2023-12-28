@@ -12,11 +12,14 @@
  */
 package org.flowable.cmmn.engine.impl.parser;
 
+
+import org.flowable.common.engine.api.repository.EngineResource;
+
 /**
  * @author Joram Barrez
  */
 public interface CmmnParser {
     
-    CmmnParseResult parse(CmmnParseContext context);
+    CmmnParseResult parse(EngineResource resourceEntity);
     
 }

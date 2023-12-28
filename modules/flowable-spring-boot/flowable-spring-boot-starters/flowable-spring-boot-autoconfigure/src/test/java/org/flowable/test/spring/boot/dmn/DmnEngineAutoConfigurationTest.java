@@ -54,7 +54,6 @@ import org.flowable.spring.boot.dmn.DmnEngineServicesAutoConfiguration;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
@@ -64,8 +63,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DmnEngineAutoConfigurationTest {
 
@@ -130,25 +127,6 @@ public class DmnEngineAutoConfigurationTest {
 
             deleteDeployments(dmnEngine);
         });
-
-    }
-
-    @Test
-    public void standaloneDmnEngineWithJackson() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class))
-                .run(context -> {
-                    assertThat(context)
-                            .doesNotHaveBean(AppEngine.class)
-                            .doesNotHaveBean(ProcessEngine.class)
-                            .hasSingleBean(ObjectMapper.class);
-                    DmnEngine dmnEngine = context.getBean(DmnEngine.class);
-                    assertThat(dmnEngine).as("Dmn engine").isNotNull();
-
-                    assertThat(dmnEngine.getDmnEngineConfiguration().getObjectMapper()).isEqualTo(context.getBean(ObjectMapper.class));
-
-                    deleteDeployments(dmnEngine);
-                });
 
     }
 
@@ -302,31 +280,6 @@ public class DmnEngineAutoConfigurationTest {
             deleteDeployments(dmnEngine);
             deleteDeployments(processEngine);
         });
-    }
-
-    @Test
-    public void dmnEngineWithProcessEngineAndJackson() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(
-                        ProcessEngineServicesAutoConfiguration.class,
-                        ProcessEngineAutoConfiguration.class,
-                        JacksonAutoConfiguration.class
-                ))
-                .run(context -> {
-                    assertThat(context)
-                            .doesNotHaveBean(AppEngine.class)
-                            .hasSingleBean(ProcessEngine.class)
-                            .hasSingleBean(ObjectMapper.class);
-                    DmnEngine dmnEngine = context.getBean(DmnEngine.class);
-                    assertThat(dmnEngine).as("Dmn engine").isNotNull();
-                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
-
-                    assertThat(dmnEngine.getDmnEngineConfiguration().getObjectMapper()).isEqualTo(context.getBean(ObjectMapper.class));
-                    assertThat(dmnEngine.getDmnEngineConfiguration().getObjectMapper()).isEqualTo(processEngine.getProcessEngineConfiguration().getObjectMapper());
-
-                    deleteDeployments(dmnEngine);
-                    deleteDeployments(processEngine);
-                });
     }
     
     @Test

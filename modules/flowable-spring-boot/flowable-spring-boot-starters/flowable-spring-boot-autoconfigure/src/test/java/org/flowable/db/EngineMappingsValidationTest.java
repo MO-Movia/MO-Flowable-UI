@@ -25,10 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -39,7 +36,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.lang3.StringUtils;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.persistence.entity.Entity;
 import org.flowable.engine.impl.db.EntityDependencyOrder;
@@ -83,6 +79,14 @@ public class EngineMappingsValidationTest {
                     org.flowable.app.engine.impl.db.EntityDependencyOrder.DELETE_ORDER,
                     org.flowable.app.engine.impl.db.EntityDependencyOrder.INSERT_ORDER)),
 
+                Arguments.of(new EntityMappingPackageInformation("org.flowable.form",
+                    org.flowable.form.engine.impl.db.EntityDependencyOrder.DELETE_ORDER,
+                    org.flowable.form.engine.impl.db.EntityDependencyOrder.INSERT_ORDER)),
+
+                Arguments.of(new EntityMappingPackageInformation("org.flowable.content",
+                    org.flowable.content.engine.impl.db.EntityDependencyOrder.DELETE_ORDER,
+                    org.flowable.content.engine.impl.db.EntityDependencyOrder.INSERT_ORDER)),
+
                 Arguments.of(new EntityMappingPackageInformation("org.flowable.idm",
                     org.flowable.idm.engine.impl.db.EntityDependencyOrder.DELETE_ORDER,
                     org.flowable.idm.engine.impl.db.EntityDependencyOrder.INSERT_ORDER)),
@@ -105,9 +109,6 @@ public class EngineMappingsValidationTest {
         "Privilege",
         "PrivilegeMapping",
         "Membership");
-
-    private static final Pattern ENTITY_RESOURCE_PATTERN = Pattern.compile(".*/entity/(.*)\\.xml");
-
 
     @ParameterizedTest(name = "Package {0}")
     @ArgumentsSource(PackageArgumentsProvider.class)
@@ -157,49 +158,7 @@ public class EngineMappingsValidationTest {
             assertThat(entityBulkInsertStatements)
                 .withFailMessage("There are no two bulk insert statement for " + resource)
                 .hasSize(2);
-
-            // The columns between regular bulk insert and the bulk insert for Oracle should be the same
-
-            if (resource.equals("EventLogEntry") || resource.equals("HistoricTaskLogEntry")) { // bulk insert differs to using a seqeuence
-                continue;
-            }
-
-            String bulkInsert1 = entityBulkInsertStatements.get(0).getTextContent();
-            List<String> bulkInsert1Columns = getColumnsForBulkInsert(bulkInsert1);
-
-            String bulkInsert2 = entityBulkInsertStatements.get(1).getTextContent();
-            List<String> bulkInsert2Columns = getColumnsForBulkInsert(bulkInsert2);
-
-            assertThat(bulkInsert1Columns).as(resource).containsOnlyOnceElementsOf(bulkInsert2Columns);
-            assertThat(bulkInsert2Columns).as(resource).containsOnlyOnceElementsOf(bulkInsert1Columns);
         }
-    }
-
-    private static Pattern INSERT_PATTERN = Pattern.compile("((.*)into(.*)\\((.*?)_ *\\))");
-
-    private List<String> getColumnsForBulkInsert(String bulkInsert) {
-        List<String> result = new ArrayList<>();
-
-        bulkInsert = bulkInsert.toLowerCase(Locale.ROOT)
-            .replace("\n", " ")
-            .replace("\r", " ")
-            .replace("\t", " ");
-
-        Matcher matcher = INSERT_PATTERN.matcher(bulkInsert);
-        assertThat(matcher.find()).withFailMessage("Regex didn't work on " + bulkInsert);
-        try {
-            String columns = matcher.group(4);
-            if (StringUtils.isNotEmpty(columns)) {
-                String[] splitted = columns.split(",");
-                for (String column : splitted) {
-                    result.add(column.toLowerCase(Locale.ROOT).replace(",", "").trim());
-                }
-            }
-        } catch (IllegalStateException e) {
-            throw new RuntimeException("Could not apply regex on " + bulkInsert);
-        }
-
-        return result;
     }
 
     @ParameterizedTest(name = "Package {0}")
@@ -276,11 +235,14 @@ public class EngineMappingsValidationTest {
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node node = nodeList.item(i);
                 String resource = node.getAttributes().getNamedItem("resource").getTextContent();
-                Matcher resourceMatcher = ENTITY_RESOURCE_PATTERN.matcher(resource);
-                if (resourceMatcher.matches()) {
-                    String entity = resourceMatcher.group(1);
+                if (!resource.endsWith("common.xml")) {
+
                     Document entityMappingXmlContent = readXmlDocument(resource);
-                    resources.put(entity, entityMappingXmlContent);
+
+                    resource = resource.substring(resource.lastIndexOf("/") + 1);
+                    resource = resource.replaceAll(".xml", "");
+
+                    resources.put(resource, entityMappingXmlContent);
                 }
             }
 

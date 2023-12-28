@@ -32,5 +32,4 @@ public class IdentityLinkType {
 
     public static final String PARTICIPANT = "participant";
 
-    public static final String REACTIVATOR = "reactivator";
 }

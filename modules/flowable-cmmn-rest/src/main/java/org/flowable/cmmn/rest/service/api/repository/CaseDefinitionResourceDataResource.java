@@ -13,7 +13,7 @@
 
 package org.flowable.cmmn.rest.service.api.repository;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import org.flowable.cmmn.api.repository.CaseDefinition;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;

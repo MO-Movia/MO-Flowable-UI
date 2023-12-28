@@ -19,15 +19,18 @@ import java.util.List;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.idm.api.IdmIdentityService;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import flowable.Application;
 
 /**
  * @author Filip Hrisafov
  */
+@RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class)
 public class BasicApplicationTest {
 

@@ -14,7 +14,6 @@ package org.flowable.cmmn.engine.impl.persistence.entity;
 
 import java.util.List;
 
-import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.api.runtime.PlanItemInstanceQuery;
 import org.flowable.common.engine.impl.persistence.entity.EntityManager;
@@ -23,8 +22,6 @@ import org.flowable.common.engine.impl.persistence.entity.EntityManager;
  * @author Joram Barrez
  */
 public interface PlanItemInstanceEntityManager extends EntityManager<PlanItemInstanceEntity> {
-
-    PlanItemInstanceEntity create(HistoricPlanItemInstance historicPlanItemInstance);
 
     /**
      * Returns a builder to create a new plan item instance.
@@ -43,8 +40,6 @@ public interface PlanItemInstanceEntityManager extends EntityManager<PlanItemIns
     List<PlanItemInstanceEntity> findByStagePlanItemInstanceId(String stagePlanItemInstanceId);
     
     List<PlanItemInstanceEntity> findByCaseInstanceIdAndPlanItemId(String caseInstanceId, String planItemId);
-
-    List<PlanItemInstanceEntity> findByStageInstanceIdAndPlanItemId(String stageInstanceId, String planItemId);
 
     void deleteSentryRelatedData(String planItemId);
 

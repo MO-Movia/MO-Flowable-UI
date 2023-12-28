@@ -53,12 +53,8 @@ public abstract class NeedsActiveTaskCmd<T> implements Command<T>, Serializable 
             throw new FlowableObjectNotFoundException("Cannot find task with id " + taskId, Task.class);
         }
 
-        if (task.isDeleted()) {
-            throw new FlowableException(task + " is already deleted");
-        }
-
         if (task.isSuspended()) {
-            throw new FlowableException(getSuspendedTaskExceptionPrefix() + " a suspended " + task);
+            throw new FlowableException(getSuspendedTaskException());
         }
 
         return execute(commandContext, task);
@@ -72,8 +68,8 @@ public abstract class NeedsActiveTaskCmd<T> implements Command<T>, Serializable 
     /**
      * Subclasses can override this method to provide a customized exception message that will be thrown when the task is suspended.
      */
-    protected String getSuspendedTaskExceptionPrefix() {
-        return "Cannot execute operation for";
+    protected String getSuspendedTaskException() {
+        return "Cannot execute operation: task is suspended";
     }
 
 }

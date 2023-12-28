@@ -66,13 +66,11 @@ public interface EventRegistry {
      */
     String generateKey(Map<String, Object> data);
 
-    void eventReceived(InboundChannelModel channelModel, String event);
-
     /**
      * Events received in adapters should call this method to process events.
      */
-    void eventReceived(InboundChannelModel channelModel, InboundEvent event);
-
+    void eventReceived(InboundChannelModel channelModel, String event);
+    
     /**
      * Send an event to all the registered event consumers.
      */

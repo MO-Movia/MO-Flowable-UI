@@ -32,9 +32,10 @@ import org.flowable.common.engine.impl.logging.LoggingSessionUtil;
 import org.flowable.common.engine.impl.persistence.entity.AbstractEntity;
 import org.flowable.variable.api.delegate.VariableScope;
 import org.flowable.variable.api.persistence.entity.VariableInstance;
+import org.flowable.variable.api.types.VariableType;
+import org.flowable.variable.api.types.VariableTypes;
 import org.flowable.variable.service.VariableServiceConfiguration;
 import org.flowable.variable.service.event.impl.FlowableVariableEventBuilder;
-import org.flowable.variable.service.impl.VariableInstanceValueModifier;
 import org.flowable.variable.service.impl.util.VariableLoggingSessionUtil;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -63,7 +64,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
 
     protected abstract VariableScopeImpl getParentVariableScope();
 
-    protected abstract void initializeVariableInstanceBackPointer(VariableInstance variableInstance);
+    protected abstract void initializeVariableInstanceBackPointer(VariableInstanceEntity variableInstance);
     
     protected abstract void addLoggingSessionInfo(ObjectNode loggingNode);
 
@@ -73,7 +74,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
 
             CommandContext commandContext = Context.getCommandContext();
             if (commandContext == null) {
-                throw new FlowableException("lazy loading outside command context for " + this);
+                throw new FlowableException("lazy loading outside command context");
             }
             Collection<VariableInstanceEntity> variableInstancesList = loadVariableInstances();
             for (VariableInstanceEntity variableInstance : variableInstancesList) {
@@ -676,7 +677,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
             }
 
             // If the variable exists on this scope, replace it
-            if (storeVariableLocal(variableName)) {
+            if (hasVariableLocal(variableName)) {
                 setVariableLocal(variableName, value, true);
                 return;
             }
@@ -791,7 +792,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
         ensureVariableInstancesInitialized();
 
         if (variableInstances.containsKey(variableName)) {
-            throw new FlowableException("variable '" + variableName + "' already exists. Use setVariableLocal if you want to overwrite the value for " + this);
+            throw new FlowableException("variable '" + variableName + "' already exists. Use setVariableLocal if you want to overwrite the value");
         }
 
         createVariableInstance(variableName, value);
@@ -822,9 +823,9 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
     protected void deleteVariableInstanceForExplicitUserCall(VariableInstanceEntity variableInstance) {
         VariableServiceConfiguration variableServiceConfiguration = getVariableServiceConfiguration();
         variableServiceConfiguration.getVariableInstanceEntityManager().delete(variableInstance);
-
+        
         if (variableServiceConfiguration.isLoggingSessionEnabled()) {
-            ObjectNode loggingNode = VariableLoggingSessionUtil.addLoggingData("Variable '" +
+            ObjectNode loggingNode = VariableLoggingSessionUtil.addLoggingData("Variable '" + 
                     variableInstance.getName() + "' deleted", variableInstance, variableServiceConfiguration.getObjectMapper());
             addLoggingSessionInfo(loggingNode);
             LoggingSessionUtil.addLoggingData(LoggingSessionConstants.TYPE_VARIABLE_DELETE, loggingNode, variableServiceConfiguration.getEngineName());
@@ -842,29 +843,47 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
         }
     }
 
-    protected void updateVariableInstance(VariableInstanceEntity variableInstance, Object newVariableValue) {
+    protected void updateVariableInstance(VariableInstanceEntity variableInstance, Object value) {
 
+        // Always check if the type should be altered. It's possible that the previous type is lower in the type
+        // checking chain (e.g. serializable) and will return true on isAbleToStore(), even though another type
+        // higher in the chain is eligible for storage.
+
+        VariableServiceConfiguration variableServiceConfiguration = getVariableServiceConfiguration();
+        VariableTypes variableTypes = variableServiceConfiguration.getVariableTypes();
+
+        VariableType newType = variableTypes.findVariableType(value);
+        
         Object oldVariableValue = variableInstance.getValue();
         String oldVariableType = variableInstance.getTypeName();
+
+        if (newType != null && !newType.equals(variableInstance.getType())) {
+            variableInstance.setValue(null);
+            variableInstance.setType(newType);
+            variableInstance.forceUpdate();
+            variableInstance.setValue(value);
+        } else {
+            variableInstance.setValue(value);
+        }
+
         initializeVariableInstanceBackPointer(variableInstance);
-        VariableServiceConfiguration variableServiceConfiguration = getVariableServiceConfiguration();
-        variableServiceConfiguration.getVariableInstanceValueModifier().updateVariableValue(variableInstance, newVariableValue, getTenantId());
+
         if (isPropagateToHistoricVariable()) {
             if (variableServiceConfiguration.getInternalHistoryVariableManager() != null) {
                 variableServiceConfiguration.getInternalHistoryVariableManager()
-                        .recordVariableUpdate(variableInstance, variableServiceConfiguration.getClock().getCurrentTime());
+                    .recordVariableUpdate(variableInstance, variableServiceConfiguration.getClock().getCurrentTime());
             }
         }
 
         // Dispatch event, if needed
         if (variableServiceConfiguration.isEventDispatcherEnabled()) {
             variableServiceConfiguration.getEventDispatcher().dispatchEvent(
-                    FlowableVariableEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_UPDATED, variableInstance, variableInstance.getValue(),
+                    FlowableVariableEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_UPDATED, variableInstance, value,
                             variableInstance.getType()), variableServiceConfiguration.getEngineName());
         }
-
+        
         if (variableServiceConfiguration.isLoggingSessionEnabled()) {
-            ObjectNode loggingNode = VariableLoggingSessionUtil.addLoggingData("Variable '" + variableInstance.getName() + "' updated",
+            ObjectNode loggingNode = VariableLoggingSessionUtil.addLoggingData("Variable '" + variableInstance.getName() + "' updated", 
                     variableInstance, variableServiceConfiguration.getObjectMapper());
             addLoggingSessionInfo(loggingNode);
             loggingNode.put("oldVariableType", oldVariableType);
@@ -875,13 +894,17 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
 
     protected VariableInstanceEntity createVariableInstance(String variableName, Object value) {
         VariableServiceConfiguration variableServiceConfiguration = getVariableServiceConfiguration();
+        VariableTypes variableTypes = variableServiceConfiguration.getVariableTypes();
+
+        VariableType type = variableTypes.findVariableType(value);
 
         VariableInstanceEntityManager variableInstanceEntityManager = variableServiceConfiguration.getVariableInstanceEntityManager();
-        VariableInstanceEntity variableInstance = variableInstanceEntityManager.create();
-        variableInstance.setName(variableName);
-        // Set the value after initializing the back pointer
+        VariableInstanceEntity variableInstance = variableInstanceEntityManager.create(variableName, type);
         initializeVariableInstanceBackPointer(variableInstance);
-        variableInstanceEntityManager.insertWithValue(variableInstance, value, getTenantId());
+        
+        // Set the value after initializing the back pointer
+        variableInstance.setValue(value);
+        variableInstanceEntityManager.insert(variableInstance);
 
         if (variableInstances != null) {
             variableInstances.put(variableName, variableInstance);
@@ -896,21 +919,18 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
 
         if (variableServiceConfiguration.isEventDispatcherEnabled()) {
             variableServiceConfiguration.getEventDispatcher().dispatchEvent(
-                    FlowableVariableEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_CREATED, variableInstance, variableInstance.getValue(),
+                    FlowableVariableEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_CREATED, variableInstance, value,
                             variableInstance.getType()), variableServiceConfiguration.getEngineName());
         }
         
         if (variableServiceConfiguration.isLoggingSessionEnabled()) {
-            ObjectNode loggingNode = VariableLoggingSessionUtil.addLoggingData("Variable '" + variableInstance.getName() + "' created",
+            ObjectNode loggingNode = VariableLoggingSessionUtil.addLoggingData("Variable '" + variableInstance.getName() + "' created", 
                     variableInstance, variableServiceConfiguration.getObjectMapper());
             addLoggingSessionInfo(loggingNode);
             LoggingSessionUtil.addLoggingData(LoggingSessionConstants.TYPE_VARIABLE_CREATE, loggingNode, variableServiceConfiguration.getEngineName());
         }
-        return variableInstance;
-    }
 
-    protected boolean storeVariableLocal(String variableName) {
-        return hasVariableLocal(variableName);
+        return variableInstance;
     }
 
     /*
@@ -929,11 +949,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
         if (transientVariables == null) {
             transientVariables = new HashMap<>();
         }
-        VariableInstanceValueModifier variableValueModifier = getVariableServiceConfiguration().getVariableInstanceValueModifier();
-        TransientVariableInstance transientVariableInstance = new TransientVariableInstance(variableName, null);
-        initializeVariableInstanceBackPointer(transientVariableInstance);
-        variableValueModifier.setVariableValue(transientVariableInstance, variableValue, getTenantId());
-        transientVariables.put(variableName, transientVariableInstance);
+        transientVariables.put(variableName, new TransientVariableInstance(variableName, variableValue));
     }
 
     @Override
@@ -996,7 +1012,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
     protected Map<String, Object> collectTransientVariables(HashMap<String, Object> variables) {
         VariableScopeImpl parentScope = getParentVariableScope();
         if (parentScope != null) {
-            variables.putAll(parentScope.collectTransientVariables(variables));
+            variables.putAll(parentScope.collectVariables(variables));
         }
 
         if (transientVariables != null) {
@@ -1047,7 +1063,7 @@ public abstract class VariableScopeImpl extends AbstractEntity implements Serial
      * Return whether changes to the variables are propagated to the history storage.
      */
     protected abstract boolean isPropagateToHistoricVariable();
-
+    
     protected abstract VariableServiceConfiguration getVariableServiceConfiguration();
 
     // getters and setters

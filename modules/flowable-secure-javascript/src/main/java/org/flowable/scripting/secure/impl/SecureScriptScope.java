@@ -14,9 +14,9 @@ package org.flowable.scripting.secure.impl;
 
 import java.util.Map;
 
-import org.flowable.common.engine.api.variable.VariableContainer;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.task.service.delegate.DelegateTask;
+import org.flowable.variable.api.delegate.VariableScope;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -27,28 +27,29 @@ public class SecureScriptScope implements Scriptable {
     private static final String KEYWORD_EXECUTION = "execution";
     private static final String KEYWORD_TASK = "task";
 
-    protected VariableContainer variableContainer;
+    protected VariableScope variableScope;
     protected Map<Object, Object> beans;
 
-    public SecureScriptScope(VariableContainer variableScope, Map<Object, Object> beans) {
-        this.variableContainer = variableScope;
+    public SecureScriptScope(VariableScope variableScope, Map<Object, Object> beans) {
+        super();
+        this.variableScope = variableScope;
         this.beans = beans;
     }
 
     @Override
     public String getClassName() {
-        return variableContainer.getClass().getName();
+        return variableScope.getClass().getName();
     }
 
     @Override
     public Object get(String s, Scriptable scriptable) {
-        if (KEYWORD_EXECUTION.equals(s) && variableContainer instanceof DelegateExecution) {
-            return variableContainer;
-        } else if (KEYWORD_TASK.equals(s) && variableContainer instanceof DelegateTask) {
-            return variableContainer;
-        } else if (variableContainer.hasVariable(s)) {
-            return variableContainer.getVariable(s);
-        } else if (beans != null && beans.containsKey(s)) {
+        if (KEYWORD_EXECUTION.equals(s) && variableScope instanceof DelegateExecution) {
+            return variableScope;
+        } else if (KEYWORD_TASK.equals(s) && variableScope instanceof DelegateTask) {
+            return variableScope;
+        } else if (variableScope.hasVariable(s)) {
+            return variableScope.getVariable(s);
+        } else if (beans != null && beans.containsKey(s)){
             return beans.get(s);
         }
         return null;
@@ -61,7 +62,7 @@ public class SecureScriptScope implements Scriptable {
 
     @Override
     public boolean has(String s, Scriptable scriptable) {
-        return variableContainer.hasVariable(s);
+        return variableScope.hasVariable(s);
     }
 
     @Override

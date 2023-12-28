@@ -16,8 +16,9 @@ import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.SendEventServiceTask;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.delegate.ActivityBehavior;
+import org.flowable.engine.impl.bpmn.behavior.SendEventTaskActivityBehavior;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.job.service.JobHandler;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
 import org.flowable.variable.api.delegate.VariableScope;
@@ -41,22 +42,14 @@ public class AsyncSendEventJobHandler implements JobHandler {
         FlowElement flowElement = executionEntity.getCurrentFlowElement();
 
         if (!(flowElement instanceof SendEventServiceTask)) {
-            throw new FlowableException("Unexpected activity type found for " + job + " at " + executionEntity);
+            throw new FlowableException(String.format("unexpected activity type found for job %s, at activity %s", job.getId(), flowElement.getId()));
         }
 
-        Object behavior = ((SendEventServiceTask) flowElement).getBehavior();
-        if (!(behavior instanceof ActivityBehavior)) {
-            throw new FlowableException(
-                    "Unexpected activity behavior (" + behavior.getClass() + ") found for " + job + " at " + executionEntity);
-        }
-
-        try {
-            ActivityBehavior activityBehavior = (ActivityBehavior) behavior;
-            commandContext.addAttribute(TYPE, true); // Will be read in the SendEventTaskActivityBehavior
-            activityBehavior.execute(executionEntity);
-        } finally {
-            commandContext.removeAttribute(TYPE);
-        }
+        SendEventServiceTask sendEventServiceTask = (SendEventServiceTask) flowElement;
+        SendEventTaskActivityBehavior sendEventTaskBehavior = CommandContextUtil.getProcessEngineConfiguration(commandContext).getActivityBehaviorFactory()
+            .createSendEventTaskBehavior(sendEventServiceTask);
+        sendEventTaskBehavior.setExecutedAsAsyncJob(true);
+        sendEventTaskBehavior.execute(executionEntity);
     }
 
 }

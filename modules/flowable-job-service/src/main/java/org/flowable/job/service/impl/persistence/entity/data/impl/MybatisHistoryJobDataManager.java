@@ -59,6 +59,7 @@ public class MybatisHistoryJobDataManager extends AbstractDataManager<HistoryJob
         // Needed for db2/sqlserver (see limitBetween in mssql.properties), otherwise ordering will be incorrect
         params.setFirstResult(page.getFirstResult());
         params.setMaxResults(page.getMaxResults());
+        params.setOrderByColumns("CREATE_TIME_ ASC");
         return getDbSqlSession().selectList("selectHistoryJobsToExecute", params);
     }
 
@@ -80,7 +81,8 @@ public class MybatisHistoryJobDataManager extends AbstractDataManager<HistoryJob
         params.put("jobExecutionScope", jobServiceConfiguration.getHistoryJobExecutionScope());
         Date now = jobServiceConfiguration.getClock().getCurrentTime();
         params.put("now", now);
-
+        Date maxTimeout = new Date(now.getTime() - jobServiceConfiguration.getAsyncExecutorResetExpiredJobsMaxTimeout());
+        params.put("maxTimeout", maxTimeout);
         return getDbSqlSession().selectList("selectExpiredHistoryJobs", params, page);
     }
 
@@ -101,23 +103,14 @@ public class MybatisHistoryJobDataManager extends AbstractDataManager<HistoryJob
         HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
-        getDbSqlSession().directUpdate("updateHistoryJobTenantIdForDeployment", params);
-    }
-
-    @Override
-    public void bulkUpdateJobLockWithoutRevisionCheck(List<HistoryJobEntity> historyJobs, String lockOwner, Date lockExpirationTime) {
-        Map<String, Object> params = new HashMap<>(3);
-        params.put("lockOwner", lockOwner);
-        params.put("lockExpirationTime", lockExpirationTime);
-
-        bulkUpdateEntities("updateHistoryJobLocks", params, "historyJobs", historyJobs);
+        getDbSqlSession().update("updateHistoryJobTenantIdForDeployment", params);
     }
 
     @Override
     public void resetExpiredJob(String jobId) {
         Map<String, Object> params = new HashMap<>(2);
         params.put("id", jobId);
-        getDbSqlSession().directUpdate("resetExpiredHistoryJob", params);
+        getDbSqlSession().update("resetExpiredHistoryJob", params);
     }
 
     @Override

@@ -17,8 +17,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 import org.flowable.common.engine.impl.cfg.IdGenerator;
 import org.flowable.common.engine.impl.context.Context;
@@ -28,15 +26,12 @@ import org.flowable.common.engine.impl.persistence.cache.CachedEntityMatcher;
 import org.flowable.common.engine.impl.persistence.cache.EntityCache;
 import org.flowable.common.engine.impl.persistence.entity.Entity;
 import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
-import org.flowable.common.engine.impl.util.CollectionUtil;
 
 /**
  * @author Joram Barrez
  * @author Tijs Rademakers
  */
 public abstract class AbstractDataManager<EntityImpl extends Entity> implements DataManager<EntityImpl> {
-
-    public static final int MAX_ENTRIES_IN_CLAUSE = 1000; // limitation from oracle (max 1000 elements in in() clause of where)
 
     public abstract Class<? extends EntityImpl> getManagedEntityClass();
 
@@ -298,30 +293,6 @@ public abstract class AbstractDataManager<EntityImpl extends Entity> implements 
                 }
             }
         }
-    }
-    
-    protected List<List<String>> createSafeInValuesList(Collection<String> values) {
-        // need to split into different parts due to some dbs not supporting more than MAX_ENTRIES_IN_CLAUSE for in()
-        return CollectionUtil.partition(values, MAX_ENTRIES_IN_CLAUSE);
-    }
-
-    protected void executeChangeWithInClause(List<EntityImpl> entities, Consumer<List<EntityImpl>> consumer) {
-        // need to split into different parts due to some dbs not supporting more than MAX_ENTRIES_IN_CLAUSE for in()
-        CollectionUtil.consumePartitions(entities, MAX_ENTRIES_IN_CLAUSE, consumer);
-    }
-
-    protected void bulkDeleteEntities(String statement, List<EntityImpl> entities) {
-        executeChangeWithInClause(entities, entitiesParameter -> {
-            getDbSqlSession().delete(statement, entitiesParameter, getManagedEntityClass());
-        });
-    }
-
-    protected void bulkUpdateEntities(String statement, Map<String, Object> parameters, String collectionNameInSqlStatement, List<EntityImpl> entities) {
-        executeChangeWithInClause(entities, entitiesParameter -> {
-            Map<String, Object> copyParameters = new HashMap<>(parameters);
-            copyParameters.put(collectionNameInSqlStatement, entitiesParameter);
-            getDbSqlSession().directUpdate(statement, copyParameters);
-        });
     }
     
     protected boolean isEntityInserted(DbSqlSession dbSqlSession, String entityLogicalName, String entityId) {

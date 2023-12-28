@@ -40,7 +40,6 @@ import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.CorrelationUtil;
 import org.flowable.engine.impl.util.CountingEntityUtil;
 import org.flowable.engine.impl.util.EventInstanceBpmnUtil;
-import org.flowable.engine.impl.util.JobUtil;
 import org.flowable.eventregistry.api.EventRegistry;
 import org.flowable.eventregistry.api.EventRepositoryService;
 import org.flowable.eventregistry.api.runtime.EventInstance;
@@ -64,7 +63,8 @@ public class SendEventTaskActivityBehavior extends AbstractBpmnActivityBehavior 
     private static final long serialVersionUID = 1L;
     
     protected SendEventServiceTask sendEventServiceTask;
-
+    protected boolean executedAsAsyncJob;
+    
     public SendEventTaskActivityBehavior(SendEventServiceTask sendEventServiceTask) {
         this.sendEventServiceTask = sendEventServiceTask;
     }
@@ -78,12 +78,24 @@ public class SendEventTaskActivityBehavior extends AbstractBpmnActivityBehavior 
         ExecutionEntity executionEntity = (ExecutionEntity) execution;
 
         ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
-        boolean executedAsAsyncJob = Boolean.TRUE.equals(commandContext.getAttribute(AsyncSendEventJobHandler.TYPE));
         boolean sendSynchronously = sendEventServiceTask.isSendSynchronously() || executedAsAsyncJob;
         if (!sendSynchronously) {
             JobService jobService = processEngineConfiguration.getJobServiceConfiguration().getJobService();
             
-            JobEntity job = JobUtil.createJob(executionEntity, sendEventServiceTask, AsyncSendEventJobHandler.TYPE, processEngineConfiguration);
+            JobEntity job = jobService.createJob();
+            job.setExecutionId(execution.getId());
+            job.setProcessInstanceId(execution.getProcessInstanceId());
+            job.setProcessDefinitionId(execution.getProcessDefinitionId());
+            job.setElementId(sendEventServiceTask.getId());
+            job.setElementName(sendEventServiceTask.getName());
+            job.setJobHandlerType(AsyncSendEventJobHandler.TYPE);
+
+            // Inherit tenant id (if applicable)
+            if (execution.getTenantId() != null) {
+                job.setTenantId(execution.getTenantId());
+            }
+
+            executionEntity.getJobs().add(job);
 
             jobService.createAsyncJob(job, true);
             jobService.scheduleAsyncJob(job);
@@ -147,7 +159,7 @@ public class SendEventTaskActivityBehavior extends AbstractBpmnActivityBehavior 
         }
 
         if (eventModel == null) {
-            throw new FlowableException("No event definition found for event key " + sendEventServiceTask.getEventType() + " for " + execution);
+            throw new FlowableException("No event definition found for event key " + sendEventServiceTask.getEventType());
         }
         return eventModel;
     }
@@ -193,7 +205,7 @@ public class SendEventTaskActivityBehavior extends AbstractBpmnActivityBehavior 
         if (channelKeys.isEmpty()) {
             if (!sendOnSystemChannel) {
                 // If the event is going to be send on the system channel then it is allowed to not define any other channels
-                throw new FlowableException("No channel keys configured for " + execution);
+                throw new FlowableException("No channel keys configured");
             } else {
                 return Collections.emptyList();
             }
@@ -250,4 +262,10 @@ public class SendEventTaskActivityBehavior extends AbstractBpmnActivityBehavior 
         }
     }
 
+    public boolean isExecutedAsAsyncJob() {
+        return executedAsAsyncJob;
+    }
+    public void setExecutedAsAsyncJob(boolean executedAsAsyncJob) {
+        this.executedAsAsyncJob = executedAsAsyncJob;
+    }
 }

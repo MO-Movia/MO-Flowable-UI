@@ -37,7 +37,5 @@
     <bean id="historyService" factory-bean="processEngine" factory-method="getHistoryService"/>
     <bean id="formService" factory-bean="processEngine" factory-method="getFormService"/>
     <bean id="managementService" factory-bean="processEngine" factory-method="getManagementService"/>
-    
-    <bean id="inboundEventChannelAdapter" class="org.flowable.spring.test.eventregistry.TestInboundEventChannelAdapter" />
 
 </beans>

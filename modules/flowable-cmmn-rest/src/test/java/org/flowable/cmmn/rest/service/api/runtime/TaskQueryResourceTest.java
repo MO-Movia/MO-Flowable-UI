@@ -13,8 +13,6 @@
 
 package org.flowable.cmmn.rest.service.api.runtime;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -23,14 +21,12 @@ import java.util.List;
 
 import org.apache.http.HttpStatus;
 import org.flowable.cmmn.api.runtime.CaseInstance;
-import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.rest.service.BaseSpringRestTestCase;
 import org.flowable.cmmn.rest.service.api.CmmnRestUrls;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.task.api.DelegationState;
 import org.flowable.task.api.Task;
-import org.flowable.task.api.history.HistoricTaskInstance;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -87,11 +83,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
             String url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_TASK_QUERY);
             ObjectNode requestNode = objectMapper.createObjectNode();
             assertResultsPresentInPostDataResponse(url, requestNode, caseTask.getId(), adhocTask.getId());
-
-            // ID filtering
-            requestNode.removeAll();
-            requestNode.put("taskId", adhocTask.getId());
-            assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
 
             // Name filtering
             requestNode.removeAll();
@@ -229,11 +220,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
             caseDefinitionKeyIn.add("oneHumanTaskCase");
             caseDefinitionKeyIn.add("another");
             assertResultsPresentInPostDataResponse(url, requestNode, caseTask.getId());
-            
-            // Without scope id filtering
-            requestNode.removeAll();
-            requestNode.put("withoutScopeId", true);
-            assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
 
             // CreatedOn filtering
             requestNode.removeAll();
@@ -284,23 +270,6 @@ public class TaskQueryResourceTest extends BaseSpringRestTestCase {
             requestNode.removeAll();
             requestNode.put("category", "some-category");
             assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
-
-            requestNode.removeAll();
-            requestNode.putArray("categoryIn").add("not-existing-category").add("some-category");
-            assertResultsPresentInPostDataResponse(url, requestNode, adhocTask.getId());
-
-            requestNode.removeAll();
-            requestNode.putArray("categoryNotIn").add("some-category");
-            assertResultsPresentInPostDataResponse(url, requestNode);
-
-            requestNode.removeAll();
-            requestNode.put("withoutCategory", Boolean.TRUE);
-            assertResultsPresentInPostDataResponse(url, requestNode, caseTask.getId());
-
-            // Without process instance id filtering
-            requestNode.removeAll();
-            requestNode.put("withoutProcessInstanceId", true);
-            assertResultsPresentInPostDataResponse(url, requestNode, caseTask.getId(), adhocTask.getId());
 
             // Filtering without duedate
             requestNode.removeAll();

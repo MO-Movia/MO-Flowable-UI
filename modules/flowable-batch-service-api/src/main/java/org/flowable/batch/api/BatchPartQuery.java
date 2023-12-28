@@ -15,87 +15,37 @@ package org.flowable.batch.api;
 
 import org.flowable.common.engine.api.query.Query;
 
-public interface BatchPartQuery extends Query<BatchPartQuery, BatchPart> {
+public interface BatchPartQuery extends Query<BatchPartQuery, Batch> {
 
-    /**
-     * Only select batch parts with the given id
-     */
-    BatchPartQuery id(String id);
-
-    /**
-     * Only select batch parts with the given batch id
-     */
+    /** Only select batches with the given id */
     BatchPartQuery batchId(String batchId);
-
-    /**
-     * Only select batch parts with the given type.
-     **/
-    BatchPartQuery type(String type);
-
-    /**
-     * Only select batch parts with the given search key.
-     **/
+    
+    /** Only select batches which exist for the given type. **/
+    BatchPartQuery batchType(String batchType);
+    
+    /** Only select batches which exist for the given search key. **/
     BatchPartQuery searchKey(String searchKey);
-
-    /**
-     * Only select batch parts with the given search key.
-     **/
+    
+    /** Only select batches which exist for the given search key. **/
     BatchPartQuery searchKey2(String searchKey2);
 
-    /**
-     * Only select batch parts with the given batch type.
-     **/
-    BatchPartQuery batchType(String batchType);
-
-    /**
-     * Only select batch parts with the given batch search key.
-     **/
-    BatchPartQuery batchSearchKey(String searchKey);
-
-    /**
-     * Only select batch parts with the batch given search key.
-     **/
-    BatchPartQuery batchSearchKey2(String searchKey2);
-
-    /**
-     * Only select batch parts with the given status.
-     **/
-    BatchPartQuery status(String status);
-
-    /**
-     * Only select batch parts with the given scope id.
-     **/
+    /** Only select batches which exist for the given scope id. **/
     BatchPartQuery scopeId(String scopeId);
 
-    /**
-     * Only select batch parts with the given sub scope id.
-     **/
+    /** Only select batches which exist for the given sub scope id. **/
     BatchPartQuery subScopeId(String subScopeId);
-
-    /**
-     * Only select batch parts with the given scope type.
-     **/
+    
+    /** Only select batches which exist for the given scope type. **/
     BatchPartQuery scopeType(String scopeType);
-
-    /**
-     * Only select batch parts with the given tenant id.
-     **/
+    
+    /** Only select batches which exist for the given tenant id. **/
     BatchPartQuery tenantId(String tenantId);
-
-    /**
-     * Only select batch parts with a tenant id like the given one.
-     **/
+    
+    /** Only select batches with a tenant id like the given one. **/
     BatchPartQuery tenantIdLike(String tenantIdLike);
 
-    /**
-     * Only select batch parts that do not have a tenant id.
-     **/
+    /** Only select batches that do not have a tenant id. **/
     BatchPartQuery withoutTenantId();
-
-    /**
-     * Only select batch parts that have been completed.
-     **/
-    BatchPartQuery completed();
 
     // sorting //////////////////////////////////////////
 
@@ -105,7 +55,13 @@ public interface BatchPartQuery extends Query<BatchPartQuery, BatchPart> {
     BatchPartQuery orderByBatchId();
 
     /**
-     * Order by batch part create time (needs to be followed by {@link #asc()} or {@link #desc()}).
+     * Order by batch create time (needs to be followed by {@link #asc()} or {@link #desc()}).
      */
-    BatchPartQuery orderByCreateTime();
+    BatchPartQuery orderByBatchCreateTime();
+    
+    /**
+     * Order by batch create time (needs to be followed by {@link #asc()} or {@link #desc()}).
+     */
+    BatchPartQuery orderByBatchTenantId();
+
 }

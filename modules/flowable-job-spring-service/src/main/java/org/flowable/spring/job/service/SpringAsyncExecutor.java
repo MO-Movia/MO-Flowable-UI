@@ -15,7 +15,6 @@ package org.flowable.spring.job.service;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.flowable.job.api.JobInfo;
-import org.flowable.job.service.impl.asyncexecutor.AsyncJobExecutorConfiguration;
 import org.flowable.job.service.impl.asyncexecutor.DefaultAsyncJobExecutor;
 
 /**
@@ -34,14 +33,6 @@ import org.flowable.job.service.impl.asyncexecutor.DefaultAsyncJobExecutor;
 public class SpringAsyncExecutor extends DefaultAsyncJobExecutor {
 
     protected SpringRejectedJobsHandler rejectedJobsHandler;
-
-    public SpringAsyncExecutor() {
-        super();
-    }
-
-    public SpringAsyncExecutor(AsyncJobExecutorConfiguration configuration) {
-        super(configuration);
-    }
 
     public SpringRejectedJobsHandler getRejectedJobsHandler() {
         return rejectedJobsHandler;

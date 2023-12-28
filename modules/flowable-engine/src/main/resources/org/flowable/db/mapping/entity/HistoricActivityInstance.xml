@@ -235,14 +235,14 @@
   </select>
 
   <select id="selectHistoricActivityInstancesByQueryCriteria" parameterType="org.flowable.engine.impl.HistoricActivityInstanceQueryImpl" resultMap="historicActivityInstanceResultMap">
-    <if test="needsPaging">${limitBefore}</if>
-    SELECT RES.* <if test="needsPaging">${limitBetween}</if>
+    <if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+    select RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
     <include refid="selectHistoricActivityInstancesByQueryCriteriaSql">
         <property name="queryTablePrefixSelect" value="RES"/>
         <property name="queryTablePrefix" value="RES."/>
     </include>
     ${orderBy}
-    <if test="needsPaging">${limitAfter}</if>
+    <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
   
   <select id="selectHistoricActivityInstanceCountByQueryCriteria" parameterType="org.flowable.engine.impl.HistoricActivityInstanceQueryImpl" resultType="long">
@@ -261,19 +261,6 @@
     </include>
   </delete>
   
-  <delete id="bulkDeleteHistoricActivityInstancesForProcessInstanceIds" parameterType="java.util.Collection">
-    delete from ${prefix}ACT_HI_ACTINST where 
-    <foreach item="listItem" index="listIndex" collection="collection">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        PROC_INST_ID_ in
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>
-  </delete>
-  
   <delete id="bulkDeleteHistoricActivityInstancesForNonExistingProcessInstances" parameterType="java.util.Map">
     delete <if test="_databaseId != 'postgres' and _databaseId != 'cockroachdb' and _databaseId != 'db2'"> ACTINST </if> from ${prefix}ACT_HI_ACTINST ACTINST where ACTINST.PROC_INST_ID_ is not null and ACTINST.PROC_INST_ID_ != '' and
     NOT EXISTS (select PROCINST.ID_ from ${prefix}ACT_HI_PROCINST PROCINST where ACTINST.PROC_INST_ID_ = PROCINST.ID_)
@@ -286,11 +273,6 @@
 
   <delete id="bulkDeleteHistoricActivityInstancesForNonExistingProcessInstances" databaseId="h2" parameterType="java.util.Map">
     delete from ${prefix}ACT_HI_ACTINST where PROC_INST_ID_ is not null and PROC_INST_ID_ != '' and 
-    PROC_INST_ID_ NOT IN (select PROCINST.ID_ from ${prefix}ACT_HI_PROCINST PROCINST)
-  </delete>
-
-  <delete id="bulkDeleteHistoricActivityInstancesForNonExistingProcessInstances" databaseId="hsql" parameterType="java.util.Map">
-    delete from ${prefix}ACT_HI_ACTINST where PROC_INST_ID_ is not null and PROC_INST_ID_ != '' and
     PROC_INST_ID_ NOT IN (select PROCINST.ID_ from ${prefix}ACT_HI_PROCINST PROCINST)
   </delete>
   
@@ -318,7 +300,7 @@
       <if test="activityType != null">
         and ${queryTablePrefix}ACT_TYPE_ = #{activityType}
       </if>
-      <if test="activityTypes != null and !activityTypes.empty">
+      <if test="activityTypes != null and !activityTypes.isEmpty()">
         and ${queryTablePrefix}ACT_TYPE_ in
          <foreach item="item" index="index" collection="activityTypes" open="(" separator="," close=")">
               #{item}
@@ -342,7 +324,7 @@
       <if test="tenantId != null">
         and ${queryTablePrefix}TENANT_ID_ = #{tenantId}
       </if>
-      <if test="tenantIds != null &amp;&amp; !tenantIds.empty">
+      <if test="tenantIds != null &amp;&amp; !tenantIds.isEmpty()">
         and ${queryTablePrefix}TENANT_ID_ in
         <foreach item="tenantId" index="index" collection="tenantIds" open="(" separator="," close=")">
             #{tenantId}
@@ -370,7 +352,7 @@
   </sql>
   
   <select id="selectHistoricActivityInstanceByNativeQuery" parameterType="java.util.Map" resultMap="historicActivityInstanceResultMap">
-  	<include refid="org.flowable.common.engine.db.selectByNativeQuery"/>
+  	<include refid="org.flowable.engine.db.common.selectByNativeQuery"/>
   </select>
   
   <select id="selectHistoricActivityInstanceCountByNativeQuery" parameterType="java.util.Map" resultType="long">

@@ -17,6 +17,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.rest.api.DataResponse;
 import org.flowable.common.rest.api.RequestUtil;
 import org.flowable.engine.RuntimeService;
@@ -61,20 +63,12 @@ public class EventSubscriptionCollectionResource {
             @ApiImplicitParam(name = "activityId", dataType = "string", value = "Only return event subscriptions with the given activity id", paramType = "query"),
             @ApiImplicitParam(name = "executionId", dataType = "string", value = "Only return event subscriptions with the given execution id", paramType = "query"),
             @ApiImplicitParam(name = "processInstanceId", dataType = "string", value = "Only return event subscriptions part of a process with the given id", paramType = "query"),
-            @ApiImplicitParam(name = "withoutProcessInstanceId", dataType = "boolean", value = "Only return event subscriptions that have no process instance id", paramType = "query"),
             @ApiImplicitParam(name = "processDefinitionId", dataType = "string", value = "Only return event subscriptions with the given process definition id", paramType = "query"),
-            @ApiImplicitParam(name = "withoutProcessDefinitionId", dataType = "boolean", value = "Only return event subscriptions that have no process definition id", paramType = "query"),
             @ApiImplicitParam(name = "scopeId", dataType = "string", value = "Only return event subscriptions part of a scope with the given id", paramType = "query"),
-            @ApiImplicitParam(name = "subScopeId", dataType = "string", value = "Only return event subscriptions part of a sub scope with the given id", paramType = "query"),
-            @ApiImplicitParam(name = "withoutScopeId", dataType = "boolean", value = "Only return event subscriptions that have no scope id", paramType = "query"),
             @ApiImplicitParam(name = "scopeDefinitionId", dataType = "string", value = "Only return event subscriptions with the given scope definition id", paramType = "query"),
-            @ApiImplicitParam(name = "withoutScopeDefinitionId", dataType = "boolean", value = "Only return event subscriptions that have no scope definition id", paramType = "query"),
             @ApiImplicitParam(name = "createdBefore", dataType = "string", format="date-time", value = "Only return event subscriptions which are created before the given date.", paramType = "query"),
             @ApiImplicitParam(name = "createdAfter", dataType = "string", format="date-time", value = "Only return event subscriptions which are created after the given date.", paramType = "query"),
             @ApiImplicitParam(name = "tenantId", dataType = "string", value = "Only return event subscriptions with the given tenant id.", paramType = "query"),
-            @ApiImplicitParam(name = "withoutTenantId", dataType = "boolean", value = "Only return event subscriptions that have no tenant id", paramType = "query"),
-            @ApiImplicitParam(name = "configuration", dataType = "string", value = "Only return event subscriptions with the given configuration value.", paramType = "query"),
-            @ApiImplicitParam(name = "withoutConfiguration", dataType = "boolean", value = "Only return event subscriptions that have no configuration value", paramType = "query"),
             @ApiImplicitParam(name = "sort", dataType = "string", value = "Property to sort on, to be used together with the order.", allowableValues = "id,created,executionId,processInstanceId,processDefinitionId,tenantId", paramType = "query")
     })
     @ApiResponses(value = {
@@ -82,7 +76,7 @@ public class EventSubscriptionCollectionResource {
             @ApiResponse(code = 400, message = "Indicates an illegal value has been used in a url query parameter. Status description contains additional details about the error.")
     })
     @GetMapping(value = "/runtime/event-subscriptions", produces = "application/json")
-    public DataResponse<EventSubscriptionResponse> getEventSubscriptions(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<EventSubscriptionResponse> getEventSubscriptions(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         EventSubscriptionQuery query = runtimeService.createEventSubscriptionQuery();
 
         if (allRequestParams.containsKey("id")) {
@@ -103,29 +97,14 @@ public class EventSubscriptionCollectionResource {
         if (allRequestParams.containsKey("processInstanceId")) {
             query.processInstanceId(allRequestParams.get("processInstanceId"));
         }
-        if (allRequestParams.containsKey("withoutProcessInstanceId") && Boolean.parseBoolean(allRequestParams.get("withoutProcessInstanceId"))) {
-            query.withoutProcessInstanceId();
-        }
         if (allRequestParams.containsKey("processDefinitionId")) {
             query.processDefinitionId(allRequestParams.get("processDefinitionId"));
-        }
-        if (allRequestParams.containsKey("withoutProcessDefinitionId") && Boolean.parseBoolean(allRequestParams.get("withoutProcessDefinitionId"))) {
-            query.withoutProcessDefinitionId();
         }
         if (allRequestParams.containsKey("scopeId")) {
             query.scopeId(allRequestParams.get("scopeId"));
         }
-        if (allRequestParams.containsKey("withoutScopeId") && Boolean.parseBoolean(allRequestParams.get("withoutScopeId"))) {
-            query.withoutScopeId();
-        }
-        if (allRequestParams.containsKey("subScopeId")) {
-            query.subScopeId(allRequestParams.get("subScopeId"));
-        }
         if (allRequestParams.containsKey("scopeDefinitionId")) {
             query.scopeDefinitionId(allRequestParams.get("scopeDefinitionId"));
-        }
-        if (allRequestParams.containsKey("withoutScopeDefinitionId") && Boolean.parseBoolean(allRequestParams.get("withoutScopeDefinitionId"))) {
-            query.withoutScopeDefinitionId();
         }
         if (allRequestParams.containsKey("createdBefore")) {
             query.createdBefore(RequestUtil.getDate(allRequestParams, "createdBefore"));
@@ -135,15 +114,6 @@ public class EventSubscriptionCollectionResource {
         }
         if (allRequestParams.containsKey("tenantId")) {
             query.tenantId(allRequestParams.get("tenantId"));
-        }
-        if (allRequestParams.containsKey("withoutTenantId") && Boolean.parseBoolean(allRequestParams.get("withoutTenantId"))) {
-            query.withoutTenantId();
-        }
-        if (allRequestParams.containsKey("configuration")) {
-            query.configuration(allRequestParams.get("configuration"));
-        }
-        if (allRequestParams.containsKey("withoutConfiguration") && Boolean.parseBoolean(allRequestParams.get("withoutConfiguration"))) {
-            query.withoutConfiguration();
         }
         
         if (restApiInterceptor != null) {

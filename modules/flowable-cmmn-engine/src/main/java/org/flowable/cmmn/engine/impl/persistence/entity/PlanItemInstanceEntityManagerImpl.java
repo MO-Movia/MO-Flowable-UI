@@ -14,7 +14,6 @@
 package org.flowable.cmmn.engine.impl.persistence.entity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
 import org.flowable.cmmn.api.runtime.PlanItemDefinitionType;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.api.runtime.PlanItemInstanceQuery;
@@ -30,12 +28,10 @@ import org.flowable.cmmn.api.runtime.PlanItemInstanceState;
 import org.flowable.cmmn.converter.util.PlanItemDependencyUtil;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.PlanItemInstanceDataManager;
-import org.flowable.cmmn.engine.impl.repository.CaseDefinitionUtil;
 import org.flowable.cmmn.engine.impl.runtime.PlanItemInstanceQueryImpl;
 import org.flowable.cmmn.engine.impl.util.CaseInstanceUtil;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.impl.util.ExpressionUtil;
-import org.flowable.cmmn.model.CmmnModel;
 import org.flowable.cmmn.model.EventListener;
 import org.flowable.cmmn.model.PlanFragment;
 import org.flowable.cmmn.model.PlanItem;
@@ -65,11 +61,6 @@ public class PlanItemInstanceEntityManagerImpl
     
     public PlanItemInstanceEntityManagerImpl(CmmnEngineConfiguration cmmnEngineConfiguration, PlanItemInstanceDataManager planItemInstanceDataManager) {
         super(cmmnEngineConfiguration, planItemInstanceDataManager);
-    }
-
-    @Override
-    public PlanItemInstanceEntity create(HistoricPlanItemInstance historicPlanItemInstance) {
-        return new PlanItemInstanceEntityImpl(historicPlanItemInstance);
     }
 
     @Override
@@ -155,9 +146,6 @@ public class PlanItemInstanceEntityManagerImpl
             stagePlanItemInstanceEntity.getChildPlanItemInstances().add(planItemInstanceEntity);
         } else {
             CaseInstanceEntity caseInstanceEntity = engineConfiguration.getCaseInstanceEntityManager().findById(planItemInstanceEntity.getCaseInstanceId());
-            if (caseInstanceEntity.getChildPlanItemInstances() == null) {
-                caseInstanceEntity.setChildPlanItemInstances(new ArrayList<>());
-            }
             caseInstanceEntity.getChildPlanItemInstances().add(planItemInstanceEntity);
         }
     }
@@ -414,11 +402,6 @@ public class PlanItemInstanceEntityManagerImpl
     }
 
     @Override
-    public List<PlanItemInstanceEntity> findByStageInstanceIdAndPlanItemId(String stageInstanceId, String planItemId) {
-        return dataManager.findByStageInstanceIdAndPlanItemId(stageInstanceId, planItemId);
-    }
-
-    @Override
     public void delete(PlanItemInstanceEntity planItemInstanceEntity, boolean fireEvent) {
         CountingPlanItemInstanceEntity countingPlanItemInstanceEntity = (CountingPlanItemInstanceEntity) planItemInstanceEntity;
         
@@ -429,7 +412,7 @@ public class PlanItemInstanceEntityManagerImpl
             List<VariableInstanceEntity> variableInstanceEntities = variableService
                     .createInternalVariableInstanceQuery()
                     .subScopeId(planItemInstanceEntity.getId())
-                    .scopeTypes(engineConfiguration.getDependentScopeTypes())
+                    .scopeTypes(ScopeTypes.CMMN_DEPENDENT)
                     .list();
             for (VariableInstanceEntity variableInstanceEntity : variableInstanceEntities) {
                 variableService.deleteVariableInstance(variableInstanceEntity);
@@ -483,20 +466,8 @@ public class PlanItemInstanceEntityManagerImpl
                 .caseInstanceId(caseInstanceId)
                 .includeEnded();
         List<PlanItemInstance> planItemInstances = findByCriteria(planItemQuery);
-        if (planItemInstances != null && !planItemInstances.isEmpty()) {
-            List<String> endStates = Arrays.asList(PlanItemInstanceState.UNAVAILABLE, PlanItemInstanceState.DISABLED, PlanItemInstanceState.COMPLETED, PlanItemInstanceState.TERMINATED, PlanItemInstanceState.FAILED);
-            CmmnModel cmmnModel = CaseDefinitionUtil.getCmmnModel(caseDefinitionId);
+        if (planItemInstances != null) {
             for (PlanItemInstance planItemInstance : planItemInstances) {
-                if (!endStates.contains(planItemInstance.getState())) {
-                    if (cmmnModel.findPlanItemByPlanItemDefinitionId(planItemInstance.getPlanItemDefinitionId()) == null) {
-                        PlanItemInstanceEntity planItemInstanceEntity = (PlanItemInstanceEntity) planItemInstance;
-                        planItemInstanceEntity.setState(PlanItemInstanceState.TERMINATED);
-                        planItemInstanceEntity.setEndedTime(engineConfiguration.getClock().getCurrentTime());
-                        planItemInstanceEntity.setTerminatedTime(planItemInstanceEntity.getEndedTime());
-                        CommandContextUtil.getCmmnHistoryManager(commandContext).recordPlanItemInstanceTerminated(planItemInstanceEntity);
-                    }
-                }
-                
                 PlanItemInstanceEntity planItemInstanceEntity = (PlanItemInstanceEntity) planItemInstance;
                 planItemInstanceEntity.setCaseDefinitionId(caseDefinitionId);
                 update(planItemInstanceEntity);

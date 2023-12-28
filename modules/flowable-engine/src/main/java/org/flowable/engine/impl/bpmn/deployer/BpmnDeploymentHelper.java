@@ -22,10 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
 import org.flowable.common.engine.api.FlowableException;
-import org.flowable.common.engine.api.delegate.Expression;
-import org.flowable.common.engine.impl.assignment.CandidateUtil;
 import org.flowable.common.engine.impl.context.Context;
-import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -36,7 +33,6 @@ import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.identitylink.service.IdentityLinkService;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
-import org.flowable.variable.service.impl.el.NoExecutionVariableScope;
 
 /**
  * Methods for working with deployments. Much of the actual work of {@link BpmnDeployer} is done by orchestrating the different pieces of work this class does; by having them here, we allow other
@@ -170,8 +166,8 @@ public class BpmnDeploymentHelper {
         BpmnModel bpmnModel = parsedDeployment.getBpmnModelForProcessDefinition(processDefinition);
 
         eventSubscriptionManager.removeObsoleteMessageEventSubscriptions(previousProcessDefinition);
-        eventSubscriptionManager.removeObsoleteSignalEventSubscription(previousProcessDefinition);
-        eventSubscriptionManager.removeOrUpdateObsoleteEventRegistryEventSubscription(previousProcessDefinition, processDefinition);
+        eventSubscriptionManager.removeObsoleteSignalEventSubScription(previousProcessDefinition);
+        eventSubscriptionManager.removeObsoleteEventRegistryEventSubScription(previousProcessDefinition);
         eventSubscriptionManager.addEventSubscriptions(processDefinition, process, bpmnModel);
 
         timerManager.removeObsoleteTimers(processDefinition);
@@ -198,30 +194,19 @@ public class BpmnDeploymentHelper {
         if (expressions != null) {
             ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
             IdentityLinkService identityLinkService = processEngineConfiguration.getIdentityLinkServiceConfiguration().getIdentityLinkService();
-            ExpressionManager expressionManager = processEngineConfiguration.getExpressionManager();
-
             Iterator<String> iterator = expressions.iterator();
             while (iterator.hasNext()) {
                 @SuppressWarnings("cast")
-                String expressionStr = iterator.next();
-
-                Expression expression = expressionManager.createExpression(expressionStr);
-                Object value = expression.getValue(NoExecutionVariableScope.getSharedInstance());
-                if (value != null) {
-
-                    Collection<String> candidates = CandidateUtil.extractCandidates(value);
-                    for (String candidate : candidates) {
-                        IdentityLinkEntity identityLink = identityLinkService.createIdentityLink();
-                        identityLink.setProcessDefId(processDefinition.getId());
-                        if (expressionType == ExpressionType.USER) {
-                            identityLink.setUserId(candidate);
-                        } else if (expressionType == ExpressionType.GROUP) {
-                            identityLink.setGroupId(candidate);
-                        }
-                        identityLink.setType(IdentityLinkType.CANDIDATE);
-                        identityLinkService.insertIdentityLink(identityLink);
-                    }
+                String expression = iterator.next();
+                IdentityLinkEntity identityLink = identityLinkService.createIdentityLink();
+                identityLink.setProcessDefId(processDefinition.getId());
+                if (expressionType == ExpressionType.USER) {
+                    identityLink.setUserId(expression);
+                } else if (expressionType == ExpressionType.GROUP) {
+                    identityLink.setGroupId(expression);
                 }
+                identityLink.setType(IdentityLinkType.CANDIDATE);
+                identityLinkService.insertIdentityLink(identityLink);
             }
         }
 

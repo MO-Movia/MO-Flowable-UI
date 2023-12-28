@@ -13,7 +13,6 @@
 
 package org.flowable.engine.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.common.engine.api.FlowableException;
@@ -129,16 +128,6 @@ public class CommentEntityManagerImpl
     public void deleteCommentsByProcessInstanceId(String processInstanceId) {
         checkHistoryEnabled();
         dataManager.deleteCommentsByProcessInstanceId(processInstanceId);
-    }
-    
-    @Override
-    public void bulkDeleteCommentsForTaskIds(Collection<String> taskIds) {
-        dataManager.bulkDeleteCommentsForTaskIds(taskIds);
-    }
-
-    @Override
-    public void bulkDeleteCommentsForProcessInstanceIds(Collection<String> processInstanceIds) {
-        dataManager.bulkDeleteCommentsForProcessInstanceIds(processInstanceIds);
     }
 
     @Override

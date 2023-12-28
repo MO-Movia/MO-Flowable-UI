@@ -10,12 +10,12 @@
         <groupId>org.flowable</groupId>
         <artifactId>flowable-root</artifactId>
         <relativePath>../..</relativePath>
-        <version>7.1.0-SNAPSHOT</version>
+        <version>6.6.0.20</version>
     </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.version>11.0.14</jetty.version>
+        <jetty.version>9.2.14.v20151106</jetty.version>
         <flowable.osgi.import.pkg>*</flowable.osgi.import.pkg>
         <flowable.artifact>
             org.flowable.http
@@ -113,18 +113,12 @@
             <artifactId>flowable-http-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.flowable</groupId>
@@ -157,8 +151,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -229,17 +223,8 @@
             <artifactId>reactor-netty</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.groovy</groupId>
-            <artifactId>groovy-jsr223</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.nashorn</groupId>
-            <artifactId>nashorn-core</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
+
     <reporting>
         <plugins>
             <plugin>

@@ -15,11 +15,8 @@ package org.flowable.dmn.xml;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-import java.nio.charset.Charset;
-
 import org.flowable.dmn.model.DmnDefinition;
 import org.flowable.dmn.model.GraphicInfo;
-import org.flowable.dmn.xml.converter.DmnXMLConverter;
 import org.junit.jupiter.api.Test;
 
 public class DiagramDiTest extends AbstractConverterTest {
@@ -35,16 +32,6 @@ public class DiagramDiTest extends AbstractConverterTest {
         DmnDefinition dmnModel = readXMLFile();
         DmnDefinition parsedModel = exportAndReadXMLFile(dmnModel);
         validateModel(parsedModel);
-    }
-
-    @Test
-    public void convertToModelAndBackAndEnsureXmlIsTheSame() throws Exception {
-        DmnDefinition dmnModel = readXMLFile();
-        String originalModelAsXml = new String(new DmnXMLConverter().convertToXML(dmnModel), Charset.defaultCharset());
-        DmnDefinition parsedModel = exportAndReadXMLFile(dmnModel);
-        String convertedModelAsXml = new String(new DmnXMLConverter().convertToXML(parsedModel), Charset.defaultCharset());
-
-        assertThat(convertedModelAsXml).isEqualTo(originalModelAsXml);
     }
 
     @Override

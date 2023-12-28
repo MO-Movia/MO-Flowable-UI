@@ -12,7 +12,6 @@
  */
 package org.flowable.engine.impl.scripting;
 
-import org.flowable.common.engine.api.variable.VariableContainer;
 import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.common.engine.impl.scripting.Resolver;
 import org.flowable.common.engine.impl.scripting.ResolverFactory;
@@ -26,9 +25,9 @@ import org.flowable.variable.api.delegate.VariableScope;
 public class VariableScopeResolverFactory implements ResolverFactory {
 
     @Override
-    public Resolver createResolver(AbstractEngineConfiguration engineConfiguration, VariableContainer variableContainer) {
-        if (variableContainer instanceof VariableScope) {
-            return new VariableScopeResolver((ProcessEngineConfigurationImpl) engineConfiguration, (VariableScope) variableContainer);
+    public Resolver createResolver(AbstractEngineConfiguration engineConfiguration, VariableScope variableScope) {
+        if (variableScope != null) {
+            return new VariableScopeResolver((ProcessEngineConfigurationImpl) engineConfiguration, variableScope);
         }
         return null;
     }

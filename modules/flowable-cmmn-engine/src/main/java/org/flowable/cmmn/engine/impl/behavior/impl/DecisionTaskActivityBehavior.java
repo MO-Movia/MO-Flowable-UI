@@ -15,7 +15,6 @@ package org.flowable.cmmn.engine.impl.behavior.impl;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.flowable.cmmn.api.delegate.DelegatePlanItemInstance;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.behavior.PlanItemActivityBehavior;
@@ -37,6 +36,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import liquibase.util.StringUtils;
 
 /**
  * @author martin.grofcik
@@ -60,7 +61,7 @@ public class DecisionTaskActivityBehavior extends TaskActivityBehavior implement
     public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
         DmnDecisionService dmnRuleService = CommandContextUtil.getDmnRuleService(commandContext);
         if (dmnRuleService == null) {
-            throw new FlowableException("Could not execute decision instance: no dmn service found. For " + planItemInstanceEntity);
+            throw new FlowableException("Could not execute decision instance: no dmn service found.");
         }
 
         String externalRef = null;
@@ -76,7 +77,7 @@ public class DecisionTaskActivityBehavior extends TaskActivityBehavior implement
             }
             
             if (StringUtils.isEmpty(externalRef)) {
-                throw new FlowableException("Could not execute decision: no externalRef defined for " + planItemInstanceEntity);
+                throw new FlowableException("Could not execute decision: no externalRef defined");
             }
         }
 
@@ -92,7 +93,7 @@ public class DecisionTaskActivityBehavior extends TaskActivityBehavior implement
             tenantId(planItemInstanceEntity.getTenantId());
 
         String fallBackToDefaultTenantValue = getFieldString(STRING_DECISION_TABLE_FALLBACK_TO_DEFAULT_TENANT);
-        if (Boolean.parseBoolean(fallBackToDefaultTenantValue)) {
+        if (fallBackToDefaultTenantValue != null && Boolean.parseBoolean(fallBackToDefaultTenantValue)) {
             executeDecisionBuilder.fallbackToDefaultTenant();
         }
 
@@ -111,25 +112,25 @@ public class DecisionTaskActivityBehavior extends TaskActivityBehavior implement
         DecisionExecutionAuditContainer decisionExecutionAuditContainer = executeDecisionBuilder.executeWithAuditTrail();
 
         if (decisionExecutionAuditContainer == null) {
-            throw new FlowableException("DMN decision with key " + externalRef + " was not executed. For " + planItemInstanceEntity);
+            throw new FlowableException("DMN decision with key " + externalRef + " was not executed.");
         }
         
         if (decisionExecutionAuditContainer.isFailed()) {
-            throw new FlowableException("DMN decision with key " + externalRef + " execution failed. Cause: " + decisionExecutionAuditContainer.getExceptionMessage() + ". For " + planItemInstanceEntity);
+            throw new FlowableException("DMN decision with key " + externalRef + " execution failed. Cause: " + decisionExecutionAuditContainer.getExceptionMessage());
         }
 
         /* Throw error if there were no rules hit when the flag indicates to do this. */
         String throwErrorFieldValue = getFieldString(EXPRESSION_DECISION_TABLE_THROW_ERROR_FLAG);
         if (decisionExecutionAuditContainer.getDecisionResult().isEmpty() && throwErrorFieldValue != null) {
             if ("true".equalsIgnoreCase(throwErrorFieldValue)) {
-                throw new FlowableException("DMN decision with key " + externalRef + " did not hit any rules for the provided input. For " + planItemInstanceEntity);
+                throw new FlowableException("DMN decision with key " + externalRef + " did not hit any rules for the provided input.");
             
             } else if (!"false".equalsIgnoreCase(throwErrorFieldValue)) {
                 Expression expression = CommandContextUtil.getExpressionManager(commandContext).createExpression(throwErrorFieldValue);
                 Object expressionValue = expression.getValue(planItemInstanceEntity);
                 
                 if (expressionValue instanceof Boolean && ((Boolean) expressionValue)) {
-                    throw new FlowableException("DMN decision with key " + externalRef + " did not hit any rules for the provided input. For " + planItemInstanceEntity);
+                    throw new FlowableException("DMN decision with key " + externalRef + " did not hit any rules for the provided input.");
                 }
             }
         }
@@ -137,11 +138,11 @@ public class DecisionTaskActivityBehavior extends TaskActivityBehavior implement
         if (cmmnEngineConfiguration.getDecisionTableVariableManager() != null) {
             if (decisionExecutionAuditContainer instanceof DecisionServiceExecutionAuditContainer) {
                 DecisionServiceExecutionAuditContainer decisionServiceExecutionAuditContainer = (DecisionServiceExecutionAuditContainer) decisionExecutionAuditContainer;
-                cmmnEngineConfiguration.getDecisionTableVariableManager().setDecisionServiceVariablesOnPlanItemInstance(decisionServiceExecutionAuditContainer.getDecisionServiceResult(),
-                    externalRef, planItemInstanceEntity, cmmnEngineConfiguration.getObjectMapper(), decisionExecutionAuditContainer.isMultipleResults());
+                cmmnEngineConfiguration.getDecisionTableVariableManager().setDecisionServiceVariablesOnExecution(decisionServiceExecutionAuditContainer.getDecisionServiceResult(),
+                    externalRef, planItemInstanceEntity, cmmnEngineConfiguration.getObjectMapper());
             } else {
                 cmmnEngineConfiguration.getDecisionTableVariableManager().setVariablesOnPlanItemInstance(decisionExecutionAuditContainer.getDecisionResult(),
-                    externalRef, planItemInstanceEntity, cmmnEngineConfiguration.getObjectMapper(), decisionExecutionAuditContainer.isMultipleResults());
+                    externalRef, planItemInstanceEntity, cmmnEngineConfiguration.getObjectMapper());
             }
         } else {
             boolean multipleResults = decisionExecutionAuditContainer.isMultipleResults() && cmmnEngineConfiguration.isAlwaysUseArraysForDmnMultiHitPolicies();

@@ -22,7 +22,6 @@ import org.flowable.cmmn.engine.impl.persistence.entity.MilestoneInstanceEntity;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.entitylink.service.impl.persistence.entity.EntityLinkEntity;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
-import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskLogEntryBuilder;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
@@ -54,30 +53,15 @@ public class CompositeCmmnHistoryManager implements CmmnHistoryManager {
     }
 
     @Override
-    public void recordHistoricCaseInstanceReactivated(CaseInstanceEntity caseInstanceEntity) {
-        for (CmmnHistoryManager historyManager : historyManagers) {
-            historyManager.recordHistoricCaseInstanceReactivated(caseInstanceEntity);
-        }
-    }
-
-    @Override
     public void recordUpdateCaseInstanceName(CaseInstanceEntity caseInstanceEntity, String name) {
         for (CmmnHistoryManager historyManager : historyManagers) {
             historyManager.recordUpdateCaseInstanceName(caseInstanceEntity, name);
         }
     }
-    
     @Override
     public void recordUpdateBusinessKey(CaseInstanceEntity caseInstanceEntity, String businessKey) {
         for (CmmnHistoryManager historyManager : historyManagers) {
             historyManager.recordUpdateBusinessKey(caseInstanceEntity, businessKey);
-        }
-    }
-    
-    @Override
-    public void recordUpdateBusinessStatus(CaseInstanceEntity caseInstanceEntity, String businessStatus) {
-        for (CmmnHistoryManager historyManager : historyManagers) {
-            historyManager.recordUpdateBusinessStatus(caseInstanceEntity, businessStatus);
         }
     }
 
@@ -92,13 +76,6 @@ public class CompositeCmmnHistoryManager implements CmmnHistoryManager {
     public void recordHistoricCaseInstanceDeleted(String caseInstanceId, String tenantId) {
         for (CmmnHistoryManager historyManager : historyManagers) {
             historyManager.recordHistoricCaseInstanceDeleted(caseInstanceId, tenantId);
-        }
-    }
-
-    @Override
-    public void recordBulkDeleteHistoricCaseInstances(Collection<String> caseInstanceIds) {
-        for (CmmnHistoryManager historyManager : historyManagers) {
-            historyManager.recordBulkDeleteHistoricCaseInstances(caseInstanceIds);
         }
     }
 
@@ -159,9 +136,9 @@ public class CompositeCmmnHistoryManager implements CmmnHistoryManager {
     }
 
     @Override
-    public void recordTaskEnd(TaskEntity task, String userId, String deleteReason, Date endTime) {
+    public void recordTaskEnd(TaskEntity task, String deleteReason, Date endTime) {
         for (CmmnHistoryManager historyManager : historyManagers) {
-            historyManager.recordTaskEnd(task, userId, deleteReason, endTime);
+            historyManager.recordTaskEnd(task, deleteReason, endTime);
         }
     }
 
@@ -173,26 +150,12 @@ public class CompositeCmmnHistoryManager implements CmmnHistoryManager {
     }
 
     @Override
-    public void recordHistoricTaskDeleted(HistoricTaskInstance task) {
-        for (CmmnHistoryManager historyManager : historyManagers) {
-            historyManager.recordHistoricTaskDeleted(task);
-        }
-    }
-
-    @Override
     public void recordPlanItemInstanceCreated(PlanItemInstanceEntity planItemInstanceEntity) {
         for (CmmnHistoryManager historyManager : historyManagers) {
             historyManager.recordPlanItemInstanceCreated(planItemInstanceEntity);
         }
     }
-
-    @Override
-    public void recordPlanItemInstanceReactivated(PlanItemInstanceEntity planItemInstanceEntity) {
-        for (CmmnHistoryManager historyManager : historyManagers) {
-            historyManager.recordPlanItemInstanceReactivated(planItemInstanceEntity);
-        }
-    }
-
+    
     @Override
     public void recordPlanItemInstanceUpdated(PlanItemInstanceEntity planItemInstanceEntity) {
         for (CmmnHistoryManager historyManager : historyManagers) {

@@ -27,27 +27,16 @@ public interface CaseInstanceQuery extends Query<CaseInstanceQuery, CaseInstance
     CaseInstanceQuery caseDefinitionKey(String caseDefinitionKey);
     CaseInstanceQuery caseDefinitionKeys(Set<String> caseDefinitionKeys);
     CaseInstanceQuery caseDefinitionId(String caseDefinitionId);
-    CaseInstanceQuery caseDefinitionIds(Set<String> caseDefinitionIds);
     CaseInstanceQuery caseDefinitionCategory(String caseDefinitionCategory);
     CaseInstanceQuery caseDefinitionName(String caseDefinitionName);
     CaseInstanceQuery caseDefinitionVersion(Integer caseDefinitionVersion);
     CaseInstanceQuery caseInstanceId(String caseInstanceId);
     CaseInstanceQuery caseInstanceIds(Set<String> caseInstanceIds);
-    CaseInstanceQuery caseInstanceName(String caseInstanceName);
-    CaseInstanceQuery caseInstanceNameLike(String caseInstanceNameLike);
-    CaseInstanceQuery caseInstanceNameLikeIgnoreCase(String caseInstanceNameLikeIgnoreCase);
-    CaseInstanceQuery caseInstanceRootScopeId(String rootScopeId);
-    CaseInstanceQuery caseInstanceParentScopeId(String parentScopeId);
     CaseInstanceQuery caseInstanceBusinessKey(String caseInstanceBusinessKey);
-    CaseInstanceQuery caseInstanceBusinessStatus(String caseInstanceBusinessStatus);
     CaseInstanceQuery caseInstanceParentId(String parentId);
     CaseInstanceQuery caseInstanceStartedBefore(Date beforeTime);
     CaseInstanceQuery caseInstanceStartedAfter(Date afterTime);
     CaseInstanceQuery caseInstanceStartedBy(String userId);
-    CaseInstanceQuery caseInstanceState(String state);
-    CaseInstanceQuery caseInstanceLastReactivatedBefore(Date beforeTime);
-    CaseInstanceQuery caseInstanceLastReactivatedAfter(Date afterTime);
-    CaseInstanceQuery caseInstanceLastReactivatedBy(String userId);
     CaseInstanceQuery caseInstanceCallbackId(String callbackId);
     CaseInstanceQuery caseInstanceCallbackType(String callbackType);
     CaseInstanceQuery caseInstanceReferenceId(String referenceId);
@@ -237,14 +226,10 @@ public interface CaseInstanceQuery extends Query<CaseInstanceQuery, CaseInstance
     CaseInstanceQuery endOr();
 
     /**
-     * Localize case name to specified locale.
+     * Limit case instance variables
      */
-    CaseInstanceQuery locale(String locale);
+    CaseInstanceQuery limitCaseInstanceVariables(Integer caseInstanceVariablesLimit);
 
-    /**
-     * Instruct localization to fallback to more general locales including the default locale of the JVM if the specified locale is not found.
-     */
-    CaseInstanceQuery withLocalizationFallback();
 
     CaseInstanceQuery orderByCaseInstanceId();
     CaseInstanceQuery orderByCaseDefinitionKey();

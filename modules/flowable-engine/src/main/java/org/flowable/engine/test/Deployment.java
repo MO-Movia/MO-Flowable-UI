@@ -64,7 +64,7 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Deployment {
 
     /**
-     * Specify all the resources that make up the deployment.
+     * Specify all the resources that make up the process definition.
      * When using this property, all resources should be passed, as no automatic detection will be done.
      */
     String[] resources() default {};
@@ -79,12 +79,4 @@ public @interface Deployment {
 
     /** Specify tenantId to deploy for */
     String tenantId() default "";
-
-    /**
-     * Whether the model should be validated during deployment. Defaults to true.
-     *
-     * Useful to suppress validation to assert on runtime errors occuring
-     * when invalid models are being executed.
-     */
-    boolean validateBpmn() default true;
 }

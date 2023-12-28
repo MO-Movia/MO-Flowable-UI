@@ -19,9 +19,6 @@ import org.flowable.common.engine.api.variable.VariableContainer;
 import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.common.engine.impl.javax.el.ELContext;
 import org.flowable.common.engine.impl.javax.el.ELResolver;
-import org.flowable.common.engine.impl.tenant.CurrentTenant;
-import org.flowable.variable.api.delegate.VariableScope;
-import org.flowable.variable.api.persistence.entity.VariableInstance;
 
 /**
  * @author Joram Barrez
@@ -30,41 +27,24 @@ public class VariableContainerELResolver extends ELResolver {
 
     public static final String VARIABLE_CONTAINER_KEY = "variableContainer";
     public static final String LOGGED_IN_USER_KEY = "authenticatedUserId";
-    public static final String CURRENT_TENANT_ID_KEY = "currentTenantId";
 
+    protected VariableContainer variableContainer;
+
+    public VariableContainerELResolver(VariableContainer variableContainer) {
+        this.variableContainer = variableContainer;
+    }
+    
     @Override
     public Object getValue(ELContext context, Object base, Object property) {
         if (base == null) {
             String variable = (String) property; // according to javadoc, can only be a String
-            VariableContainer variableContainer = getVariableContainer(context);
             if (LOGGED_IN_USER_KEY.equals(property)) {
                 context.setPropertyResolved(true);
                 return Authentication.getAuthenticatedUserId();
 
-            } else if (CURRENT_TENANT_ID_KEY.equals(property)) {
-                context.setPropertyResolved(true);
-                return CurrentTenant.getTenantContext().getTenantId();
             } else if (variableContainer.hasVariable(variable)) {
-                Object value = null;
-                if (context.getContext(EvaluationState.class) == EvaluationState.WRITE) {
-                    if (variableContainer instanceof VariableScope) {
-                        VariableInstance variableInstance = ((VariableScope) variableContainer).getVariableInstance(variable);
-                        if (!variableInstance.isReadOnly()) {
-                            // When we are in a write evaluation context we can only access the variable if it is not read only
-                            // e.g. this can happen when using multi instance variable aggregation and someone wants to write to
-                            // reviews[0].score, reviews is an aggregated variable which is read only
-                            value = variableInstance.getValue();
-                        }
-                    } else {
-                        // simple variable container can be written to by default.
-                        // No further checks required.
-                        value = variableContainer.getVariable(variable);
-                    }
-                } else {
-                    value = variableContainer.getVariable(variable);
-                }
                 context.setPropertyResolved(true); // if not set, the next elResolver in the CompositeElResolver will be called
-                return value;
+                return variableContainer.getVariable(variable);
             } else if (VARIABLE_CONTAINER_KEY.equals(property)) {
                 context.setPropertyResolved(true); // if not set, the next elResolver in the CompositeElResolver will be called
                 return variableContainer;
@@ -77,7 +57,7 @@ public class VariableContainerELResolver extends ELResolver {
     public boolean isReadOnly(ELContext context, Object base, Object property) {
         if (base == null) {
             String variable = (String) property;
-            return !getVariableContainer(context).hasVariable(variable);
+            return !variableContainer.hasVariable(variable);
         }
         return true;
     }
@@ -86,23 +66,11 @@ public class VariableContainerELResolver extends ELResolver {
     public void setValue(ELContext context, Object base, Object property, Object value) {
         if (base == null) {
             String variable = (String) property;
-            VariableContainer variableContainer = getVariableContainer(context);
             if (variableContainer.hasVariable(variable)) {
                 context.setPropertyResolved(true);
-                if (variableContainer instanceof VariableScope) {
-                    VariableInstance variableInstance = ((VariableScope) variableContainer).getVariableInstance(variable);
-                    if (variableInstance == null || !variableInstance.isReadOnly()) {
-                        variableContainer.setVariable(variable, value);
-                    }
-                } else {
-                    variableContainer.setVariable(variable, value);
-                }
+                variableContainer.setVariable(variable, value);
             }
         }
-    }
-
-    protected VariableContainer getVariableContainer(ELContext elContext) {
-        return (VariableContainer) elContext.getContext(VariableContainer.class);
     }
 
     @Override

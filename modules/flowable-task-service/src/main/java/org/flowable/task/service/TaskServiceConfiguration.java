@@ -70,6 +70,8 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
     
     protected TaskQueryInterceptor taskQueryInterceptor;
     protected HistoricTaskQueryInterceptor historicTaskQueryInterceptor;
+    protected int taskQueryLimit;
+    protected int historicTaskQueryLimit;
 
     protected TaskPostProcessor taskPostProcessor;
 
@@ -262,6 +264,24 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
 
     public TaskServiceConfiguration setHistoricTaskQueryInterceptor(HistoricTaskQueryInterceptor historicTaskQueryInterceptor) {
         this.historicTaskQueryInterceptor = historicTaskQueryInterceptor;
+        return this;
+    }
+
+    public int getTaskQueryLimit() {
+        return taskQueryLimit;
+    }
+
+    public TaskServiceConfiguration setTaskQueryLimit(int taskQueryLimit) {
+        this.taskQueryLimit = taskQueryLimit;
+        return this;
+    }
+
+    public int getHistoricTaskQueryLimit() {
+        return historicTaskQueryLimit;
+    }
+
+    public TaskServiceConfiguration setHistoricTaskQueryLimit(int historicTaskQueryLimit) {
+        this.historicTaskQueryLimit = historicTaskQueryLimit;
         return this;
     }
 

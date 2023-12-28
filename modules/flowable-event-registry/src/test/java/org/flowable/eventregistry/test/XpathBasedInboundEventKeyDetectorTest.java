@@ -27,30 +27,30 @@ class XpathBasedInboundEventKeyDetectorTest {
 
     @Test
     void testDetectEventDefinitionKey() {
-        Document eventInfo = deserializer.deserialize("<data><name>Doe</name><eventKey>event-01</eventKey></data>");
+        Document xmlDocument = deserializer.deserialize("<data><name>Doe</name><eventKey>event-01</eventKey></data>");
 
         String xPath = "/data/eventKey";
         XpathBasedInboundEventKeyDetector detector = new XpathBasedInboundEventKeyDetector(xPath);
-        String eventDefinitionKey = detector.detectEventDefinitionKey(eventInfo);
+        String eventDefinitionKey = detector.detectEventDefinitionKey(xmlDocument);
         assertThat(eventDefinitionKey).isEqualTo("event-01");
     }
 
     @Test
     void testDetectEventDefinitionKeyWrongXpath() {
-        Document eventInfo = deserializer.deserialize("<data><name>Doe</name><eventKey>event-01</eventKey></data>");
+        Document xmlDocument = deserializer.deserialize("<data><name>Doe</name><eventKey>event-01</eventKey></data>");
 
         String xPath = "/data/wrongEventKey";
         XpathBasedInboundEventKeyDetector detector = new XpathBasedInboundEventKeyDetector(xPath);
-        assertThatThrownBy(() -> detector.detectEventDefinitionKey(eventInfo)).isInstanceOf(FlowableException.class);
+        assertThatThrownBy(() -> detector.detectEventDefinitionKey(xmlDocument)).isInstanceOf(FlowableException.class);
     }
 
     @Test
     void testDetectEventDefinitionKeyMissingDefinitionKeyInXml() {
-        Document eventInfo = deserializer.deserialize("<data><name>Doe</name></data>");
+        Document xmlDocument = deserializer.deserialize("<data><name>Doe</name></data>");
 
         String xPath = "/data/eventKey";
         XpathBasedInboundEventKeyDetector detector = new XpathBasedInboundEventKeyDetector(xPath);
-        assertThatThrownBy(() -> detector.detectEventDefinitionKey(eventInfo)).isInstanceOf(FlowableException.class);
+        assertThatThrownBy(() -> detector.detectEventDefinitionKey(xmlDocument)).isInstanceOf(FlowableException.class);
     }
 
 }

@@ -25,7 +25,6 @@ import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.flowable.engine.runtime.ActivityInstance;
 import org.flowable.entitylink.service.impl.persistence.entity.EntityLinkEntity;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
-import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskLogEntryBuilder;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
@@ -121,13 +120,6 @@ public class CompositeHistoryManager implements HistoryManager {
     }
 
     @Override
-    public void recordBulkDeleteProcessInstances(Collection<String> processInstanceIds) {
-        for (HistoryManager historyManager : historyManagers) {
-            historyManager.recordBulkDeleteProcessInstances(processInstanceIds);
-        }
-    }
-
-    @Override
     public void recordActivityStart(ActivityInstance activityInstance) {
         for (HistoryManager historyManager : historyManagers) {
             historyManager.recordActivityStart(activityInstance);
@@ -138,6 +130,13 @@ public class CompositeHistoryManager implements HistoryManager {
     public void recordActivityEnd(ActivityInstance activityInstance) {
         for (HistoryManager historyManager : historyManagers) {
             historyManager.recordActivityEnd(activityInstance);
+        }
+    }
+
+    @Override
+    public void recordActivityEnd(ExecutionEntity executionEntity, String deleteReason, Date endTime) {
+        for (HistoryManager historyManager : historyManagers) {
+            historyManager.recordActivityEnd(executionEntity, deleteReason, endTime);
         }
     }
 
@@ -168,9 +167,9 @@ public class CompositeHistoryManager implements HistoryManager {
     }
 
     @Override
-    public void recordTaskEnd(TaskEntity task, ExecutionEntity execution, String userId, String deleteReason, Date endTime) {
+    public void recordTaskEnd(TaskEntity task, ExecutionEntity execution, String deleteReason, Date endTime) {
         for (HistoryManager historyManager : historyManagers) {
-            historyManager.recordTaskEnd(task, execution, userId, deleteReason, endTime);
+            historyManager.recordTaskEnd(task, execution, deleteReason, endTime);
         }
     }
 
@@ -178,13 +177,6 @@ public class CompositeHistoryManager implements HistoryManager {
     public void recordTaskInfoChange(TaskEntity taskEntity, String activityInstanceId, Date changeTime) {
         for (HistoryManager historyManager : historyManagers) {
             historyManager.recordTaskInfoChange(taskEntity, activityInstanceId, changeTime);
-        }
-    }
-
-    @Override
-    public void recordHistoricTaskDeleted(HistoricTaskInstance task){
-        for (HistoryManager historyManager : historyManagers) {
-            historyManager.recordHistoricTaskDeleted(task);
         }
     }
 
@@ -313,13 +305,6 @@ public class CompositeHistoryManager implements HistoryManager {
     public void updateProcessBusinessKeyInHistory(ExecutionEntity processInstance) {
         for (HistoryManager historyManager : historyManagers) {
             historyManager.updateProcessBusinessKeyInHistory(processInstance);
-        }
-    }
-
-    @Override
-    public void updateProcessBusinessStatusInHistory(ExecutionEntity processInstance) {
-        for (HistoryManager historyManager : historyManagers) {
-            historyManager.updateProcessBusinessStatusInHistory(processInstance);
         }
     }
 

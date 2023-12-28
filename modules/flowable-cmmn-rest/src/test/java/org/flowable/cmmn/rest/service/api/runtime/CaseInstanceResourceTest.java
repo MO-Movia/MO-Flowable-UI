@@ -26,12 +26,9 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.flowable.cmmn.api.runtime.CaseInstance;
-import org.flowable.cmmn.api.runtime.PlanItemInstanceState;
-import org.flowable.cmmn.api.runtime.UserEventListenerInstance;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.rest.service.BaseSpringRestTestCase;
 import org.flowable.cmmn.rest.service.api.CmmnRestUrls;
@@ -39,7 +36,6 @@ import org.flowable.common.engine.impl.identity.Authentication;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.javacrumbs.jsonunit.core.Option;
@@ -65,8 +61,6 @@ public class CaseInstanceResourceTest extends BaseSpringRestTestCase {
                 .callbackId("testCallbackId")
                 .callbackType("testCallbackType")
                 .start();
-        
-        runtimeService.updateBusinessStatus(caseInstance.getId(), "myBusinessStatus");
 
         String url = buildUrl(CmmnRestUrls.URL_CASE_INSTANCE, caseInstance.getId());
         CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
@@ -80,7 +74,6 @@ public class CaseInstanceResourceTest extends BaseSpringRestTestCase {
                 .isEqualTo("{"
                         + " id: '" + caseInstance.getId() + "',"
                         + " businessKey: 'myBusinessKey',"
-                        + " businessStatus: 'myBusinessStatus',"
                         + " referenceId: 'testReferenceId',"
                         + " referenceType: 'testReferenceType',"
                         + " callbackId: 'testCallbackId',"
@@ -127,10 +120,10 @@ public class CaseInstanceResourceTest extends BaseSpringRestTestCase {
     }
 
     /**
-     * Test terminating a single case instance.
+     * Test deleting a single case instance.
      */
     @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
-    public void testTerminateCaseInstance() {
+    public void testDeleteCaseInstance() {
         CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").businessKey("myBusinessKey").start();
         closeResponse(
                 executeRequest(new HttpDelete(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE, caseInstance.getId())),
@@ -141,32 +134,10 @@ public class CaseInstanceResourceTest extends BaseSpringRestTestCase {
     }
 
     /**
-     * Test terminating an unexisting case instance.
-     */
-    public void testTerminateUnexistingCaseInstance() {
-        closeResponse(executeRequest(new HttpDelete(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE, "unexisting")),
-                HttpStatus.SC_NOT_FOUND));
-    }
-    
-    /**
-     * Test deleting a single case instance.
-     */
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
-    public void testDeleteCaseInstance() {
-        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").businessKey("myBusinessKey").start();
-        closeResponse(
-                executeRequest(new HttpDelete(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE, caseInstance.getId(), "delete")),
-                        HttpStatus.SC_NO_CONTENT));
-
-        // Check if process-instance is gone
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).count()).isZero();
-    }
-
-    /**
      * Test deleting an unexisting case instance.
      */
     public void testDeleteUnexistingCaseInstance() {
-        closeResponse(executeRequest(new HttpDelete(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE, "unexisting", "delete")),
+        closeResponse(executeRequest(new HttpDelete(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE, "unexistini")),
                 HttpStatus.SC_NOT_FOUND));
     }
 
@@ -405,149 +376,6 @@ public class CaseInstanceResourceTest extends BaseSpringRestTestCase {
         assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult().getName()).isEqualTo("test name two");
         assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult().getBusinessKey())
                 .isEqualTo("test business key");
-    }
-    
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/runtime/changeStateCase.cmmn" })
-    public void testChangeStateCaseInstance() throws Exception {
-        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder()
-                .caseDefinitionKey("testCase")
-                .start();
-
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(4);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").singleResult().getState()).isEqualTo(PlanItemInstanceState.AVAILABLE);
-        
-        String url = buildUrl(CmmnRestUrls.URL_CASE_INSTANCE_CHANGE_STATE, caseInstance.getId());
-        
-        ObjectNode changeStateNode = objectMapper.createObjectNode();
-        ArrayNode definitionIds = changeStateNode.putArray("activatePlanItemDefinitionIds");
-        definitionIds.add("stage1");
-
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(changeStateNode.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_OK));
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(4);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").singleResult().getState()).isEqualTo(PlanItemInstanceState.ACTIVE);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").singleResult().getState()).isEqualTo(PlanItemInstanceState.ACTIVE);
-        
-        changeStateNode = objectMapper.createObjectNode();
-        ArrayNode terminateDefinitionIds = changeStateNode.putArray("terminatePlanItemDefinitionIds");
-        terminateDefinitionIds.add("stageTask");
-        
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(changeStateNode.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_OK));
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).includeEnded().list()).hasSize(5);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").includeEnded().singleResult().getState()).isEqualTo(PlanItemInstanceState.COMPLETED);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").includeEnded().singleResult().getState()).isEqualTo(PlanItemInstanceState.TERMINATED);
-        
-        changeStateNode = objectMapper.createObjectNode();
-        ArrayNode availableDefinitionIds = changeStateNode.putArray("moveToAvailablePlanItemDefinitionIds");
-        availableDefinitionIds.add("userEventListener1");
-        availableDefinitionIds.add("stage1");
-        
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(changeStateNode.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_OK));
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(4);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").singleResult().getState()).isEqualTo(PlanItemInstanceState.AVAILABLE);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").singleResult().getState()).isEqualTo(PlanItemInstanceState.AVAILABLE);
-        
-        UserEventListenerInstance userEventListener = runtimeService.createUserEventListenerInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
-        runtimeService.completeUserEventListenerInstance(userEventListener.getId());
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(4);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").list()).hasSize(0);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(1);
-        
-        changeStateNode = objectMapper.createObjectNode();
-        ArrayNode addRepetitionDefinitionIds = changeStateNode.putArray("addWaitingForRepetitionPlanItemDefinitionIds");
-        addRepetitionDefinitionIds.add("stage1");
-        
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(changeStateNode.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_OK));
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(5);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(1);
-        
-        changeStateNode = objectMapper.createObjectNode();
-        availableDefinitionIds = changeStateNode.putArray("moveToAvailablePlanItemDefinitionIds");
-        availableDefinitionIds.add("userEventListener1");
-        
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(changeStateNode.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_OK));
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(6);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(1);
-        
-        userEventListener = runtimeService.createUserEventListenerInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
-        runtimeService.completeUserEventListenerInstance(userEventListener.getId());
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(6);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").list()).hasSize(0);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(0);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-    }
-    
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/runtime/changeStateRepetitionCase.cmmn" })
-    public void testChangeStateCaseInstanceWithRepetition() throws Exception {
-        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder()
-                .caseDefinitionKey("testCase")
-                .start();
-
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(4);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").singleResult().getState()).isEqualTo(PlanItemInstanceState.AVAILABLE);
-        
-        UserEventListenerInstance userEventListener = runtimeService.createUserEventListenerInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
-        runtimeService.completeUserEventListenerInstance(userEventListener.getId());
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(6);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").planItemInstanceState(PlanItemInstanceState.AVAILABLE).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(1);
-        
-        userEventListener = runtimeService.createUserEventListenerInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
-        runtimeService.completeUserEventListenerInstance(userEventListener.getId());
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(8);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").planItemInstanceState(PlanItemInstanceState.AVAILABLE).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-        
-        String url = buildUrl(CmmnRestUrls.URL_CASE_INSTANCE_CHANGE_STATE, caseInstance.getId());
-        
-        ObjectNode changeStateNode = objectMapper.createObjectNode();
-        ArrayNode removeRepetitionDefinitionIds = changeStateNode.putArray("removeWaitingForRepetitionPlanItemDefinitionIds");
-        removeRepetitionDefinitionIds.add("stage1");
-        
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(changeStateNode.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_OK));
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(7);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").planItemInstanceState(PlanItemInstanceState.AVAILABLE).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(0);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-        
-        userEventListener = runtimeService.createUserEventListenerInstanceQuery().caseInstanceId(caseInstance.getId()).singleResult();
-        runtimeService.completeUserEventListenerInstance(userEventListener.getId());
-        
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list()).hasSize(7);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("userEventListener1").planItemInstanceState(PlanItemInstanceState.AVAILABLE).list()).hasSize(1);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stage1").planItemInstanceState(PlanItemInstanceState.WAITING_FOR_REPETITION).list()).hasSize(0);
-        assertThat(runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).planItemDefinitionId("stageTask").planItemInstanceState(PlanItemInstanceState.ACTIVE).list()).hasSize(2);
     }
 
     protected ArrayNode getStageOverviewResponse(CaseInstance caseInstance) throws IOException {

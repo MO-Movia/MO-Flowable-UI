@@ -36,7 +36,6 @@ public class ProcessInstanceResponse {
     protected String url;
     protected String name;
     protected String businessKey;
-    protected String businessStatus;
     protected boolean suspended;
     protected boolean ended;
     protected String processDefinitionId;
@@ -47,7 +46,6 @@ public class ProcessInstanceResponse {
     protected String startUserId;
     @JsonSerialize(using = DateToStringSerializer.class, as = Date.class)
     protected Date startTime;
-    protected String superProcessInstanceId;
     protected List<RestVariable> variables = new ArrayList<>();
     protected String callbackId;
     protected String callbackType;
@@ -93,15 +91,6 @@ public class ProcessInstanceResponse {
 
     public void setBusinessKey(String businessKey) {
         this.businessKey = businessKey;
-    }
-
-    @ApiModelProperty(example = "myBusinessStatus")
-    public String getBusinessStatus() {
-        return businessStatus;
-    }
-
-    public void setBusinessStatus(String businessStatus) {
-        this.businessStatus = businessStatus;
     }
 
     public boolean isSuspended() {
@@ -181,15 +170,6 @@ public class ProcessInstanceResponse {
 
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
-    }
-    
-    @ApiModelProperty(example = "3")
-    public String getSuperProcessInstanceId() {
-        return superProcessInstanceId;
-    }
-
-    public void setSuperProcessInstanceId(String superProcessInstanceId) {
-        this.superProcessInstanceId = superProcessInstanceId;
     }
 
     public List<RestVariable> getVariables() {

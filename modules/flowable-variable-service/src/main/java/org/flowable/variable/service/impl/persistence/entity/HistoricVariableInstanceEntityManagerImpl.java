@@ -13,7 +13,6 @@
 
 package org.flowable.variable.service.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -38,41 +37,27 @@ public class HistoricVariableInstanceEntityManagerImpl
     }
 
     @Override
-    public HistoricVariableInstanceEntity create(VariableInstanceEntity variableInstance, Date createTime) {
+    public HistoricVariableInstanceEntity createAndInsert(VariableInstanceEntity variableInstance, Date createTime) {
         HistoricVariableInstanceEntity historicVariableInstance = dataManager.create();
         historicVariableInstance.setId(variableInstance.getId());
-        historicVariableInstance.setRevision(variableInstance.getRevision());
-
-        copyVariableFields(historicVariableInstance, variableInstance, createTime);
-
-        historicVariableInstance.setCreateTime(createTime);
-        historicVariableInstance.setLastUpdatedTime(createTime);
-
-        return historicVariableInstance;
-    }
-
-    @Override
-    public HistoricVariableInstanceEntity createAndInsert(VariableInstanceEntity variableInstance, Date createTime) {
-        HistoricVariableInstanceEntity historicVariableInstance = create(variableInstance, createTime);
-
-        insert(historicVariableInstance);
-
-        return historicVariableInstance;
-    }
-
-    @Override
-    public void copyVariableFields(HistoricVariableInstanceEntity historicVariableInstance, VariableInstanceEntity variableInstance, Date updateTime) {
         historicVariableInstance.setProcessInstanceId(variableInstance.getProcessInstanceId());
         historicVariableInstance.setExecutionId(variableInstance.getExecutionId());
         historicVariableInstance.setTaskId(variableInstance.getTaskId());
+        historicVariableInstance.setRevision(variableInstance.getRevision());
         historicVariableInstance.setName(variableInstance.getName());
         historicVariableInstance.setVariableType(variableInstance.getType());
         historicVariableInstance.setScopeId(variableInstance.getScopeId());
         historicVariableInstance.setSubScopeId(variableInstance.getSubScopeId());
         historicVariableInstance.setScopeType(variableInstance.getScopeType());
-        historicVariableInstance.setMetaInfo(variableInstance.getMetaInfo());
 
-        copyVariableValue(historicVariableInstance, variableInstance, updateTime);
+        copyVariableValue(historicVariableInstance, variableInstance, createTime);
+
+        historicVariableInstance.setCreateTime(createTime);
+        historicVariableInstance.setLastUpdatedTime(createTime);
+
+        insert(historicVariableInstance);
+
+        return historicVariableInstance;
     }
 
     @Override
@@ -153,22 +138,7 @@ public class HistoricVariableInstanceEntityManagerImpl
             }
         }
     }
-
-    @Override
-    public void bulkDeleteHistoricVariableInstancesByProcessInstanceIds(Collection<String> processInstanceIds) {
-        dataManager.bulkDeleteHistoricVariableInstancesByProcessInstanceIds(processInstanceIds);
-    }
-
-    @Override
-    public void bulkDeleteHistoricVariableInstancesByTaskIds(Collection<String> taskIds) {
-        dataManager.bulkDeleteHistoricVariableInstancesByTaskIds(taskIds);
-    }
-
-    @Override
-    public void bulkDeleteHistoricVariableInstancesByScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType) {
-        dataManager.bulkDeleteHistoricVariableInstancesByScopeIdsAndScopeType(scopeIds, scopeType);
-    }
-
+    
     @Override
     public void deleteHistoricVariableInstancesForNonExistingProcessInstances() {
         if (serviceConfiguration.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY)) {

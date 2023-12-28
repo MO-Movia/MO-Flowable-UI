@@ -80,8 +80,6 @@ public class LDAPConfiguration {
     // Cache listener (experimental)
     protected LDAPGroupCacheListener groupCacheListener;
 
-    protected boolean connectionPooling = true;
-
     // Getters and Setters //////////////////////////////////////////////////
 
     public String getServer() {
@@ -456,16 +454,4 @@ public class LDAPConfiguration {
         this.groupCacheListener = groupCacheListener;
     }
 
-    /**
-     * Sets if connections to the LDAP system should be pooled and reused.
-     * <p>
-     * Enabled by default.
-     */
-    public void setConnectionPooling(boolean connectionPooling) {
-        this.connectionPooling = connectionPooling;
-    }
-
-    public boolean isConnectionPooling() {
-        return connectionPooling;
-    }
 }

@@ -14,6 +14,8 @@ package org.flowable.dmn.model;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author Yvo Swillens
  */
@@ -37,6 +39,8 @@ public class UnaryTests extends DmnElement {
 
     public void setTextValues(List<Object> textValues) {
         this.textValues = textValues;
+        this.text = "\"" + StringUtils.join(textValues, "\",\"") + "\"";
+
     }
 
     public String getExpressionLanguage() {

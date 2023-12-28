@@ -49,11 +49,8 @@ import org.flowable.bpmn.converter.child.FlowableHttpResponseHandlerParser;
 import org.flowable.bpmn.converter.child.FlowableMapExceptionParser;
 import org.flowable.bpmn.converter.child.FormPropertyParser;
 import org.flowable.bpmn.converter.child.IOSpecificationParser;
-import org.flowable.bpmn.converter.child.InParameterParser;
 import org.flowable.bpmn.converter.child.MessageEventDefinitionParser;
 import org.flowable.bpmn.converter.child.MultiInstanceParser;
-import org.flowable.bpmn.converter.child.OutParameterParser;
-import org.flowable.bpmn.converter.child.ScriptInfoParser;
 import org.flowable.bpmn.converter.child.SignalEventDefinitionParser;
 import org.flowable.bpmn.converter.child.TaskListenerParser;
 import org.flowable.bpmn.converter.child.TerminateEventDefinitionParser;
@@ -86,7 +83,6 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
         addGenericParser(new EscalationEventDefinitionParser());
         addGenericParser(new ExecutionListenerParser());
         addGenericParser(new FieldExtensionParser());
-        addGenericParser(new ScriptInfoParser());
         addGenericParser(new FlowableEventListenerParser());
         addGenericParser(new FlowableHttpRequestHandlerParser());
         addGenericParser(new FlowableHttpResponseHandlerParser());
@@ -169,7 +165,6 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
 
     public static ExtensionElement parseExtensionElement(XMLStreamReader xtr) throws Exception {
         ExtensionElement extensionElement = new ExtensionElement();
-        BpmnXMLUtil.addXMLLocation(extensionElement, xtr);
         extensionElement.setName(xtr.getLocalName());
         if (StringUtils.isNotEmpty(xtr.getNamespaceURI())) {
             extensionElement.setNamespace(xtr.getNamespaceURI());
@@ -212,103 +207,9 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
         String attributeValue = xtr.getAttributeValue(FLOWABLE_EXTENSIONS_NAMESPACE, attributeName);
         if (attributeValue == null) {
             attributeValue = xtr.getAttributeValue(ACTIVITI_EXTENSIONS_NAMESPACE, attributeName);
-            if (attributeValue == null) {
-                attributeValue = xtr.getAttributeValue(CAMUNDA_EXTENSIONS_NAMESPACE, attributeName);
-            }
         }
 
         return attributeValue;
-    }
-    
-    public static IOParameter parseInIOParameter(XMLStreamReader xtr) {
-        IOParameter parameter = null;
-        String source = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_SOURCE);
-        String sourceExpression = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_SOURCE_EXPRESSION);
-        String target = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_TARGET);
-        if ((StringUtils.isNotEmpty(source) || StringUtils.isNotEmpty(sourceExpression)) && StringUtils.isNotEmpty(target)) {
-
-            parameter = new IOParameter();
-            if (StringUtils.isNotEmpty(sourceExpression)) {
-                parameter.setSourceExpression(sourceExpression);
-            } else {
-                parameter.setSource(source);
-            }
-
-            parameter.setTarget(target);
-            
-            for (int i = 0; i < xtr.getAttributeCount(); i++) {
-                String attributeName = xtr.getAttributeLocalName(i);
-                if (ATTRIBUTE_IOPARAMETER_SOURCE.equals(attributeName) || ATTRIBUTE_IOPARAMETER_SOURCE_EXPRESSION.equals(attributeName) ||
-                                ATTRIBUTE_IOPARAMETER_TARGET.equals(attributeName)) {
-                    
-                    continue;
-                }
-                
-                ExtensionAttribute extensionAttribute = new ExtensionAttribute();
-                extensionAttribute.setName(attributeName);
-                extensionAttribute.setValue(xtr.getAttributeValue(i));
-                if (StringUtils.isNotEmpty(xtr.getAttributeNamespace(i))) {
-                    extensionAttribute.setNamespace(xtr.getAttributeNamespace(i));
-                }
-                if (StringUtils.isNotEmpty(xtr.getAttributePrefix(i))) {
-                    extensionAttribute.setNamespacePrefix(xtr.getAttributePrefix(i));
-                }
-                parameter.addAttribute(extensionAttribute);
-            }
-        }
-        
-        return parameter;
-    }
-    
-    public static IOParameter parseOutIOParameter(XMLStreamReader xtr) {
-        IOParameter parameter = null;
-        String source = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_SOURCE);
-        String sourceExpression = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_SOURCE_EXPRESSION);
-        String target = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_TARGET);
-        String targetExpression = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_TARGET_EXPRESSION);
-        if ((StringUtils.isNotEmpty(source) || StringUtils.isNotEmpty(sourceExpression)) && 
-                        (StringUtils.isNotEmpty(target) || StringUtils.isNotEmpty(targetExpression))) {
-
-            parameter = new IOParameter();
-            if (StringUtils.isNotEmpty(sourceExpression)) {
-                parameter.setSourceExpression(sourceExpression);
-            } else {
-                parameter.setSource(source);
-            }
-
-            if (StringUtils.isNotEmpty(targetExpression)) {
-                parameter.setTargetExpression(targetExpression);
-            } else {
-                parameter.setTarget(target);
-            }
-            
-            for (int i = 0; i < xtr.getAttributeCount(); i++) {
-                String attributeName = xtr.getAttributeLocalName(i);
-                if (ATTRIBUTE_IOPARAMETER_SOURCE.equals(attributeName) || ATTRIBUTE_IOPARAMETER_SOURCE_EXPRESSION.equals(attributeName) ||
-                                ATTRIBUTE_IOPARAMETER_TARGET.equals(attributeName) || ATTRIBUTE_IOPARAMETER_TARGET_EXPRESSION.equals(attributeName)) {
-                    
-                    continue;
-                }
-                
-                ExtensionAttribute extensionAttribute = new ExtensionAttribute();
-                extensionAttribute.setName(attributeName);
-                extensionAttribute.setValue(xtr.getAttributeValue(i));
-                if (StringUtils.isNotEmpty(xtr.getAttributeNamespace(i))) {
-                    extensionAttribute.setNamespace(xtr.getAttributeNamespace(i));
-                }
-                if (StringUtils.isNotEmpty(xtr.getAttributePrefix(i))) {
-                    extensionAttribute.setNamespacePrefix(xtr.getAttributePrefix(i));
-                }
-                parameter.addAttribute(extensionAttribute);
-            }
-
-            String transientString = xtr.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_TRANSIENT);
-            if ("true".equalsIgnoreCase(transientString)) {
-                parameter.setTransient(true);
-            }
-        }
-        
-        return parameter;
     }
 
     public static void writeDefaultAttribute(String attributeName, String value, XMLStreamWriter xtw) throws Exception {
@@ -411,7 +312,7 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
     
     public static boolean writeIOParameters(String elementName, List<IOParameter> parameterList, boolean didWriteExtensionStartElement, XMLStreamWriter xtw) throws Exception {
 
-        if (parameterList == null || parameterList.isEmpty()) {
+        if (parameterList.isEmpty()) {
             return didWriteExtensionStartElement;
         }
 
@@ -429,8 +330,8 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
                 writeDefaultAttribute(ATTRIBUTE_IOPARAMETER_SOURCE, ioParameter.getSource(), xtw);
             }
             
-            if (StringUtils.isNotEmpty(ioParameter.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_SOURCE_TYPE))) {
-                writeDefaultAttribute(ATTRIBUTE_IOPARAMETER_SOURCE_TYPE, ioParameter.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_SOURCE_TYPE), xtw);
+            if (StringUtils.isNotEmpty(ioParameter.getAttributeValue(null, "sourceType"))) {
+                writeDefaultAttribute("sourceType", ioParameter.getAttributeValue(null, "sourceType"), xtw);
             }
             
             if (StringUtils.isNotEmpty(ioParameter.getTargetExpression())) {
@@ -440,16 +341,13 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
                 writeDefaultAttribute(ATTRIBUTE_IOPARAMETER_TARGET, ioParameter.getTarget(), xtw);
             }
             
-            if (StringUtils.isNotEmpty(ioParameter.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_TARGET_TYPE))) {
-                writeDefaultAttribute(ATTRIBUTE_IOPARAMETER_TARGET_TYPE, ioParameter.getAttributeValue(null, ATTRIBUTE_IOPARAMETER_TARGET_TYPE), xtw);
+            if (StringUtils.isNotEmpty(ioParameter.getAttributeValue(null, "targetType"))) {
+                writeDefaultAttribute("targetType", ioParameter.getAttributeValue(null, "targetType"), xtw);
             }
             
             if (ioParameter.isTransient()) {
                 writeDefaultAttribute(ATTRIBUTE_IOPARAMETER_TRANSIENT, "true", xtw);
             }
-
-            writeCustomAttributes(ioParameter.getAttributes().values(), xtw,
-                    InParameterParser.defaultInParameterAttributes, OutParameterParser.defaultOutParameterAttributes);
 
             xtw.writeEndElement();
         }
@@ -574,8 +472,7 @@ public class BpmnXMLUtil implements BpmnXMLConstants {
                 for (ExtensionAttribute blackAttribute : blackList) {
                     if (blackAttribute.getName().equals(attribute.getName())) {
                         if (attribute.getNamespace() != null && (FLOWABLE_EXTENSIONS_NAMESPACE.equals(attribute.getNamespace()) ||
-                                ACTIVITI_EXTENSIONS_NAMESPACE.equals(attribute.getNamespace()) ||
-                                CAMUNDA_EXTENSIONS_NAMESPACE.equals(attribute.getNamespace()))) {
+                                ACTIVITI_EXTENSIONS_NAMESPACE.equals(attribute.getNamespace()))) {
 
                             return true;
                         }

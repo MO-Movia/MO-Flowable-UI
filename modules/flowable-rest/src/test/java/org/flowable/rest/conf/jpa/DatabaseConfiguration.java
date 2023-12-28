@@ -12,9 +12,8 @@
  */
 package org.flowable.rest.conf.jpa;
 
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-
-import jakarta.persistence.EntityManagerFactory;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

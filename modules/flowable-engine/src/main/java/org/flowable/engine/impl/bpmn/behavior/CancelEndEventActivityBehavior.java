@@ -67,7 +67,7 @@ public class CancelEndEventActivityBehavior extends FlowNodeActivityBehavior {
         }
 
         if (parentScopeExecution == null) {
-            throw new FlowableException("No sub process execution found for cancel end event in " + executionEntity);
+            throw new FlowableException("No sub process execution found for cancel end event " + executionEntity.getCurrentActivityId());
         }
 
         SubProcess subProcess = (SubProcess) parentScopeExecution.getCurrentFlowElement();
@@ -84,7 +84,7 @@ public class CancelEndEventActivityBehavior extends FlowNodeActivityBehavior {
         }
 
         if (cancelBoundaryEvent == null) {
-            throw new FlowableException("Could not find cancel boundary event for cancel end event in " + executionEntity);
+            throw new FlowableException("Could not find cancel boundary event for cancel end event " + executionEntity.getCurrentActivityId());
         }
 
         ExecutionEntity newParentScopeExecution = null;
@@ -98,7 +98,7 @@ public class CancelEndEventActivityBehavior extends FlowNodeActivityBehavior {
         }
 
         if (newParentScopeExecution == null) {
-            throw new FlowableException("Programmatic error: no parent scope execution found for boundary event " + cancelBoundaryEvent.getId() + " for " + parentScopeExecution);
+            throw new FlowableException("Programmatic error: no parent scope execution found for boundary event " + cancelBoundaryEvent.getId());
         }
 
         ScopeUtil.createCopyOfSubProcessExecutionForCompensation(parentScopeExecution);

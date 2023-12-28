@@ -12,13 +12,11 @@
  */
 package org.flowable.cmmn.converter;
 
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.cmmn.model.CaseTask;
 import org.flowable.cmmn.model.CmmnElement;
-import org.flowable.common.engine.api.FlowableException;
 
 /**
  * @author Joram Barrez
@@ -37,14 +35,10 @@ public class CaseRefExpressionXmlConverter extends CaseElementXmlConverter {
 
     @Override
     protected CmmnElement convert(XMLStreamReader xtr, ConversionHelper conversionHelper) {
-        try {
-            String expression = xtr.getElementText();
-            if (StringUtils.isNotEmpty(expression) && conversionHelper.getCurrentCmmnElement() instanceof CaseTask) {
-                CaseTask caseTask = (CaseTask) conversionHelper.getCurrentCmmnElement();
-                caseTask.setCaseRefExpression(expression);
-            }
-        } catch (XMLStreamException e) {
-            throw new FlowableException("Error converting case reference expression", e);
+        String expression = xtr.getText();
+        if (StringUtils.isNotEmpty(expression) && conversionHelper.getCurrentCmmnElement() instanceof CaseTask) {
+            CaseTask caseTask = (CaseTask) conversionHelper.getCurrentCmmnElement();
+            caseTask.setCaseRefExpression(expression);
         }
         return null;
     }

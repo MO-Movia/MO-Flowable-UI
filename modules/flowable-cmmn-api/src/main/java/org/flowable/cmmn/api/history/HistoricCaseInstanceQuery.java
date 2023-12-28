@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.flowable.common.engine.api.query.BatchDeleteQuery;
 import org.flowable.common.engine.api.query.DeleteQuery;
 import org.flowable.common.engine.api.query.Query;
 
@@ -25,8 +24,7 @@ import org.flowable.common.engine.api.query.Query;
  * @author Joram Barrez
  * @author Tijs Rademakers
  */
-public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQuery, HistoricCaseInstance>, DeleteQuery<HistoricCaseInstanceQuery, HistoricCaseInstance>,
-        BatchDeleteQuery<HistoricCaseInstanceQuery> {
+public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQuery, HistoricCaseInstance>, DeleteQuery<HistoricCaseInstanceQuery, HistoricCaseInstance> {
 
     /**
      * Only select historic case instances with the given identifier.
@@ -39,52 +37,14 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
     HistoricCaseInstanceQuery caseInstanceIds(Set<String> caseInstanceIds);
     
     /**
-     * Only select historic case instances with the given name.
-     */
-    HistoricCaseInstanceQuery caseInstanceName(String caseInstanceName);
-    
-    /**
-     * Only select historic case instances like the given name.
-     */
-    HistoricCaseInstanceQuery caseInstanceNameLike(String caseInstanceNameLike);
-    
-    /**
-     * Only select case instances that have a name like (case insensitive) the given name.
-     *
-     * @param nameLikeIgnoreCase
-     *          cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
-     */
-    HistoricCaseInstanceQuery caseInstanceNameLikeIgnoreCase(String nameLikeIgnoreCase);
-    
-    /**
      * Only select historic case instances with the given business key.
      */
     HistoricCaseInstanceQuery caseInstanceBusinessKey(String caseInstanceBusinessKey);
-
-    /**
-     * Only select historic case instances with the given case instance root scope id.
-     */
-    HistoricCaseInstanceQuery caseInstanceRootScopeId(String rootScopeId);
-
-    /**
-     * Only select historic case instances with the given case instance parent scope id.
-     */
-    HistoricCaseInstanceQuery caseInstanceParentScopeId(String parentScopeId);
-    
-    /**
-     * Only select historic case instances with the given business status.
-     */
-    HistoricCaseInstanceQuery caseInstanceBusinessStatus(String caseInstanceBusinessStatus);
     
     /**
      * Only select historic case instances with the parent identifier.
      */
     HistoricCaseInstanceQuery caseInstanceParentId(String parentId);
-
-    /**
-     * Only select historic case instances without a parent identifier.
-     */
-    HistoricCaseInstanceQuery withoutCaseInstanceParent();
     
     /**
      * Only select historic case instances with the given key.
@@ -100,11 +60,6 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      * Only select historic case instances with the given case definition identifier.
      */
     HistoricCaseInstanceQuery caseDefinitionId(String caseDefinitionId);
-
-    /**
-     * Only select historic case instances with the given case definition ids.
-     */
-    HistoricCaseInstanceQuery caseDefinitionIds(Set<String> caseDefinitionIds);
     
     /**
      * Only select historic case instances with the given case definition category.
@@ -125,6 +80,11 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      * Include historic case variables in the historic case query result
      */
     HistoricCaseInstanceQuery includeCaseVariables();
+
+    /**
+     * Limit historic case instance variables
+     */
+    HistoricCaseInstanceQuery limitCaseVariables(Integer historicCaseVariablesLimit);
 
     /**
      * Only select historic case instances that are defined by a case definition with the given deployment identifier.
@@ -172,26 +132,6 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
     HistoricCaseInstanceQuery startedBy(String userId);
     
     /**
-     * Only select historic case instances that have a state that is equal to the provided value.
-     */
-    HistoricCaseInstanceQuery state(String state);
-
-    /**
-     * Only select historic case instance that are reactivated before the provided date time.
-     */
-    HistoricCaseInstanceQuery lastReactivatedBefore(Date beforeTime);
-
-    /**
-     * Only select historic case instance that are reactivated after the provided date time.
-     */
-    HistoricCaseInstanceQuery lastReactivatedAfter(Date afterTime);
-
-    /**
-     * Only select historic case instances that are reactivated by the provided user identifier.
-     */
-    HistoricCaseInstanceQuery lastReactivatedBy(String userId);
-    
-    /**
      * Only select historic case instances that have the provided callback identifier.
      */
     HistoricCaseInstanceQuery caseInstanceCallbackId(String callbackId);
@@ -200,11 +140,6 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      * Only select historic case instances that have the provided callback type.
      */
     HistoricCaseInstanceQuery caseInstanceCallbackType(String callbackType);
-
-    /**
-     * Only select historic case instances that do not have a callback identifier.
-     */
-    HistoricCaseInstanceQuery withoutCaseInstanceCallbackId();
 
     /**
      * Only select historic case instance that have the provided reference identifier.
@@ -363,6 +298,14 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      *            cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
      */
     HistoricCaseInstanceQuery variableValueLikeIgnoreCase(String name, String value);
+
+    /**
+     * Only select case instances that have a name like (case insensitive) the given name.
+     *
+     * @param nameLikeIgnoreCase
+     *          cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
+     */
+    HistoricCaseInstanceQuery caseInstanceNameLikeIgnoreCase(String nameLikeIgnoreCase);
     
     /**
      * Only select case instances which have a variable with the given name.
@@ -380,17 +323,6 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      */
     HistoricCaseInstanceQuery variableNotExists(String name);
     
-
-    /**
-     * Localize case name to specified locale.
-     */
-    HistoricCaseInstanceQuery locale(String locale);
-
-    /**
-     * Instruct localization to fallback to more general locales including the default locale of the JVM if the specified locale is not found.
-     */
-    HistoricCaseInstanceQuery withLocalizationFallback();
-
     HistoricCaseInstanceQuery orderByCaseInstanceId();
     HistoricCaseInstanceQuery orderByCaseInstanceName();
     HistoricCaseInstanceQuery orderByCaseDefinitionKey();

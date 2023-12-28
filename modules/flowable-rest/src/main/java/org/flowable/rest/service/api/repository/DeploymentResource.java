@@ -13,6 +13,9 @@
 
 package org.flowable.rest.service.api.repository;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.Deployment;
@@ -24,7 +27,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -56,7 +58,7 @@ public class DeploymentResource {
             @ApiResponse(code = 404, message = "Indicates the requested deployment was not found.")
     })
     @GetMapping(value = "/repository/deployments/{deploymentId}", produces = "application/json")
-    public DeploymentResponse getDeployment(@ApiParam(name = "deploymentId", value ="The id of the deployment to get.") @PathVariable String deploymentId) {
+    public DeploymentResponse getDeployment(@ApiParam(name = "deploymentId", value ="The id of the deployment to get.") @PathVariable String deploymentId, HttpServletRequest request) {
         Deployment deployment = repositoryService.createDeploymentQuery().deploymentId(deploymentId).singleResult();
 
         if (deployment == null) {
@@ -70,14 +72,14 @@ public class DeploymentResource {
         return restResponseFactory.createDeploymentResponse(deployment);
     }
 
-    @ApiOperation(value = "Delete a deployment", tags = { "Deployment" }, code = 204)
+    @ApiOperation(value = "Delete a deployment", tags = { "Deployment" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the deployment was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested deployment was not found.")
     })
     @DeleteMapping(value = "/repository/deployments/{deploymentId}", produces = "application/json")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteDeployment(@ApiParam(name = "deploymentId") @PathVariable String deploymentId, @RequestParam(value = "cascade", required = false, defaultValue = "false") Boolean cascade) {
+    public void deleteDeployment(@ApiParam(name = "deploymentId") @PathVariable String deploymentId, @RequestParam(value = "cascade", required = false, defaultValue = "false") Boolean cascade,
+            HttpServletResponse response) {
         
         Deployment deployment = repositoryService.createDeploymentQuery().deploymentId(deploymentId).singleResult();
 
@@ -94,5 +96,6 @@ public class DeploymentResource {
         } else {
             repositoryService.deleteDeployment(deploymentId);
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 }

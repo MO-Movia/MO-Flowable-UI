@@ -37,7 +37,6 @@ public class StartProcessInstanceByMessageCmd implements Command<ProcessInstance
 
     protected String messageName;
     protected String businessKey;
-    protected String businessStatus;
     protected Map<String, Object> processVariables;
     protected Map<String, Object> transientVariables;
     protected String callbackId;
@@ -45,36 +44,24 @@ public class StartProcessInstanceByMessageCmd implements Command<ProcessInstance
     protected String referenceId;
     protected String referenceType;
     protected String tenantId;
-    protected String ownerId;
-    protected String assigneeId;
 
     public StartProcessInstanceByMessageCmd(String messageName, String businessKey, Map<String, Object> processVariables, String tenantId) {
-        this(messageName, businessKey, processVariables, tenantId, null, null);
-    }
-
-    public StartProcessInstanceByMessageCmd(String messageName, String businessKey, Map<String, Object> processVariables, String tenantId,
-        String ownerId, String assigneeId) {
         this.messageName = messageName;
         this.businessKey = businessKey;
         this.processVariables = processVariables;
         this.tenantId = tenantId;
-        this.ownerId = ownerId;
-        this.assigneeId = assigneeId;
     }
 
     public StartProcessInstanceByMessageCmd(ProcessInstanceBuilderImpl processInstanceBuilder) {
         this(processInstanceBuilder.getMessageName(),
-                processInstanceBuilder.getBusinessKey(),
-                processInstanceBuilder.getVariables(),
-                processInstanceBuilder.getTenantId(),
-                processInstanceBuilder.getOwnerId(),
-                processInstanceBuilder.getAssigneeId());
+             processInstanceBuilder.getBusinessKey(),
+             processInstanceBuilder.getVariables(),
+             processInstanceBuilder.getTenantId());
         this.transientVariables = processInstanceBuilder.getTransientVariables();
         this.callbackId = processInstanceBuilder.getCallbackId();
         this.callbackType = processInstanceBuilder.getCallbackType();
         this.referenceId = processInstanceBuilder.getReferenceId();
         this.referenceType = processInstanceBuilder.getReferenceType();
-        this.businessStatus = processInstanceBuilder.getBusinessStatus();
     }
 
     @Override
@@ -105,9 +92,8 @@ public class StartProcessInstanceByMessageCmd implements Command<ProcessInstance
         }
 
         ProcessInstanceHelper processInstanceHelper = processEngineConfiguration.getProcessInstanceHelper();
-        ProcessInstance processInstance = processInstanceHelper.createAndStartProcessInstanceByMessage(processDefinition,
-                messageName, businessKey, businessStatus, processVariables, transientVariables, callbackId, callbackType, referenceId, referenceType,
-                ownerId, assigneeId);
+        ProcessInstance processInstance = processInstanceHelper.createAndStartProcessInstanceByMessage(processDefinition, 
+            messageName, businessKey, processVariables, transientVariables, callbackId, callbackType, referenceId, referenceType);
 
         return processInstance;
     }

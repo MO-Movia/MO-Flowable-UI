@@ -13,6 +13,9 @@
 
 package org.flowable.eventregistry.rest.service.api.repository;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.eventregistry.api.EventDeployment;
 import org.flowable.eventregistry.rest.service.api.EventRegistryRestResponseFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -46,19 +48,18 @@ public class DeploymentResource extends BaseDeploymentResource {
             @ApiResponse(code = 404, message = "Indicates the requested deployment was not found.")
     })
     @GetMapping(value = "/event-registry-repository/deployments/{deploymentId}", produces = "application/json")
-    public EventDeploymentResponse getDeployment(@ApiParam(name = "deploymentId", value ="The id of the deployment to get.") @PathVariable String deploymentId) {
+    public EventDeploymentResponse getDeployment(@ApiParam(name = "deploymentId", value ="The id of the deployment to get.") @PathVariable String deploymentId, HttpServletRequest request) {
         EventDeployment deployment = getEventDeployment(deploymentId);
         return restResponseFactory.createDeploymentResponse(deployment);
     }
 
-    @ApiOperation(value = "Delete a deployment", tags = { "Deployment" }, code = 204)
+    @ApiOperation(value = "Delete a deployment", tags = { "Deployment" })
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the deployment was found and has been deleted. Response-body is intentionally empty."),
             @ApiResponse(code = 404, message = "Indicates the requested deployment was not found.")
     })
     @DeleteMapping(value = "/event-registry-repository/deployments/{deploymentId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteDeployment(@ApiParam(name = "deploymentId") @PathVariable String deploymentId) {
+    public void deleteDeployment(@ApiParam(name = "deploymentId") @PathVariable String deploymentId, HttpServletResponse response) {
         
         EventDeployment deployment = getEventDeployment(deploymentId);
         if (restApiInterceptor != null) {
@@ -66,5 +67,7 @@ public class DeploymentResource extends BaseDeploymentResource {
         }
 
         repositoryService.deleteDeployment(deploymentId);
+
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 }

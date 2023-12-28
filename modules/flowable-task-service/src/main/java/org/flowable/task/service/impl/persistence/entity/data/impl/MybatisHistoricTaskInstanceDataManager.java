@@ -12,8 +12,7 @@
  */
 package org.flowable.task.service.impl.persistence.entity.data.impl;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -53,16 +52,10 @@ public class MybatisHistoricTaskInstanceDataManager extends AbstractDataManager<
         return new HistoricTaskInstanceEntityImpl(task);
     }
 
-    @Override
     @SuppressWarnings("unchecked")
+    @Override
     public List<HistoricTaskInstanceEntity> findHistoricTasksByParentTaskId(String parentTaskId) {
         return getDbSqlSession().selectList("selectHistoricTasksByParentTaskId", parentTaskId);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<String> findHistoricTaskIdsByParentTaskIds(Collection<String> parentTaskIds) {
-        return getDbSqlSession().selectList("selectHistoricTaskIdsByParentTaskIds", createSafeInValuesList(parentTaskIds));
     }
 
     @Override
@@ -70,41 +63,53 @@ public class MybatisHistoricTaskInstanceDataManager extends AbstractDataManager<
     public List<HistoricTaskInstanceEntity> findHistoricTasksByProcessInstanceId(String processInstanceId) {
         return getDbSqlSession().selectList("selectHistoricTaskInstancesByProcessInstanceId", processInstanceId);
     }
-    
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<String> findHistoricTaskIdsForProcessInstanceIds(Collection<String> processInstanceIds) {
-        return getDbSqlSession().selectList("selectHistoricTaskInstanceIdsForProcessInstanceIds", createSafeInValuesList(processInstanceIds));
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<String> findHistoricTaskIdsForScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("scopeIds", createSafeInValuesList(scopeIds));
-        params.put("scopeType", scopeType);
-        
-        return getDbSqlSession().selectList("selectHistoricTaskInstanceIdsForScopeIdsAndScopeType", params);
-    }
 
     @Override
     public long findHistoricTaskInstanceCountByQueryCriteria(HistoricTaskInstanceQueryImpl historicTaskInstanceQuery) {
-        setSafeInValueLists(historicTaskInstanceQuery);
         return (Long) getDbSqlSession().selectOne("selectHistoricTaskInstanceCountByQueryCriteria", historicTaskInstanceQuery);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<HistoricTaskInstance> findHistoricTaskInstancesByQueryCriteria(HistoricTaskInstanceQueryImpl historicTaskInstanceQuery) {
-        setSafeInValueLists(historicTaskInstanceQuery);
         return getDbSqlSession().selectList("selectHistoricTaskInstancesByQueryCriteria", historicTaskInstanceQuery, getManagedEntityClass());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<HistoricTaskInstance> findHistoricTaskInstancesAndRelatedEntitiesByQueryCriteria(HistoricTaskInstanceQueryImpl historicTaskInstanceQuery) {
-        setSafeInValueLists(historicTaskInstanceQuery);
-        return getDbSqlSession().selectList("selectHistoricTaskInstancesWithRelatedEntitiesByQueryCriteria", historicTaskInstanceQuery, getManagedEntityClass());
+        // paging doesn't work for combining task instances and variables
+        // due to an outer join, so doing it in-memory
+
+        int firstResult = historicTaskInstanceQuery.getFirstResult();
+        int maxResults = historicTaskInstanceQuery.getMaxResults();
+
+        // setting max results, limit to 20000 results for performance reasons
+        if (historicTaskInstanceQuery.getTaskVariablesLimit() != null) {
+            historicTaskInstanceQuery.setMaxResults(historicTaskInstanceQuery.getTaskVariablesLimit());
+        } else {
+            historicTaskInstanceQuery.setMaxResults(taskServiceConfiguration.getHistoricTaskQueryLimit());
+        }
+        historicTaskInstanceQuery.setFirstResult(0);
+
+        List<HistoricTaskInstance> instanceList = getDbSqlSession().selectListWithRawParameterNoCacheLoadAndStore(
+                        "selectHistoricTaskInstancesWithRelatedEntitiesByQueryCriteria", historicTaskInstanceQuery, getManagedEntityClass());
+
+        if (instanceList != null && !instanceList.isEmpty()) {
+            if (firstResult > 0) {
+                if (firstResult <= instanceList.size()) {
+                    int toIndex = firstResult + Math.min(maxResults, instanceList.size() - firstResult);
+                    return instanceList.subList(firstResult, toIndex);
+                } else {
+                    return Collections.EMPTY_LIST;
+                }
+            } else {
+                int toIndex = maxResults > 0 ?  Math.min(maxResults, instanceList.size()) : instanceList.size();
+                return instanceList.subList(0, toIndex);
+            }
+        }
+
+        return instanceList;
     }
 
     @Override
@@ -124,11 +129,6 @@ public class MybatisHistoricTaskInstanceDataManager extends AbstractDataManager<
     }
 
     @Override
-    public void bulkDeleteHistoricTaskInstancesForIds(Collection<String> taskIds) {
-        getDbSqlSession().delete("bulkDeleteHistoricTaskInstancesForIds", createSafeInValuesList(taskIds), HistoricTaskInstanceEntityImpl.class);
-    }
-
-    @Override
     public void deleteHistoricTaskInstancesForNonExistingProcessInstances() {
         getDbSqlSession().delete("bulkDeleteHistoricTaskInstancesForNonExistingProcessInstances", null, HistoricTaskInstanceEntityImpl.class);
     }
@@ -141,21 +141,5 @@ public class MybatisHistoricTaskInstanceDataManager extends AbstractDataManager<
     @Override
     protected IdGenerator getIdGenerator() {
         return taskServiceConfiguration.getIdGenerator();
-    }
-    
-    protected void setSafeInValueLists(HistoricTaskInstanceQueryImpl historicTaskInstanceQuery) {
-        if (historicTaskInstanceQuery.getCandidateGroups() != null) {
-            historicTaskInstanceQuery.setSafeCandidateGroups(createSafeInValuesList(historicTaskInstanceQuery.getCandidateGroups()));
-        }
-        
-        if (historicTaskInstanceQuery.getInvolvedGroups() != null) {
-            historicTaskInstanceQuery.setSafeInvolvedGroups(createSafeInValuesList(historicTaskInstanceQuery.getInvolvedGroups()));
-        }
-        
-        if (historicTaskInstanceQuery.getOrQueryObjects() != null && !historicTaskInstanceQuery.getOrQueryObjects().isEmpty()) {
-            for (HistoricTaskInstanceQueryImpl orHistoricTaskInstanceQuery : historicTaskInstanceQuery.getOrQueryObjects()) {
-                setSafeInValueLists(orHistoricTaskInstanceQuery);
-            }
-        }
     }
 }

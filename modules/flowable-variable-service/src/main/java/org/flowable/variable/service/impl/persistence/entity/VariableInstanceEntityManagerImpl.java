@@ -14,16 +14,13 @@
 package org.flowable.variable.service.impl.persistence.entity;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 import org.flowable.common.engine.impl.persistence.entity.AbstractServiceEngineEntityManager;
 import org.flowable.common.engine.impl.persistence.entity.ByteArrayRef;
-import org.flowable.variable.api.persistence.entity.VariableInstance;
+import org.flowable.variable.api.types.VariableType;
 import org.flowable.variable.service.InternalVariableInstanceQuery;
 import org.flowable.variable.service.VariableServiceConfiguration;
 import org.flowable.variable.service.impl.InternalVariableInstanceQueryImpl;
-import org.flowable.variable.service.impl.VariableInstanceQueryImpl;
 import org.flowable.variable.service.impl.persistence.entity.data.VariableInstanceDataManager;
 
 /**
@@ -40,42 +37,26 @@ public class VariableInstanceEntityManagerImpl
     }
 
     @Override
-    public VariableInstanceEntity create(String name) {
-        VariableInstanceEntity variableInstance = create();
-        variableInstance.setName(name);
+    public VariableInstanceEntity create(String name, VariableType type, Object value) {
+        VariableInstanceEntity variableInstance = create(name, type);
+        variableInstance.setValue(value);
         return variableInstance;
     }
 
     @Override
-    public void insertWithValue(VariableInstanceEntity variable, Object value, String tenantId) {
-        getServiceConfiguration().getVariableInstanceValueModifier().setVariableValue(variable, value, tenantId);
-        insert(variable);
+    public VariableInstanceEntity create(String name, VariableType type) {
+        VariableInstanceEntity variableInstance = create();
+        variableInstance.setName(name);
+        variableInstance.setType(type);
+        variableInstance.setTypeName(type.getTypeName());
+        return variableInstance;
     }
 
     @Override
     public InternalVariableInstanceQuery createInternalVariableInstanceQuery() {
         return new InternalVariableInstanceQueryImpl(dataManager);
     }
-    
-    @Override
-    public long findVariableInstanceCountByQueryCriteria(VariableInstanceQueryImpl variableInstanceQuery) {
-        return dataManager.findVariableInstanceCountByQueryCriteria(variableInstanceQuery);
-    }
 
-    @Override
-    public List<VariableInstance> findVariableInstancesByQueryCriteria(VariableInstanceQueryImpl variableInstanceQuery) {
-        return dataManager.findVariableInstancesByQueryCriteria(variableInstanceQuery);
-    }
-    
-    @Override
-    public List<VariableInstance> findVariableInstancesByNativeQuery(Map<String, Object> parameterMap) {
-        return dataManager.findVariableInstancesByNativeQuery(parameterMap);
-    }
-
-    @Override
-    public long findVariableInstanceCountByNativeQuery(Map<String, Object> parameterMap) {
-        return dataManager.findVariableInstanceCountByNativeQuery(parameterMap);
-    }
     @Override
     public void delete(VariableInstanceEntity entity, boolean fireDeleteEvent) {
         super.delete(entity, false);

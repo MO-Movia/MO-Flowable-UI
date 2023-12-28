@@ -12,14 +12,9 @@
  */
 package org.flowable.job.service.impl.asyncexecutor.multitenant;
 
-import java.util.List;
-
 import org.flowable.common.engine.impl.cfg.multitenant.TenantInfoHolder;
-import org.flowable.job.service.impl.asyncexecutor.AcquireJobsRunnableConfiguration;
 import org.flowable.job.service.impl.asyncexecutor.AcquireTimerJobsRunnable;
-import org.flowable.job.service.impl.asyncexecutor.AcquireTimerLifecycleListener;
 import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
-import org.flowable.job.service.impl.persistence.entity.TimerJobEntity;
 
 /**
  * Extends the default {@link AcquireTimerJobsRunnable} by setting the 'tenant' context before executing.
@@ -31,15 +26,9 @@ public class TenantAwareAcquireTimerJobsRunnable extends AcquireTimerJobsRunnabl
     protected TenantInfoHolder tenantInfoHolder;
     protected String tenantId;
 
-    public TenantAwareAcquireTimerJobsRunnable(AsyncExecutor asyncExecutor, TenantInfoHolder tenantInfoHolder, String tenantId, int moveExecutorPoolSize) {
-        this(asyncExecutor, tenantInfoHolder, tenantId, null, AcquireJobsRunnableConfiguration.DEFAULT, moveExecutorPoolSize);
-    }
+    public TenantAwareAcquireTimerJobsRunnable(AsyncExecutor asyncExecutor, TenantInfoHolder tenantInfoHolder, String tenantId) {
 
-    public TenantAwareAcquireTimerJobsRunnable(AsyncExecutor asyncExecutor, TenantInfoHolder tenantInfoHolder, String tenantId,
-            AcquireTimerLifecycleListener lifecycleListener, AcquireJobsRunnableConfiguration configuration, int moveExecutorPoolSize) {
-
-        super(asyncExecutor, asyncExecutor.getJobServiceConfiguration().getJobManager(), lifecycleListener,
-            configuration, moveExecutorPoolSize);
+        super(asyncExecutor, asyncExecutor.getJobServiceConfiguration().getJobManager());
         this.tenantInfoHolder = tenantInfoHolder;
         this.tenantId = tenantId;
     }
@@ -55,13 +44,4 @@ public class TenantAwareAcquireTimerJobsRunnable extends AcquireTimerJobsRunnabl
         tenantInfoHolder.clearCurrentTenantId();
     }
 
-    @Override
-    protected void executeMoveTimerJobsToExecutableJobs(List<TimerJobEntity> timerJobs) {
-        try {
-            tenantInfoHolder.setCurrentTenantId(tenantId);
-            super.executeMoveTimerJobsToExecutableJobs(timerJobs);
-        } finally {
-            tenantInfoHolder.clearCurrentTenantId();
-        }
-    }
 }

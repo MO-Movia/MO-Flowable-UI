@@ -104,7 +104,7 @@ public class ReceiveEventTaskActivityBehavior extends AbstractBpmnActivityBehavi
         }
 
         if (key == null) {
-            throw new FlowableException("Could not resolve key for: " + eventDefinitionKey + " for " + executionEntity);
+            throw new FlowableException("Could not resolve key for: " + eventDefinitionKey);
         }
 
         return key.toString();

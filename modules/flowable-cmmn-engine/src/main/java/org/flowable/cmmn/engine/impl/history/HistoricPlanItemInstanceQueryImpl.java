@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
 import org.flowable.cmmn.api.history.HistoricPlanItemInstanceQuery;
-import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.persistence.entity.HistoricPlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
@@ -30,7 +29,7 @@ import org.flowable.common.engine.impl.query.AbstractQuery;
 /**
  * @author Dennis Federico
  */
-public class HistoricPlanItemInstanceQueryImpl extends AbstractQuery<HistoricPlanItemInstanceQuery, HistoricPlanItemInstance>
+public class HistoricPlanItemInstanceQueryImpl extends AbstractQuery<HistoricPlanItemInstanceQuery, HistoricPlanItemInstance> 
         implements HistoricPlanItemInstanceQuery, CacheAwareQuery<HistoricPlanItemInstanceEntity> {
 
     private static final long serialVersionUID = 1L;
@@ -81,13 +80,10 @@ public class HistoricPlanItemInstanceQueryImpl extends AbstractQuery<HistoricPla
     protected String extraValue;
     protected String involvedUser;
     protected Collection<String> involvedGroups;
-    private List<List<String>> safeInvolvedGroups;
     protected boolean onlyStages;
     protected String tenantId;
     protected String tenantIdLike;
     protected boolean withoutTenantId;
-    protected String locale;
-    protected boolean withLocalizationFallback;
 
     public HistoricPlanItemInstanceQueryImpl() {
 
@@ -428,18 +424,6 @@ public class HistoricPlanItemInstanceQueryImpl extends AbstractQuery<HistoricPla
     }
 
     @Override
-    public HistoricPlanItemInstanceQuery locale(String locale) {
-        this.locale = locale;
-        return this;
-    }
-
-    @Override
-    public HistoricPlanItemInstanceQuery withLocalizationFallback() {
-        this.withLocalizationFallback = true;
-        return this;
-    }
-
-    @Override
     public HistoricPlanItemInstanceQuery orderByCreateTime() {
         return orderBy(HistoricPlanItemInstanceQueryProperty.CREATE_TIME);
     }
@@ -511,15 +495,7 @@ public class HistoricPlanItemInstanceQueryImpl extends AbstractQuery<HistoricPla
 
     @Override
     public List<HistoricPlanItemInstance> executeList(CommandContext commandContext) {
-        List<HistoricPlanItemInstance> historicPlanItems = CommandContextUtil.getHistoricPlanItemInstanceEntityManager(commandContext).findByCriteria(this);
-
-        CmmnEngineConfiguration cmmnEngineConfiguration = CommandContextUtil.getCmmnEngineConfiguration(commandContext);
-        if (cmmnEngineConfiguration.getPlanItemLocalizationManager() != null) {
-            for (HistoricPlanItemInstance historicPlanItemInstance : historicPlanItems) {
-                cmmnEngineConfiguration.getPlanItemLocalizationManager().localize(historicPlanItemInstance, locale, withLocalizationFallback);
-            }
-        }
-        return historicPlanItems;
+        return CommandContextUtil.getHistoricPlanItemInstanceEntityManager(commandContext).findByCriteria(this);
     }
 
     public String getPlanItemInstanceId() {
@@ -675,13 +651,5 @@ public class HistoricPlanItemInstanceQueryImpl extends AbstractQuery<HistoricPla
     }
     public boolean isWithoutTenantId() {
         return withoutTenantId;
-    }
-
-    public List<List<String>> getSafeInvolvedGroups() {
-        return safeInvolvedGroups;
-    }
-
-    public void setSafeInvolvedGroups(List<List<String>> safeInvolvedGroups) {
-        this.safeInvolvedGroups = safeInvolvedGroups;
     }
 }

@@ -10,7 +10,7 @@
         <groupId>org.flowable</groupId>
         <artifactId>flowable-root</artifactId>
         <relativePath>../..</relativePath>
-        <version>7.1.0-SNAPSHOT</version>
+        <version>6.6.0.20</version>
     </parent>
 
     <dependencies>
@@ -43,8 +43,8 @@
             <artifactId>joda-time</artifactId>
         </dependency>
         <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
+            <groupId>javax.persistence</groupId>
+            <artifactId>javax.persistence-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -95,7 +95,7 @@
             org.flowable.variable.service.db.mapping.entity
         </flowable.osgi.export.additional>
         <flowable.osgi.import.additional>
-            jakarta.persistence*;resolution:=optional,
+            javax.persistence*;resolution:=optional,
         </flowable.osgi.import.additional>
     </properties>
 

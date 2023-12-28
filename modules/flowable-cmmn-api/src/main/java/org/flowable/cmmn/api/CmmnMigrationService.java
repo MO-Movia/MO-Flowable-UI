@@ -18,8 +18,6 @@ import org.flowable.cmmn.api.migration.CaseInstanceBatchMigrationResult;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationBuilder;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationDocument;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationValidationResult;
-import org.flowable.cmmn.api.migration.HistoricCaseInstanceMigrationBuilder;
-import org.flowable.cmmn.api.migration.HistoricCaseInstanceMigrationDocument;
 
 /**
  * Service to manager case instance migrations.
@@ -31,10 +29,6 @@ public interface CmmnMigrationService {
     CaseInstanceMigrationBuilder createCaseInstanceMigrationBuilder();
 
     CaseInstanceMigrationBuilder createCaseInstanceMigrationBuilderFromCaseInstanceMigrationDocument(CaseInstanceMigrationDocument document);
-    
-    HistoricCaseInstanceMigrationBuilder createHistoricCaseInstanceMigrationBuilder();
-
-    HistoricCaseInstanceMigrationBuilder createHistoricCaseInstanceMigrationBuilderFromHistoricCaseInstanceMigrationDocument(HistoricCaseInstanceMigrationDocument document);
 
     CaseInstanceMigrationValidationResult validateMigrationForCaseInstance(String caseInstanceId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
 
@@ -43,24 +37,14 @@ public interface CmmnMigrationService {
     CaseInstanceMigrationValidationResult validateMigrationForCaseInstancesOfCaseDefinition(String caseDefinitionKey, int caseDefinitionVersion, String caseDefinitionTenantId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
 
     void migrateCaseInstance(String caseInstanceId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
-    
-    void migrateHistoricCaseInstance(String caseInstanceId, HistoricCaseInstanceMigrationDocument historicCaseInstanceMigrationDocument);
 
     void migrateCaseInstancesOfCaseDefinition(String caseDefinitionId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
-    
-    void migrateHistoricCaseInstancesOfCaseDefinition(String caseDefinitionId, HistoricCaseInstanceMigrationDocument historicCaseInstanceMigrationDocument);
 
     void migrateCaseInstancesOfCaseDefinition(String caseDefinitionKey, int caseDefinitionVersion, String caseDefinitionTenantId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
-    
-    void migrateHistoricCaseInstancesOfCaseDefinition(String caseDefinitionKey, int caseDefinitionVersion, String caseDefinitionTenantId, HistoricCaseInstanceMigrationDocument historicCaseInstanceMigrationDocument);
 
     Batch batchMigrateCaseInstancesOfCaseDefinition(String caseDefinitionId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
-    
-    Batch batchMigrateHistoricCaseInstancesOfCaseDefinition(String caseDefinitionId, HistoricCaseInstanceMigrationDocument historicCaseInstanceMigrationDocument);
 
     Batch batchMigrateCaseInstancesOfCaseDefinition(String caseDefinitionKey, int caseDefinitionVersion, String caseDefinitionTenantId, CaseInstanceMigrationDocument caseInstanceMigrationDocument);
-    
-    Batch batchMigrateHistoricCaseInstancesOfCaseDefinition(String caseDefinitionKey, int caseDefinitionVersion, String caseDefinitionTenantId, HistoricCaseInstanceMigrationDocument historicCaseInstanceMigrationDocument);
 
     CaseInstanceBatchMigrationResult getResultsOfBatchCaseInstanceMigration(String migrationBatchId);
 

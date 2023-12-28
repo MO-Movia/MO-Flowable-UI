@@ -37,9 +37,6 @@ import org.flowable.engine.runtime.NativeProcessInstanceQuery;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceBuilder;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
-import org.flowable.engine.runtime.ProcessInstanceStartEventSubscriptionBuilder;
-import org.flowable.engine.runtime.ProcessInstanceStartEventSubscriptionDeletionBuilder;
-import org.flowable.engine.runtime.ProcessInstanceStartEventSubscriptionModificationBuilder;
 import org.flowable.engine.task.Event;
 import org.flowable.entitylink.api.EntityLink;
 import org.flowable.eventregistry.api.EventRegistryEventConsumer;
@@ -49,8 +46,6 @@ import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.variable.api.delegate.VariableScope;
 import org.flowable.variable.api.persistence.entity.VariableInstance;
-import org.flowable.variable.api.runtime.NativeVariableInstanceQuery;
-import org.flowable.variable.api.runtime.VariableInstanceQuery;
 
 /**
  * @author Tom Baeyens
@@ -336,15 +331,6 @@ public interface RuntimeService {
     void deleteProcessInstance(String processInstanceId, String deleteReason);
 
     /**
-     * Delete a collection of existing runtime process instance.
-     *
-     * @param processInstanceIds Set of ids of process instances to delete, cannot be null.
-     * @param deleteReason reason for deleting, can be null.
-     * @throws FlowableObjectNotFoundException when no process instance is found with the given id.
-     */
-    void bulkDeleteProcessInstances(Collection<String> processInstanceIds, String deleteReason);
-
-    /**
      * Finds the activity ids for all executions that are waiting in activities. This is a list because a single activity can be active multiple times.
      *
      * @param executionId
@@ -438,49 +424,9 @@ public interface RuntimeService {
      *     new businessKey value
      */
     void updateBusinessKey(String processInstanceId, String businessKey);
-    
-    /**
-     * Updates the business status for the provided process instance
-     *
-     * @param processInstanceId
-     *     id of the process instance to set the business status, cannot be null
-     * @param businessStatus
-     *     new business status value
-     */
-    void updateBusinessStatus(String processInstanceId, String businessStatus);
 
     // Identity Links
     // ///////////////////////////////////////////////////////////////
-
-    /**
-     * Set the new owner of a process instance.
-     *
-     * @param processInstanceId the id of the process to set its new owner
-     * @param userId the id of the user to set as the new owner
-     */
-    void setOwner(String processInstanceId, String userId);
-
-    /**
-     * Removes the owner of a process instance.
-     *
-     * @param processInstanceId the id of the process to remove the owner from
-     */
-    void removeOwner(String processInstanceId);
-
-    /**
-     * Set the new assignee of a process instance.
-     *
-     * @param processInstanceId the id of the process to set its new assignee
-     * @param userId the id of the user to set as the new assignee
-     */
-    void setAssignee(String processInstanceId, String userId);
-
-    /**
-     * Removes the assignee of a process instance.
-     *
-     * @param processInstanceId the id of the process to remove the assignee from
-     */
-    void removeAssignee(String processInstanceId);
 
     /**
      * Involves a user with a process instance. The type of identity link is defined by the given identityLinkType.
@@ -904,16 +850,6 @@ public interface RuntimeService {
      *     collection containing name of variables to remove.
      */
     void removeVariablesLocal(String executionId, Collection<String> variableNames);
-    
-    /**
-     * Creates a new programmatic query to search for {@link VariableInstance}s.
-     */
-    VariableInstanceQuery createVariableInstanceQuery();
-
-    /**
-     * Returns a new {@link org.flowable.common.engine.api.query.NativeQuery} for variable instances.
-     */
-    NativeVariableInstanceQuery createNativeVariableInstanceQuery();
 
     /**
      * All DataObjects visible from the given execution scope (including parent scopes).
@@ -1360,34 +1296,6 @@ public interface RuntimeService {
     void addEventRegistryConsumer(EventRegistryEventConsumer eventConsumer);
     
     void removeEventRegistryConsumer(EventRegistryEventConsumer eventConsumer);
-
-    /**
-     * Creates a new event subscription builder to register a subscription to start a new process instance based on an event with a particular set of
-     * correlation parameter values. In order for this to work, the process definition needs to have an event-registry based start event with a
-     * dynamic, manual subscription based behavior and the registered correlation parameter values within the builder need to be based on
-     * actual correlation parameter definitions within the event model the start event is based on.
-     * Register one or more correlation parameter value with in the builder before invoking the
-     * {@link ProcessInstanceStartEventSubscriptionBuilder#subscribe()} method to create and register the subscription.
-     *
-     * @return the subscription builder
-     */
-    ProcessInstanceStartEventSubscriptionBuilder createProcessInstanceStartEventSubscriptionBuilder();
-
-    /**
-     * Creates a new event subscription modification builder to modify one or more previously registered process start event subscriptions based
-     * on a particular process definition and with an optional combination of correlation parameter values.
-     *
-     * @return the subscription modification builder
-     */
-    ProcessInstanceStartEventSubscriptionModificationBuilder createProcessInstanceStartEventSubscriptionModificationBuilder();
-
-    /**
-     * Creates a new event subscription deletion builder delete one or more previously registered process start event subscriptions based
-     * on a particular process definition and with an optional combination of correlation parameter values.
-     *
-     * @return the subscription deletion builder
-     */
-    ProcessInstanceStartEventSubscriptionDeletionBuilder createProcessInstanceStartEventSubscriptionDeletionBuilder();
 
     /**
      * Sets the name for the process instance with the given id.

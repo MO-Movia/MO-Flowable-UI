@@ -4,8 +4,8 @@
     "name": "My channel",
     "description": "My channel description",
     "channelType": "inbound",
-    "type": "expression",
-    "adapterDelegateExpression": "${testInboundEventChannelAdapter}",
+    "type": "jms",
+    "destination": "testQueue",
     "deserializerType": "json",
     "channelEventKeyDetection": {
         "fixedValue": "myEvent"

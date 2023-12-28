@@ -12,7 +12,6 @@
  */
 package org.flowable.dmn.engine.impl.persistence.entity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +34,4 @@ public interface HistoricDecisionExecutionEntityManager extends EntityManager<Hi
 
     long findHistoricDecisionExecutionCountByNativeQuery(Map<String, Object> parameterMap);
 
-    void delete(HistoricDecisionExecutionQueryImpl query);
-    
-    void bulkDeleteHistoricDecisionExecutionsByInstanceIdsAndScopeType(Collection<String> instanceIds, String scopeType);
 }

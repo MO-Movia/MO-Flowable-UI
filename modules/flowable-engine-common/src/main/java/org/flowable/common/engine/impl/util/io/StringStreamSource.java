@@ -14,34 +14,34 @@ package org.flowable.common.engine.impl.util.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
+
+import org.flowable.common.engine.api.FlowableException;
 
 /**
  * @author Tom Baeyens
  */
 public class StringStreamSource implements StreamSource {
 
-    protected final String string;
-    protected final Charset byteArrayEncoding;
+    String string;
+    String byteArrayEncoding = "utf-8";
 
     public StringStreamSource(String string) {
-        this(string, StandardCharsets.UTF_8);
+        this.string = string;
     }
 
     public StringStreamSource(String string, String byteArrayEncoding) {
-        this.string = string;
-        this.byteArrayEncoding = Charset.forName(byteArrayEncoding);
-    }
-
-    public StringStreamSource(String string, Charset byteArrayEncoding) {
         this.string = string;
         this.byteArrayEncoding = byteArrayEncoding;
     }
 
     @Override
     public InputStream getInputStream() {
-        return new ByteArrayInputStream(byteArrayEncoding == null ? string.getBytes() : string.getBytes(byteArrayEncoding));
+        try {
+            return new ByteArrayInputStream(byteArrayEncoding == null ? string.getBytes() : string.getBytes(byteArrayEncoding));
+        } catch (UnsupportedEncodingException e) {
+            throw new FlowableException("Unsupported encoding for string", e);
+        }
     }
 
     @Override

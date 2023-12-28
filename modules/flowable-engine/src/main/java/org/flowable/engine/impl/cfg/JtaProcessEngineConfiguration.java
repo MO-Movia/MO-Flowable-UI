@@ -12,7 +12,7 @@
  */
 package org.flowable.engine.impl.cfg;
 
-import jakarta.transaction.TransactionManager;
+import javax.transaction.TransactionManager;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.cfg.jta.JtaTransactionContextFactory;

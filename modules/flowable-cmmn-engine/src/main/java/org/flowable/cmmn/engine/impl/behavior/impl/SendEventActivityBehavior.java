@@ -54,7 +54,7 @@ public class SendEventActivityBehavior extends TaskActivityBehavior{
     @Override
     public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
 
-        String key = getEventKey(planItemInstanceEntity);
+        String key = getEventKey();
 
         EventRegistry eventRegistry = CommandContextUtil.getEventRegistry();
 
@@ -86,7 +86,7 @@ public class SendEventActivityBehavior extends TaskActivityBehavior{
         }
 
         if (eventModel == null) {
-            throw new FlowableException("No event model found for event key " + key + " for " + planItemInstanceEntity);
+            throw new FlowableException("No event model found for event key " + key);
         }
         return eventModel;
     }
@@ -133,7 +133,7 @@ public class SendEventActivityBehavior extends TaskActivityBehavior{
         if (channelKeys.isEmpty()) {
             if (!sendOnSystemChannel) {
                 // If the event is going to be send on the system channel then it is allowed to not define any other channels
-                throw new FlowableException("No channel keys configured for " + planItemInstanceEntity);
+                throw new FlowableException("No channel keys configured");
             } else {
                 return Collections.emptyList();
             }
@@ -152,11 +152,11 @@ public class SendEventActivityBehavior extends TaskActivityBehavior{
         return channelModels;
     }
 
-    protected String getEventKey(PlanItemInstanceEntity planItemInstanceEntity) {
+    protected String getEventKey() {
         if (StringUtils.isNotEmpty(serviceTask.getEventType())) {
             return serviceTask.getEventType();
         } else {
-            throw new FlowableException("No event key configured for " + serviceTask.getId() + " for " + planItemInstanceEntity);
+            throw new FlowableException("No event key configured for " + serviceTask.getId());
         }
     }
 

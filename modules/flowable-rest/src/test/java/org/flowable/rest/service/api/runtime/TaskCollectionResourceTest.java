@@ -16,7 +16,6 @@ package org.flowable.rest.service.api.runtime;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -26,10 +25,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.flowable.engine.impl.cmd.ChangeDeploymentTenantIdCmd;
-import org.flowable.engine.runtime.ActivityInstance;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
@@ -49,7 +46,6 @@ import net.javacrumbs.jsonunit.core.Option;
  * Test for all REST-operations related to the Task collection resource.
  *
  * @author Frederik Heremans
- * @author Christopher Welsch
  */
 public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
 
@@ -171,20 +167,12 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
             String url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION);
             assertResultsPresentInDataResponse(url, adhocTask.getId(), processTask.getId());
 
-            // ID filtering
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?taskId=" + encode(adhocTask.getId());
-            assertResultsPresentInDataResponse(url, adhocTask.getId());
-
             // Name filtering
             url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?name=" + encode("Name one");
             assertResultsPresentInDataResponse(url, adhocTask.getId());
 
             // Name like filtering
             url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?nameLike=" + encode("%one");
-            assertResultsPresentInDataResponse(url, adhocTask.getId());
-            
-            // Name like ignore case filtering
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?nameLikeIgnoreCase=" + encode("%ONE");
             assertResultsPresentInDataResponse(url, adhocTask.getId());
 
             // Description filtering
@@ -292,13 +280,6 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
             
             url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?processInstanceIdWithChildren=nonexisting";
             assertResultsPresentInDataResponse(url);
-            
-            // Without process instance id
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?withoutProcessInstanceId=true";
-            assertResultsPresentInDataResponse(url, adhocTask.getId());
-            
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?withoutProcessInstanceId=false";
-            assertResultsPresentInDataResponse(url, processTask.getId(), adhocTask.getId());
 
             // Execution filtering
             Execution taskExecution = runtimeService.createExecutionQuery().activityId("processTask").singleResult();
@@ -380,15 +361,6 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
             url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?category=" + encode("some-category");
             assertResultsPresentInDataResponse(url, adhocTask.getId());
 
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?categoryIn=" + encode("some-other-category,some-category");
-            assertResultsPresentInDataResponse(url, adhocTask.getId());
-
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?categoryNotIn=" + encode("some-category");
-            assertResultsPresentInDataResponse(url);
-
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?withoutCategory=true";
-            assertResultsPresentInDataResponse(url, processTask.getId());
-
             // Suspend process-instance to have a suspended task
             runtimeService.suspendProcessInstanceById(processInstance.getId());
 
@@ -402,10 +374,6 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
 
             url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?includeTaskLocalVariables=true";
             CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + url), HttpStatus.SC_OK);
-            
-            // Without scope id
-            url = RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?withoutScopeId=true";
-            assertResultsPresentInDataResponse(url, processTask.getId(), adhocTask.getId());
 
             // Check status and size
             JsonNode dataNode = objectMapper.readTree(response.getEntity().getContent()).get("data");
@@ -469,140 +437,4 @@ public class TaskCollectionResourceTest extends BaseSpringRestTestCase {
             }
         }
     }
-    @Test
-    public void testBulkUpdateTaskAssignee() throws IOException {
-
-        taskService.createTaskBuilder().id("taskID1").create();
-        taskService.createTaskBuilder().id("taskID2").create();
-        taskService.createTaskBuilder().id("taskID3").create();
-
-        ObjectNode requestNode = objectMapper.createObjectNode();
-        requestNode.put("assignee", "admin");
-        requestNode.putArray("taskIds").add("taskID1").add("taskID3");
-
-        HttpPut httpPut = new HttpPut(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION));
-        httpPut.setEntity(new StringEntity(requestNode.toString()));
-        executeRequest(httpPut, HttpStatus.SC_OK);
-
-        assertThat(taskService.createTaskQuery().taskId("taskID1").singleResult().getAssignee()).isEqualTo("admin");
-        assertThat(taskService.createTaskQuery().taskId("taskID2").singleResult().getAssignee()).isNull();
-        assertThat(taskService.createTaskQuery().taskId("taskID3").singleResult().getAssignee()).isEqualTo("admin");
-
-        taskService.deleteTask("taskID1", true);
-        taskService.deleteTask("taskID2", true);
-        taskService.deleteTask("taskID3", true);
-
-    }
-    @Test
-    public void testInvalidBulkUpdateTasks() throws IOException {
-        ObjectNode requestNode = objectMapper.createObjectNode();
-
-        HttpPut httpPut = new HttpPut(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION));
-        httpPut.setEntity(null);
-        executeRequest(httpPut, HttpStatus.SC_BAD_REQUEST);
-
-        httpPut = new HttpPut(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION));
-        requestNode.put("name", "testName");
-        httpPut.setEntity(new StringEntity(requestNode.toString()));
-        CloseableHttpResponse response = executeRequest(httpPut, HttpStatus.SC_BAD_REQUEST);
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS)
-                .isEqualTo("{"
-                        + "message:'Bad request',"
-                        + "exception:'taskIds can not be null for bulk update tasks requests'"
-                        + "}");
-
-        requestNode.putArray("taskIds").add("invalidId");
-
-        httpPut.setEntity(new StringEntity(requestNode.toString()));
-        executeRequest(httpPut, HttpStatus.SC_NOT_FOUND);
-
-    }
-
-    @Test
-    @Deployment(resources = {
-            "org/flowable/rest/service/api/runtime/simpleParallelCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleInnerCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleProcessWithUserTasks.bpmn20.xml",
-            "org/flowable/rest/service/api/oneTaskProcess.bpmn20.xml"
-    })
-    public void testQueryByRootScopeId() throws IOException {
-        runtimeService.startProcessInstanceByKey("oneTaskProcess");
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleParallelCallActivity");
-
-        List<String> taskExecutionIds = runtimeService.createExecutionQuery().rootProcessInstanceId(processInstance.getId())
-                .processDefinitionKey("oneTaskProcess").activityId("theTask").list().stream().map(Execution::getId).toList();
-
-        Task task1 = taskService.createTaskQuery().executionId(taskExecutionIds.get(0)).singleResult();
-        Task task2 = taskService.createTaskQuery().executionId(taskExecutionIds.get(1)).singleResult();
-        Task task3 = taskService.createTaskQuery().executionId(taskExecutionIds.get(2)).singleResult();
-
-        Execution formTask1Execution = runtimeService.createExecutionQuery().rootProcessInstanceId(processInstance.getId()).activityId("formTask1")
-                .singleResult();
-        Task formTask1 = taskService.createTaskQuery().executionId(formTask1Execution.getId()).singleResult();
-
-        Execution taskForm2Execution = runtimeService.createExecutionQuery().rootProcessInstanceId(processInstance.getId()).activityId("formTask2")
-                .singleResult();
-        Task formTask2 = taskService.createTaskQuery().executionId(taskForm2Execution.getId()).singleResult();
-
-        String url = SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?rootScopeId="
-                + processInstance.getId();
-
-        CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
-
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + "  data: ["
-                        + "    { id: '" + task1.getId() + "' },"
-                        + "    { id: '" + task2.getId() + "' },"
-                        + "    { id: '" + task3.getId() + "' },"
-                        + "    { id: '" + formTask1.getId() + "' },"
-                        + "    { id: '" + formTask2.getId() + "' }"
-                        + "  ]"
-                        + "}");
-    }
-
-    @Test
-    @Deployment(resources = {
-            "org/flowable/rest/service/api/runtime/simpleParallelCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleInnerCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleProcessWithUserTasks.bpmn20.xml",
-            "org/flowable/rest/service/api/oneTaskProcess.bpmn20.xml"
-    })
-    public void testQueryByParentScopeId() throws IOException {
-        runtimeService.startProcessInstanceByKey("oneTaskProcess");
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleParallelCallActivity");
-
-        Execution formTask1Execution = runtimeService.createExecutionQuery().rootProcessInstanceId(processInstance.getId()).activityId("formTask1")
-                .singleResult();
-        Task formTask1 = taskService.createTaskQuery().executionId(formTask1Execution.getId()).singleResult();
-
-        Execution taskForm2Execution = runtimeService.createExecutionQuery().rootProcessInstanceId(processInstance.getId()).activityId("formTask2")
-                .singleResult();
-        Task formTask2 = taskService.createTaskQuery().executionId(taskForm2Execution.getId()).singleResult();
-
-
-        String url = SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_TASK_COLLECTION) + "?parentScopeId="
-                + taskForm2Execution.getProcessInstanceId();
-
-        CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
-
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + "  data: ["
-                        + "    { id: '" + formTask1.getId() + "' },"
-                        + "    { id: '" + formTask2.getId() + "' }"
-
-                        + "  ]"
-                        + "}");
-
-    }
-
 }

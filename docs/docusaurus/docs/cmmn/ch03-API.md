@@ -308,7 +308,7 @@ To make working with case variables easier, a set of out-of-the-box functions is
 
 -   **variables:containsAny(varName, value1, value2, …​)** : similar to the *contains* function, but *true* will be returned if **any** (and not all) the passed values is contained in the variable.
 
--   **variables:base64(varName)** : converts a Binary or String variable to a Base64 String
+-   \*variables:base64(varName): converts a Binary or String Variable in Base64 String
 
 -   Comparator functions:
 
@@ -350,37 +350,49 @@ By default history data is stored forever, this can cause the history tables to 
 
 ### Automatic History Cleaning Configuration
 
-Automatic cleanup of HistoricCaseInstances is disabled by default but can be enabled and configured programmatically.  Once enabled the default is to run a cleanup job at 1 AM to delete all HistoricCaseInstances and associated data that have ended 365 days prior or older.
-The deletion of the historical processes is done using the Flowable Batch mechanism, by scheduling jobs that are going to delete the processes in batches and store the information about what was done in a batch table.
+Automatic cleanup of HistoricCaseInstances is disabled by default but can be enabled and configured programmatically.  Once enabled the default is to run a cleanup job at 1 AM to delete all HistoricCaseInstances and associated data that have ended 365 days prior or older. 
 
     CmmnEngine cmmnEngine = CmmnEngineConfiguration.
         .createProcessEngineConfigurationFromResourceDefault()
         .setEnableHistoryCleaning(true)
         .setHistoryCleaningTimeCycleConfig("0 0 1 * * ?")
-        .setCleanInstancesEndedAfter(Duration.ofDays(365))
+        .setCleanInstancesEndedAfterNumberOfDays(365)
         .buildCmmnEngine();
  
 Spring properties set in an application.properties or externalized configuration are also available:
  
      flowable.enable-history-cleaning=true
-     flowable.history-cleaning-after=365d
+     flowable.history-cleaning-after-days=365
      flowable.history-cleaning-cycle=0 0 1 * * ?
  
 ### Manually Deleting History
 
-[//]: # (TODO change examples)
-
-Manually cleaning history can be accomplished by executing methods on the CmmnHistoryService query builders.
+Manually cleaning history can accomplished by executing methods on the CmmnHistoryService query builders.
 
 Delete all HistoricCaseInstances and their related data that are older than one year.
 
-     int numberOfCasesInBatch = 10;
      Calendar cal = new GregorianCalendar();
      cal.set(Calendar.YEAR, cal.get(Calendar.YEAR) - 1);
      cmmnHistoryService.createHistoricCaseInstanceQuery()
        .finishedBefore(cal.getTime())
-       .deleteSequentiallyUsingBatch(numberOfCasesInBatch, "Custom Delete Batch");
+       .deleteWithRelatedData();
 
+Delete just HistoricCaseInstances older than one year.
+
+    Calendar cal = new GregorianCalendar();
+    cal.set(Calendar.YEAR, cal.get(Calendar.YEAR) - 1);
+    cmmnHistoryService.createHistoricCaseInstanceQuery()
+      .finishedBefore(cal.getTime())
+      .delete();
+      
+Delete just HistoricTaskInstances older than one year.
+
+    Calendar cal = new GregorianCalendar();
+    cal.set(Calendar.YEAR, cal.get(Calendar.YEAR) - 1);
+    cmmnHistoryService.createHistoricTaskInstanceQuery()
+      .finishedBefore(cal.getTime())
+      .delete();
+          
 ## Unit testing
 
 Cases are an integral part of software projects and they should be tested in the same way normal application logic is tested: with unit tests.

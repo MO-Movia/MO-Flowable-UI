@@ -134,7 +134,7 @@ public abstract class ReflectUtil {
     public static Object instantiate(String className) {
         try {
             Class<?> clazz = loadClass(className);
-            return clazz.getConstructor().newInstance();
+            return clazz.newInstance();
         } catch (Exception e) {
             throw new FlowableException("couldn't instantiate class " + className, e);
         }
@@ -210,7 +210,9 @@ public abstract class ReflectUtil {
         try {
             field.setAccessible(true);
             field.set(object, value);
-        } catch (IllegalArgumentException | IllegalAccessException e) {
+        } catch (IllegalArgumentException e) {
+            throw new FlowableException("Could not set field " + field, e);
+        } catch (IllegalAccessException e) {
             throw new FlowableException("Could not set field " + field, e);
         }
     }

@@ -45,7 +45,8 @@ public abstract class AbstractExternalWorkerJobCmd implements Command<Void> {
         ExternalWorkerJobEntity externalWorkerJob = resolveJob(commandContext);
 
         if (!ScopeTypes.CMMN.equals(externalWorkerJob.getScopeType())) {
-            throw new FlowableException(externalWorkerJob + " is not cmmn scoped. This command can only handle cmmn scoped external worker jobs");
+            throw new FlowableException(
+                    "External worker job with id " + externalJobId + " is not cmmn scoped. This command can only handle cmmn scoped external worker jobs");
         }
 
         runJobLogic(externalWorkerJob, commandContext);

@@ -49,11 +49,9 @@ public class EventPayloadToXmlStringSerializer implements OutboundEventSerialize
 
             if (!eventInstance.getPayloadInstances().isEmpty()) {
                 for (EventPayloadInstance payloadInstance : eventInstance.getPayloadInstances()) {
-                    if (!payloadInstance.getEventPayloadDefinition().isNotForBody()) {
-                        Element element = doc.createElement(payloadInstance.getDefinitionName());
-                        element.setTextContent(payloadInstance.getValue().toString());
-                        rootElement.appendChild(element);
-                    }
+                    Element element = doc.createElement(payloadInstance.getDefinitionName());
+                    element.setTextContent(payloadInstance.getValue().toString());
+                    rootElement.appendChild(element);
                 }
             }
 
@@ -64,7 +62,7 @@ public class EventPayloadToXmlStringSerializer implements OutboundEventSerialize
             return writer.toString();
 
         } catch (Exception e) {
-            throw new FlowableException("XML serialization failed for " + eventInstance, e);
+            throw new FlowableException("Could not serialize eventInstance to xml string", e);
         }
     }
 

@@ -29,12 +29,10 @@ import org.flowable.common.engine.impl.calendar.DurationHelper;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.common.engine.impl.util.ExceptionUtil;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.util.CommandContextUtil;
-import org.flowable.job.api.FlowableUnrecoverableJobException;
 import org.flowable.job.service.JobService;
 import org.flowable.job.service.TimerJobService;
 import org.flowable.job.service.impl.persistence.entity.AbstractRuntimeJobEntity;
@@ -45,7 +43,6 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Saeid Mirzaei
  * @author Joram Barrez
- * @author Filip Hrisafov
  */
 
 public class JobRetryCmd implements Command<Object> {
@@ -99,7 +96,7 @@ public class JobRetryCmd implements Command<Object> {
 
             LOGGER.debug("activity or FailedJobRetryTimerCycleValue is null in job {}. Only decrementing retries.", jobId);
 
-            if (job.getRetries() <= 1 || isUnrecoverableException()) {
+            if (job.getRetries() <= 1) {
                 newJobEntity = jobService.moveJobToDeadLetterJob(job);
             } else {
                 newJobEntity = timerJobService.moveJobToTimerJob(job);
@@ -123,7 +120,7 @@ public class JobRetryCmd implements Command<Object> {
                     jobRetries = durationHelper.getTimes();
                 }
 
-                if (jobRetries <= 1 || isUnrecoverableException()) {
+                if (jobRetries <= 1) {
                     newJobEntity = jobService.moveJobToDeadLetterJob(job);
                 } else {
                     newJobEntity = timerJobService.moveJobToTimerJob(job);
@@ -141,7 +138,7 @@ public class JobRetryCmd implements Command<Object> {
                 newJobEntity.setRetries(jobRetries - 1);
 
             } catch (Exception e) {
-                throw new FlowableException("failedJobRetryTimeCycle has wrong format:" + failedJobRetryTimeCycleValue + " for execution " + executionEntity, e);
+                throw new FlowableException("failedJobRetryTimeCycle has wrong format:" + failedJobRetryTimeCycleValue, exception);
             }
         }
 
@@ -187,10 +184,6 @@ public class JobRetryCmd implements Command<Object> {
             return null;
         }
         return CommandContextUtil.getExecutionEntityManager(commandContext).findById(executionId);
-    }
-
-    protected boolean isUnrecoverableException() {
-        return ExceptionUtil.containsCause(exception, FlowableUnrecoverableJobException.class);
     }
 
 }

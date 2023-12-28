@@ -14,9 +14,6 @@
 package org.flowable.eventsubscription.service.impl.persistence.entity;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -146,11 +143,6 @@ public class EventSubscriptionEntityManagerImpl
     public List<EventSubscriptionEntity> findEventSubscriptionsByExecutionAndType(final String executionId, final String type) {
         return dataManager.findEventSubscriptionsByExecutionAndType(executionId, type);
     }
-    
-    @Override
-    public List<EventSubscriptionEntity> findEventSubscriptionsByProcessInstanceAndType(final String processInstanceId, final String type) {
-        return dataManager.findEventSubscriptionsByProcessInstanceAndType(processInstanceId, type);
-    }
 
     @Override
     public List<EventSubscriptionEntity> findEventSubscriptionsByProcessInstanceAndActivityId(String processInstanceId, String activityId, String type) {
@@ -171,11 +163,6 @@ public class EventSubscriptionEntityManagerImpl
     public List<EventSubscriptionEntity> findEventSubscriptionsByTypeAndProcessDefinitionId(String type, String processDefinitionId, String tenantId) {
         return dataManager.findEventSubscriptionsByTypeAndProcessDefinitionId(type, processDefinitionId, tenantId);
     }
-    
-    @Override
-    public List<EventSubscriptionEntity> findEventSubscriptionsByScopeIdAndType(final String scopeId, final String type) {
-        return dataManager.findEventSubscriptionsByScopeIdAndType(scopeId, type);
-    }
 
     @Override
     public List<EventSubscriptionEntity> findEventSubscriptionsByName(String type, String eventName, String tenantId) {
@@ -195,31 +182,6 @@ public class EventSubscriptionEntityManagerImpl
     @Override
     public void updateEventSubscriptionTenantId(String oldTenantId, String newTenantId) {
         dataManager.updateEventSubscriptionTenantId(oldTenantId, newTenantId);
-    }
-
-    @Override
-    public void updateEventSubscriptionProcessDefinitionId(String oldProcessDefinitionId, String newProcessDefinitionId, String eventType, String activityId, String scopeDefinitionKey, String configuration) {
-        dataManager.updateEventSubscriptionProcessDefinitionId(oldProcessDefinitionId, newProcessDefinitionId, eventType, activityId, scopeDefinitionKey, configuration);
-    }
-
-    @Override
-    public boolean lockEventSubscription(String eventSubscriptionId) {
-        EventSubscriptionServiceConfiguration serviceConfiguration = getServiceConfiguration();
-
-        int lockMillis = (int) serviceConfiguration.getEventSubscriptionLockTime().toMillis();
-        GregorianCalendar lockCal = new GregorianCalendar();
-        lockCal.setTime(serviceConfiguration.getClock().getCurrentTime());
-        lockCal.add(Calendar.MILLISECOND, lockMillis);
-        Date lockExpirationTime = lockCal.getTime();
-
-        String lockOwner = serviceConfiguration.getLockOwner();
-
-        return dataManager.updateEventSubscriptionLockTime(eventSubscriptionId, lockExpirationTime, lockOwner, getClock().getCurrentTime());
-    }
-
-    @Override
-    public void unlockEventSubscription(String eventSubscriptionId) {
-        dataManager.clearEventSubscriptionLockTime(eventSubscriptionId);
     }
 
     @Override
@@ -245,11 +207,6 @@ public class EventSubscriptionEntityManagerImpl
     @Override
     public void deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(String scopeDefinitionId, String scopeType) {
         dataManager.deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(scopeDefinitionId, scopeType);
-    }
-
-    @Override
-    public void deleteEventSubscriptionsForProcessDefinitionAndProcessStartEvent(String processDefinitionId, String eventType, String activityId, String configuration) {
-        dataManager.deleteEventSubscriptionsForProcessDefinitionAndProcessStartEvent(processDefinitionId, eventType, activityId, configuration);
     }
 
     protected SignalEventSubscriptionEntity insertSignalEvent(EventSubscriptionBuilder eventSubscriptionBuilder) {
@@ -281,7 +238,6 @@ public class EventSubscriptionEntityManagerImpl
         subscriptionEntity.setSubScopeId(eventSubscriptionBuilder.getSubScopeId());
         subscriptionEntity.setScopeId(eventSubscriptionBuilder.getScopeId());
         subscriptionEntity.setScopeDefinitionId(eventSubscriptionBuilder.getScopeDefinitionId());
-        subscriptionEntity.setScopeDefinitionKey(eventSubscriptionBuilder.getScopeDefinitionKey());
         subscriptionEntity.setScopeType(eventSubscriptionBuilder.getScopeType());
         
         if (eventSubscriptionBuilder.getTenantId() != null) {
@@ -294,6 +250,7 @@ public class EventSubscriptionEntityManagerImpl
     }
     
     protected MessageEventSubscriptionEntity insertMessageEvent(EventSubscriptionBuilder eventSubscriptionBuilder) {
+        
         MessageEventSubscriptionEntity subscriptionEntity = createMessageEventSubscription();
         subscriptionEntity.setExecutionId(eventSubscriptionBuilder.getExecutionId());
         subscriptionEntity.setProcessInstanceId(eventSubscriptionBuilder.getProcessInstanceId());
@@ -301,7 +258,6 @@ public class EventSubscriptionEntityManagerImpl
 
         subscriptionEntity.setActivityId(eventSubscriptionBuilder.getActivityId());
         subscriptionEntity.setProcessDefinitionId(eventSubscriptionBuilder.getProcessDefinitionId());
-        subscriptionEntity.setScopeDefinitionKey(eventSubscriptionBuilder.getScopeDefinitionKey());
         if (eventSubscriptionBuilder.getTenantId() != null) {
             subscriptionEntity.setTenantId(eventSubscriptionBuilder.getTenantId());
         }
@@ -314,6 +270,7 @@ public class EventSubscriptionEntityManagerImpl
     }
     
     protected CompensateEventSubscriptionEntity insertCompensationEvent(EventSubscriptionBuilder eventSubscriptionBuilder) {
+        
         CompensateEventSubscriptionEntity eventSubscription = createCompensateEventSubscription();
         eventSubscription.setExecutionId(eventSubscriptionBuilder.getExecutionId());
         eventSubscription.setProcessInstanceId(eventSubscriptionBuilder.getProcessInstanceId());
@@ -331,7 +288,6 @@ public class EventSubscriptionEntityManagerImpl
     protected GenericEventSubscriptionEntity insertGenericEvent(EventSubscriptionBuilder eventSubscriptionBuilder) {
         GenericEventSubscriptionEntity eventSubscription = createGenericEventSubscription();
         eventSubscription.setEventType(eventSubscriptionBuilder.getEventType());
-        eventSubscription.setEventName(eventSubscriptionBuilder.getEventName());
         eventSubscription.setExecutionId(eventSubscriptionBuilder.getExecutionId());
         eventSubscription.setProcessInstanceId(eventSubscriptionBuilder.getProcessInstanceId());
         eventSubscription.setActivityId(eventSubscriptionBuilder.getActivityId());
@@ -339,7 +295,6 @@ public class EventSubscriptionEntityManagerImpl
         eventSubscription.setSubScopeId(eventSubscriptionBuilder.getSubScopeId());
         eventSubscription.setScopeId(eventSubscriptionBuilder.getScopeId());
         eventSubscription.setScopeDefinitionId(eventSubscriptionBuilder.getScopeDefinitionId());
-        eventSubscription.setScopeDefinitionKey(eventSubscriptionBuilder.getScopeDefinitionKey());
         eventSubscription.setScopeType(eventSubscriptionBuilder.getScopeType());
 
         if (eventSubscriptionBuilder.getTenantId() != null) {

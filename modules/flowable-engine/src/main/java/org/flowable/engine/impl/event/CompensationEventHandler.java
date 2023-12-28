@@ -50,7 +50,7 @@ public class CompensationEventHandler implements EventHandler {
 
         String configuration = eventSubscription.getConfiguration();
         if (configuration == null) {
-            throw new FlowableException("Compensating execution not set for " + eventSubscription);
+            throw new FlowableException("Compensating execution not set for compensate event subscription with id " + eventSubscription.getId());
         }
 
         ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
@@ -59,7 +59,7 @@ public class CompensationEventHandler implements EventHandler {
         String processDefinitionId = compensatingExecution.getProcessDefinitionId();
         Process process = ProcessDefinitionUtil.getProcess(processDefinitionId);
         if (process == null) {
-            throw new FlowableException("Cannot start process instance. Process model (id = " + processDefinitionId + ") could not be found for " + eventSubscription);
+            throw new FlowableException("Cannot start process instance. Process model (id = " + processDefinitionId + ") could not be found");
         }
 
         FlowElement flowElement = process.getFlowElement(eventSubscription.getActivityId(), true);

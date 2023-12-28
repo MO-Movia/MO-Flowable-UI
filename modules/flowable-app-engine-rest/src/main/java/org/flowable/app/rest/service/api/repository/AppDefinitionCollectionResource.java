@@ -17,6 +17,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.app.api.AppRepositoryService;
 import org.flowable.app.api.repository.AppDefinitionQuery;
 import org.flowable.app.engine.impl.repository.AppDefinitionQueryProperty;
@@ -94,7 +96,7 @@ public class AppDefinitionCollectionResource {
             @ApiResponse(code = 400, message = "Indicates a parameter was passed in the wrong format . The status-message contains additional information.")
     })
     @GetMapping(value = "/app-repository/app-definitions", produces = "application/json")
-    public DataResponse<AppDefinitionResponse> getForms(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<AppDefinitionResponse> getForms(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         AppDefinitionQuery appDefinitionQuery = appRepositoryService.createAppDefinitionQuery();
 
         // Populate filter-parameters
@@ -156,7 +158,8 @@ public class AppDefinitionCollectionResource {
             }
         }
         if (allRequestParams.containsKey("latest")) {
-            if (Boolean.parseBoolean(allRequestParams.get("latest"))) {
+            boolean latest = Boolean.parseBoolean(allRequestParams.get("latest"));
+            if (latest) {
                 appDefinitionQuery.latestVersion();
             }
         }

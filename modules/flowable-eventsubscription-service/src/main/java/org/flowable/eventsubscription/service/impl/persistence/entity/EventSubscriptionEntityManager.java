@@ -42,12 +42,6 @@ public interface EventSubscriptionEntityManager extends EntityManager<EventSubsc
 
     void updateEventSubscriptionTenantId(String oldTenantId, String newTenantId);
 
-    void updateEventSubscriptionProcessDefinitionId(String oldProcessDefinitionId, String newProcessDefinitionId, String eventType, String activityId, String scopeDefinitionKey, String configuration);
-
-    boolean lockEventSubscription(String eventSubscriptionId);
-
-    void unlockEventSubscription(String eventSubscriptionId);
-
     /* Delete */
 
     void deleteEventSubscriptionsForProcessDefinition(String processDefinitionId);
@@ -60,8 +54,6 @@ public interface EventSubscriptionEntityManager extends EntityManager<EventSubsc
 
     void deleteEventSubscriptionsForScopeDefinitionIdAndTypeAndNullScopeId(String scopeDefinitionId, String scopeType);
 
-    void deleteEventSubscriptionsForProcessDefinitionAndProcessStartEvent(String processDefinitionId, String eventType, String activityId, String configuration);
-
     /* Find (generic) */
 
     List<EventSubscriptionEntity> findEventSubscriptionsByName(String type, String eventName, String tenantId);
@@ -72,16 +64,12 @@ public interface EventSubscriptionEntityManager extends EntityManager<EventSubsc
 
     List<EventSubscriptionEntity> findEventSubscriptionsByExecutionAndType(String executionId, String type);
     
-    List<EventSubscriptionEntity> findEventSubscriptionsByProcessInstanceAndType(String processInstanceId, String type);
-    
-    List<EventSubscriptionEntity> findEventSubscriptionsBySubScopeId(String subScopeId);
+    List<EventSubscriptionEntity> findEventSubscriptionsBySubScopeId(final String subScopeId);
 
     List<EventSubscriptionEntity> findEventSubscriptionsByProcessInstanceAndActivityId(String processInstanceId, String activityId, String type);
 
     List<EventSubscriptionEntity> findEventSubscriptionsByTypeAndProcessDefinitionId(String type, String processDefinitionId, String tenantId);
 
-    List<EventSubscriptionEntity> findEventSubscriptionsByScopeIdAndType(String scopeId, String type);
-    
     List<EventSubscription> findEventSubscriptionsByQueryCriteria(EventSubscriptionQueryImpl eventSubscriptionQueryImpl);
 
     long findEventSubscriptionCountByQueryCriteria(EventSubscriptionQueryImpl eventSubscriptionQueryImpl);

@@ -12,7 +12,6 @@
  */
 package org.flowable.spring.boot.cmmn;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,33 +55,11 @@ public class FlowableCmmnProperties {
     private boolean enabled = true;
 
     /**
-     * Enables extra checks on the DMN xml that is parsed.
-     * Unfortunately, this feature is not available on some platforms, hence you need to disable if your platform does not allow the use of
+     * Enables extra checks on the DMN xml that is parsed. See https://www.flowable.org/docs/userguide/index.html#advanced.safe.bpmn.xml
+     * Unfortunately, this feature is not available on some platforms (JDK 6, JBoss), hence you need to disable if your platform does not allow the use of
      * StaxSource during XML parsing.
      */
     private boolean enableSafeXml = true;
-
-    /**
-     * Whether case instances should be started asynchronously from an event registry.
-     * This is a fallback applied for all events. We suggest modelling your cases appropriately, i.e. marking the start of the case as async
-     */
-    private boolean eventRegistryStartCaseInstanceAsync = false;
-
-    /**
-     * Whether case instances should be started asynchronously from an event registry.
-     * This is a fallback applied for all events. We suggest modelling your cases appropriately, i.e. marking the start of the case as async
-     */
-
-    /**
-     * Whether the check for unique case instances should be done with a lock.
-     * We do not recommend changing this property, unless you have been explicitly asked by a Flowable maintainer.
-     */
-    private boolean eventRegistryUniqueCaseInstanceCheckWithLock = true;
-
-    /**
-     * The amount of time for the lock of a unique start event.
-     */
-    private Duration eventRegistryUniqueCaseInstanceStartLockTime = Duration.ofMinutes(10);
 
     /**
      * The servlet configuration for the CMMN Rest API.
@@ -136,30 +113,6 @@ public class FlowableCmmnProperties {
 
     public void setEnableSafeXml(boolean enableSafeXml) {
         this.enableSafeXml = enableSafeXml;
-    }
-
-    public boolean isEventRegistryStartCaseInstanceAsync() {
-        return eventRegistryStartCaseInstanceAsync;
-    }
-
-    public void setEventRegistryStartCaseInstanceAsync(boolean eventRegistryStartCaseInstanceAsync) {
-        this.eventRegistryStartCaseInstanceAsync = eventRegistryStartCaseInstanceAsync;
-    }
-
-    public boolean isEventRegistryUniqueCaseInstanceCheckWithLock() {
-        return eventRegistryUniqueCaseInstanceCheckWithLock;
-    }
-
-    public void setEventRegistryUniqueCaseInstanceCheckWithLock(boolean eventRegistryUniqueCaseInstanceCheckWithLock) {
-        this.eventRegistryUniqueCaseInstanceCheckWithLock = eventRegistryUniqueCaseInstanceCheckWithLock;
-    }
-
-    public Duration getEventRegistryUniqueCaseInstanceStartLockTime() {
-        return eventRegistryUniqueCaseInstanceStartLockTime;
-    }
-
-    public void setEventRegistryUniqueCaseInstanceStartLockTime(Duration eventRegistryUniqueCaseInstanceStartLockTime) {
-        this.eventRegistryUniqueCaseInstanceStartLockTime = eventRegistryUniqueCaseInstanceStartLockTime;
     }
 
     public FlowableServlet getServlet() {

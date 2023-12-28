@@ -40,8 +40,6 @@ public final class CmmnRestUrls {
     public static final String SEGMENT_CASE_INSTANCE_RESOURCE = "case-instances";
     public static final String SEGMENT_PLAN_ITEM_INSTANCE_RESOURCE = "plan-item-instances";
     public static final String SEGMENT_VARIABLES = "variables";
-    public static final String SEGMENT_VARIABLE_INSTANCE_RESOURCE = "variable-instances";
-    public static final String SEGMENT_EVENT_SUBSCRIPTIONS = "event-subscriptions";
     public static final String SEGMENT_SUBTASKS = "subtasks";
     public static final String SEGMENT_IDENTITYLINKS = "identitylinks";
     public static final String SEGMENT_EVENTS = "events";
@@ -85,7 +83,6 @@ public final class CmmnRestUrls {
     public static final String SEGMENT_DECISIONS = "decisions";
     public static final String SEGMENT_FORM_DEFINITIONS = "form-definitions";
     public static final String SEGMENT_STAGE_OVERVIEW = "stage-overview";
-    public static final String SEGMENT_CHANGE_STATE = "change-state";
 
     /**
      * URL template for the deployment collection: <i>cmmn-repository/deployments</i>
@@ -257,11 +254,6 @@ public final class CmmnRestUrls {
      * URL template for a single case instance stage overview: <i>cmmn-runtime/case-instances/{0:caseInstanceId}/stage-overview</i>
      */
     public static final String[] URL_CASE_INSTANCE_STAGE_OVERVIEW = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_CASE_INSTANCE_RESOURCE, "{0}", SEGMENT_STAGE_OVERVIEW};
-    
-    /**
-     * URL template for a single case instance change state: <i>cmmn-runtime/case-instances/{0:caseInstanceId}/change-state</i>
-     */
-    public static final String[] URL_CASE_INSTANCE_CHANGE_STATE = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_CASE_INSTANCE_RESOURCE, "{0}", SEGMENT_CHANGE_STATE};
 
     /**
      * URL template for a case instance's identity links: <i>cmmn-runtime/case-instances/{0:caseInstanceId}/identitylinks</i>
@@ -288,33 +280,6 @@ public final class CmmnRestUrls {
      * URL template for a single case instance: <i>cmmn-runtime/plan-item-instances/{0:planItemInstanceId}</i>
      */
     public static final String[] URL_PLAN_ITEM_INSTANCE = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_PLAN_ITEM_INSTANCE_RESOURCE, "{0}" };
-    
-
-    /**
-     * URL template for plan item instance variables: <i>cmmn-runtime/plan-item-instances/{0:planItemInstanceId}/variables</i>
-     */
-    public static final String[] URL_PLAN_ITEM_INSTANCE_VARIABLES = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_PLAN_ITEM_INSTANCE_RESOURCE, "{0}",
-            SEGMENT_VARIABLES };
-    /**
-     * URL template for a single plan item instance variable: <i>cmmn-runtime/plan-item-instances/{0:planItemInstanceId}/variables/{1:variableName}</i>
-     */
-    public static final String[] URL_PLAN_ITEM_INSTANCE_VARIABLE = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_PLAN_ITEM_INSTANCE_RESOURCE, "{0}", SEGMENT_VARIABLES,
-            "{1}" };
-
-    /**
-     * URL template for a single case instance: <i>cmmn-runtime/plan-item-instances/{0:planItemInstanceId}/variables/{1:variableName}/data</i>
-     */
-    public static final String[] URL_PLAN_ITEM_INSTANCE_VARIABLE_DATA = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_PLAN_ITEM_INSTANCE_RESOURCE, "{0}",
-            SEGMENT_VARIABLES, "{1}", SEGMENT_VARIABLE_DATA };
-    /**
-     * URL template for variable instance query: <i>cmmn-runtime/variable-instances</i>
-     */
-    public static final String[] URL_VARIABLE_INSTANCES = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_VARIABLE_INSTANCE_RESOURCE };
-
-    /**
-     * URL template for a single variable instance data: <i>cmmn-runtime/variable-instances/{0:varInstanceId}/data</i>
-     */
-    public static final String[] URL_VARIABLE_INSTANCE_DATA = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_VARIABLE_INSTANCE_RESOURCE, "{0}", SEGMENT_VARIABLE_DATA };
     
     /**
      * URL template for a single job: <i>cmmn-management/jobs/{0:jobId}</i>
@@ -362,35 +327,25 @@ public final class CmmnRestUrls {
     public static final String[] URL_DEADLETTER_JOB_EXCEPTION_STRACKTRACE = { SEGMENT_MANAGEMENT_RESOURCES, SEGMENT_DEADLETTER_JOBS, "{0}", SEGMENT_JOB_EXCEPTION_STACKTRACE };
 
     /**
-     * URL template for the collection of jobs: <i>cmmn-management/jobs</i>
+     * URL template for the collection of jobs: <i>management/jobs</i>
      */
     public static final String[] URL_JOB_COLLECTION = { SEGMENT_MANAGEMENT_RESOURCES, SEGMENT_JOBS };
 
     /**
-     * URL template for the collection of timer jobs: <i>cmmn-management/timer-jobs</i>
+     * URL template for the collection of timer jobs: <i>management/timer-jobs</i>
      */
     public static final String[] URL_TIMER_JOB_COLLECTION = { SEGMENT_MANAGEMENT_RESOURCES, SEGMENT_TIMER_JOBS };
 
     /**
-     * URL template for the collection of timer jobs: <i>cmmn-management/suspended-jobs</i>
+     * URL template for the collection of timer jobs: <i>management/suspended-jobs</i>
      */
     public static final String[] URL_SUSPENDED_JOB_COLLECTION = { SEGMENT_MANAGEMENT_RESOURCES, SEGMENT_SUSPENDED_JOBS };
 
     /**
-     * URL template for the collection of timer jobs: <i>cmmn-management/deadletter-jobs</i>
+     * URL template for the collection of timer jobs: <i>management/deadletter-jobs</i>
      */
     public static final String[] URL_DEADLETTER_JOB_COLLECTION = { SEGMENT_MANAGEMENT_RESOURCES, SEGMENT_DEADLETTER_JOBS };
 
-    /**
-     * URL template for a single event subscription: <i>cmmn-runtime/event-subscriptions/{0:eventSubscriptionId}</i>
-     */
-    public static final String[] URL_EVENT_SUBSCRIPTION = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_EVENT_SUBSCRIPTIONS, "{0}" };
-
-    /**
-     * URL template for the collection of event subscriptions: <i>cmmn-runtime/event-subscriptions</i>
-     */
-    public static final String[] URL_EVENT_SUBSCRIPTION_COLLECTION = { SEGMENT_RUNTIME_RESOURCES, SEGMENT_EVENT_SUBSCRIPTIONS };
-    
     /**
      * URL template for a single historic case instance: <i>cmmn-history/historic-case-instances/{0:caseInstanceId}</i>
      */
@@ -412,7 +367,7 @@ public final class CmmnRestUrls {
     public static final String[] URL_HISTORIC_CASE_INSTANCE_IDENTITY_LINKS = { SEGMENT_HISTORY_RESOURCES, SEGMENT_HISTORIC_CASE_INSTANCE_RESOURCE, "{0}", SEGMENT_IDENTITYLINKS };
 
     /**
-     * URL template for historic case instance variables: <i>history/historic-case-instances/{0:caseInstanceId}/variables/{1:variableName}/data</i>
+     * URL template for historic case instance variables: <i>history/historic-case-instances/{0:caseInstanceId}/variables/{1:variableName}</i>
      */
     public static final String[] URL_HISTORIC_CASE_INSTANCE_VARIABLE_DATA = { SEGMENT_HISTORY_RESOURCES, SEGMENT_HISTORIC_CASE_INSTANCE_RESOURCE, "{0}", SEGMENT_VARIABLES, "{1}",
             SEGMENT_VARIABLE_DATA };
@@ -433,7 +388,7 @@ public final class CmmnRestUrls {
     public static final String[] URL_HISTORIC_TASK_INSTANCE_IDENTITY_LINKS = { SEGMENT_HISTORY_RESOURCES, SEGMENT_HISTORIC_TASK_INSTANCE_RESOURCE, "{0}", SEGMENT_IDENTITYLINKS };
 
     /**
-     * URL template for a single historic task instance: <i>history/historic-task-instances/{0:taskId}/variables/{1:variableName}/data</i>
+     * URL template for a single historic task instance: <i>history/historic-task-instances/{0:taskId}/variables/{1:variableName}</i>
      */
     public static final String[] URL_HISTORIC_TASK_INSTANCE_VARIABLE_DATA = { SEGMENT_HISTORY_RESOURCES, SEGMENT_HISTORIC_TASK_INSTANCE_RESOURCE, "{0}", SEGMENT_VARIABLES, "{1}", SEGMENT_VARIABLE_DATA };
 
@@ -457,11 +412,6 @@ public final class CmmnRestUrls {
      */
     public static final String[] URL_HISTORIC_VARIABLE_INSTANCE_DATA = { SEGMENT_HISTORY_RESOURCES, SEGMENT_HISTORIC_VARIABLE_INSTANCE_RESOURCE, "{0}", SEGMENT_VARIABLE_DATA };
 
-    /**
-     * URL template for variable instance query: <i>query/variable-instances</i>
-     */
-    public static final String[] URL_VARIABLE_INSTANCE_QUERY = { SEGMENT_QUERY_RESOURCES, SEGMENT_VARIABLE_INSTANCE_RESOURCE };
-    
     /**
      * URL template for a single historic milestone instance: <i>cmmn-history/historic-milestone-instances/{0:milestoneId}</i>
      */

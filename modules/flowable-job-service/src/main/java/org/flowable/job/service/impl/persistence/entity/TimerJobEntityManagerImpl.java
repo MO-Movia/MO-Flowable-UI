@@ -13,7 +13,6 @@
 
 package org.flowable.job.service.impl.persistence.entity;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.List;
 import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
 import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
 import org.flowable.common.engine.impl.calendar.BusinessCalendar;
-import org.flowable.common.engine.impl.persistence.entity.ByteArrayRef;
 import org.flowable.job.api.Job;
 import org.flowable.job.service.JobServiceConfiguration;
 import org.flowable.job.service.event.impl.FlowableJobEventBuilder;
@@ -144,10 +142,14 @@ public class TimerJobEntityManagerImpl
 
     @Override
     public void delete(TimerJobEntity jobEntity) {
-        delete(jobEntity, false);
+        super.delete(jobEntity, false);
 
         deleteByteArrayRef(jobEntity.getExceptionByteArrayRef());
         deleteByteArrayRef(jobEntity.getCustomValuesByteArrayRef());
+
+        if (serviceConfiguration.getInternalJobManager() != null) {
+            serviceConfiguration.getInternalJobManager().handleJobDelete(jobEntity);
+        }
 
         // Send event
         FlowableEventDispatcher eventDispatcher = getEventDispatcher();
@@ -156,47 +158,7 @@ public class TimerJobEntityManagerImpl
                     serviceConfiguration.getEngineName());
         }
     }
-
-    @Override
-    public void delete(TimerJobEntity jobEntity, boolean fireDeleteEvent) {
-        if (serviceConfiguration.getInternalJobManager() != null) {
-            serviceConfiguration.getInternalJobManager().handleJobDelete(jobEntity);
-        }
-
-        super.delete(jobEntity, fireDeleteEvent);
-    }
-
-    @Override
-    public void bulkUpdateJobLockWithoutRevisionCheck(List<TimerJobEntity> timerJobEntities, String lockOwner, Date lockExpirationTime) {
-        dataManager.bulkUpdateJobLockWithoutRevisionCheck(timerJobEntities, lockOwner, lockExpirationTime);
-    }
-
-    @Override
-    public void bulkDeleteTimerJobsWithoutRevisionCheck(List<TimerJobEntity> timerJobEntities) {
-        List<String> byteArrayIdsToDelete = new ArrayList<>();
-
-        for (TimerJobEntity timerJobEntity : timerJobEntities) {
-            if (serviceConfiguration.getInternalJobManager() != null) {
-                serviceConfiguration.getInternalJobManager().handleJobDelete(timerJobEntity);
-            }
-
-            ByteArrayRef exceptionByteArrayRef = timerJobEntity.getExceptionByteArrayRef();
-            if (exceptionByteArrayRef != null && !exceptionByteArrayRef.isDeleted() && exceptionByteArrayRef.getId() != null) {
-                byteArrayIdsToDelete.add(exceptionByteArrayRef.getId());
-            }
-
-            ByteArrayRef customValuesByteArrayRef = timerJobEntity.getCustomValuesByteArrayRef();
-            if (customValuesByteArrayRef != null && !customValuesByteArrayRef.isDeleted() && customValuesByteArrayRef.getId() != null) {
-                byteArrayIdsToDelete.add(customValuesByteArrayRef.getId());
-            }
-        }
-
-        dataManager.bulkDeleteWithoutRevision(timerJobEntities);
-
-        // Delete ByteArrays related with timer jobs
-        bulkDeleteByteArraysById(byteArrayIdsToDelete);
-    }
-
+    
     protected TimerJobEntity createTimer(JobEntity te) {
         TimerJobEntity newTimerEntity = create();
         newTimerEntity.setJobHandlerConfiguration(te.getJobHandlerConfiguration());
@@ -214,8 +176,6 @@ public class TimerJobEntityManagerImpl
         newTimerEntity.setSubScopeId(te.getSubScopeId());
         newTimerEntity.setScopeDefinitionId(te.getScopeDefinitionId());
         newTimerEntity.setScopeType(te.getScopeType());
-        newTimerEntity.setElementId(te.getElementId());
-        newTimerEntity.setElementName(te.getElementId());
 
         // Inherit tenant
         newTimerEntity.setTenantId(te.getTenantId());

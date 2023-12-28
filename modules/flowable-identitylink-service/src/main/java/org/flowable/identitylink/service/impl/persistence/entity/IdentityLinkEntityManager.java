@@ -16,14 +16,11 @@ import java.util.Collection;
 import java.util.List;
 
 import org.flowable.common.engine.impl.persistence.entity.EntityManager;
-import org.flowable.identitylink.api.history.HistoricIdentityLink;
 
 /**
  * @author Joram Barrez
  */
 public interface IdentityLinkEntityManager extends EntityManager<IdentityLinkEntity> {
-
-    IdentityLinkEntity createIdentityLinkFromHistoricIdentityLink(HistoricIdentityLink historicIdentityLink);
 
     List<IdentityLinkEntity> findIdentityLinksByTaskId(String taskId);
 
@@ -87,7 +84,5 @@ public interface IdentityLinkEntityManager extends EntityManager<IdentityLinkEnt
     void deleteIdentityLinksByScopeIdAndScopeType(String scopeId, String scopeType);
     
     void deleteIdentityLinksByScopeDefinitionIdAndScopeType(String scopeDefinitionId, String scopeType);
-    
-    void bulkDeleteIdentityLinksForScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType);
 
 }

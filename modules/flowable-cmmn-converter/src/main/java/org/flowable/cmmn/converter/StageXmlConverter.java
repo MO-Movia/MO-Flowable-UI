@@ -55,15 +55,10 @@ public class StageXmlConverter extends PlanItemDefinitionXmlConverter {
         }
 
         stage.setCase(conversionHelper.getCurrentCase());
-        stage.setParent(conversionHelper.getCurrentPlanFragment());
+        stage.setParent(conversionHelper.getCurrentStage());
         
         conversionHelper.setCurrentStage(stage);
         conversionHelper.addStage(stage);
-
-        String businessStatus = xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_BUSINESS_STATUS);
-        if (StringUtils.isNotEmpty(businessStatus)) {
-            stage.setBusinessStatus(businessStatus);
-        }
         
         return stage;
     }

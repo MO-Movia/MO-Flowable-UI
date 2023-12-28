@@ -15,7 +15,6 @@ package org.flowable.common.engine.impl.scripting;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,6 @@ import java.util.Set;
 import javax.script.Bindings;
 import javax.script.SimpleScriptContext;
 
-import org.flowable.common.engine.api.variable.VariableContainer;
 import org.flowable.variable.api.delegate.VariableScope;
 
 /**
@@ -41,18 +39,18 @@ public class ScriptBindings implements Bindings {
     protected static final Set<String> UNSTORED_KEYS = new HashSet<>(Arrays.asList("out", "out:print", "lang:import", "context", "elcontext", "print", "println", "nashorn.global"));
 
     protected List<Resolver> scriptResolvers;
-    protected VariableContainer variableContainer;
+    protected VariableScope variableScope;
     protected Bindings defaultBindings;
     protected boolean storeScriptVariables = true; // By default everything is stored (backwards compatibility)
 
-    public ScriptBindings(List<Resolver> scriptResolvers, VariableContainer variableContainer) {
+    public ScriptBindings(List<Resolver> scriptResolvers, VariableScope variableScope) {
         this.scriptResolvers = scriptResolvers;
-        this.variableContainer = variableContainer;
+        this.variableScope = variableScope;
         this.defaultBindings = new SimpleScriptContext().getBindings(SimpleScriptContext.ENGINE_SCOPE);
     }
 
-    public ScriptBindings(List<Resolver> scriptResolvers, VariableContainer variableContainer, boolean storeScriptVariables) {
-        this(scriptResolvers, variableContainer);
+    public ScriptBindings(List<Resolver> scriptResolvers, VariableScope variableScope, boolean storeScriptVariables) {
+        this(scriptResolvers, variableScope);
         this.storeScriptVariables = storeScriptVariables;
     }
 
@@ -81,8 +79,8 @@ public class ScriptBindings implements Bindings {
         if (storeScriptVariables) {
             Object oldValue = null;
             if (!UNSTORED_KEYS.contains(name)) {
-                oldValue = variableContainer.getVariable(name);
-                variableContainer.setVariable(name, value);
+                oldValue = variableScope.getVariable(name);
+                variableScope.setVariable(name, value);
                 return oldValue;
             }
         }
@@ -91,22 +89,22 @@ public class ScriptBindings implements Bindings {
 
     @Override
     public Set<Map.Entry<String, Object>> entrySet() {
-        return getVariables().entrySet();
+        return variableScope.getVariables().entrySet();
     }
 
     @Override
     public Set<String> keySet() {
-        return getVariables().keySet();
+        return variableScope.getVariables().keySet();
     }
 
     @Override
     public int size() {
-        return getVariables().size();
+        return variableScope.getVariables().size();
     }
 
     @Override
     public Collection<Object> values() {
-        return getVariables().values();
+        return variableScope.getVariables().values();
     }
 
     @Override
@@ -141,10 +139,4 @@ public class ScriptBindings implements Bindings {
         UNSTORED_KEYS.add(unstoredKey);
     }
 
-    protected Map<String, Object> getVariables() {
-        if (this.variableContainer instanceof VariableScope) {
-            return ((VariableScope) this.variableContainer).getVariables();
-        }
-        return Collections.emptyMap();
-    }
 }

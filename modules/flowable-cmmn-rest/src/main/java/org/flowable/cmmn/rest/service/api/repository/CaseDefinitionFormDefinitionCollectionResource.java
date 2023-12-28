@@ -14,6 +14,8 @@ package org.flowable.cmmn.rest.service.api.repository;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.cmmn.api.repository.CaseDefinition;
 import org.flowable.form.api.FormDefinition;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +43,8 @@ public class CaseDefinitionFormDefinitionCollectionResource extends BaseCaseDefi
     })
     @GetMapping(value = "/cmmn-repository/case-definitions/{caseDefinitionId}/form-definitions", produces = "application/json")
     public List<FormDefinitionResponse> getFormDefinitionsForCaseDefinition(
-            @ApiParam(name = "caseDefinitionId") @PathVariable String caseDefinitionId) {
+            @ApiParam(name = "caseDefinitionId") @PathVariable String caseDefinitionId,
+            HttpServletRequest request) {
 
         CaseDefinition caseDefinition = getCaseDefinitionFromRequest(caseDefinitionId);
         List<FormDefinition> formDefinitions = repositoryService.getFormDefinitionsForCaseDefinition(caseDefinition.getId());

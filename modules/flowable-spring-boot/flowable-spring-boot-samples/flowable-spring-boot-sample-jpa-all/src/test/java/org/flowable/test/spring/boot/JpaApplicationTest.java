@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManagerFactory;
 
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RuntimeService;
@@ -29,10 +29,12 @@ import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.task.api.Task;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import flowable.Application;
 import flowable.Photo;
@@ -41,6 +43,7 @@ import flowable.PhotoRepository;
 /**
  * @author Filip Hrisafov
  */
+@RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class)
 public class JpaApplicationTest {
 
@@ -62,7 +65,7 @@ public class JpaApplicationTest {
     @Autowired
     private TaskService taskService;
 
-    @AfterEach
+    @After
     public void tearDown() {
         runtimeService.createProcessInstanceQuery()
             .processDefinitionKey("dogeProcess")
@@ -93,6 +96,10 @@ public class JpaApplicationTest {
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("dogeProcess", variables);
 
+        List<Execution> waitingExecutions = runtimeService.createExecutionQuery().activityId("wait").list();
+        assertThat(waitingExecutions)
+            .hasSize(2);
+
         Map<String, Object> processInstanceVariables = runtimeService.getVariables(processInstance.getId());
         assertThat(processInstanceVariables).containsOnlyKeys("photos");
         List<Photo> processPhotos = (List<Photo>) processInstanceVariables.get("photos");
@@ -103,13 +110,11 @@ public class JpaApplicationTest {
                 "two"
             );
 
-        Execution waitingExecution = runtimeService.createExecutionQuery().activityId("wait").singleResult();
-        while (waitingExecution != null) {
+        for (Execution waitingExecution : waitingExecutions) {
             Photo executionPhoto = runtimeService.getVariable(waitingExecution.getId(), "photo", Photo.class);
             assertThat(executionPhoto).isNotNull();
             assertThat(executionPhoto.getLabel()).isIn("one", "two");
             runtimeService.trigger(waitingExecution.getId());
-            waitingExecution = runtimeService.createExecutionQuery().activityId("wait").singleResult();
         }
 
         Task reviewTask = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();

@@ -12,10 +12,6 @@
  */
 package org.flowable.common.rest.exception;
 
-import java.util.UUID;
-
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.flowable.common.engine.api.FlowableForbiddenException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableIllegalStateException;
@@ -38,100 +34,61 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 public class BaseExceptionHandlerAdvice {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
-
-    /**
-     * Flag indicating whether to send the full error exception message for unknown exceptions.
-     * If set to {@code true}, then the {@link Exception#getMessage()} will be set on the {@link ErrorInfo#setException(String)},
-     * otherwise a unique error identifier will be set and a message containing that identifier will be logged.
-     */
-    protected boolean sendFullErrorException = true;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseExceptionHandlerAdvice.class);
 
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE) // 415
     @ExceptionHandler(FlowableContentNotSupportedException.class)
     @ResponseBody
-    public ErrorInfo handleNotSupported(FlowableContentNotSupportedException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Content is not supported. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleNotSupported(FlowableContentNotSupportedException e) {
         return new ErrorInfo("Content is not supported", e);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT) // 409
     @ExceptionHandler(FlowableConflictException.class)
     @ResponseBody
-    public ErrorInfo handleConflict(FlowableConflictException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Conflict. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleConflict(FlowableConflictException e) {
         return new ErrorInfo("Conflict", e);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND) // 404
     @ExceptionHandler(FlowableObjectNotFoundException.class)
     @ResponseBody
-    public ErrorInfo handleNotFound(FlowableObjectNotFoundException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Not found. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleNotFound(FlowableObjectNotFoundException e) {
         return new ErrorInfo("Not found", e);
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN) // 403
     @ExceptionHandler(FlowableForbiddenException.class)
     @ResponseBody
-    public ErrorInfo handleForbidden(FlowableForbiddenException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Forbidden. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleForbidden(FlowableForbiddenException e) {
         return new ErrorInfo("Forbidden", e);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST) // 400
     @ExceptionHandler(FlowableIllegalArgumentException.class)
     @ResponseBody
-    public ErrorInfo handleIllegalArgument(FlowableIllegalArgumentException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Illegal argument. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleIllegalArgument(FlowableIllegalArgumentException e) {
         return new ErrorInfo("Bad request", e);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST) // 400
     @ExceptionHandler(FlowableIllegalStateException.class)
     @ResponseBody
-    public ErrorInfo handleIllegalState(FlowableIllegalStateException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Illegal state. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleIllegalState(FlowableIllegalStateException e) {
         return new ErrorInfo("Bad request", e);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST) // 400
     @ExceptionHandler(HttpMessageConversionException.class)
     @ResponseBody
-    public ErrorInfo handleBadMessageConversion(HttpMessageConversionException e, HttpServletRequest request) {
-        if (sendFullErrorException) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Invalid message conversion. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-            }
-            return new ErrorInfo("Bad request", e);
-        } else {
-            String errorIdentifier = UUID.randomUUID().toString();
-            logger.warn("Invalid Message conversion exception. Error ID: {}. Message: {}, Request: {} {}", errorIdentifier, e.getMessage(), request.getMethod(), request.getRequestURI());
-            ErrorInfo errorInfo = new ErrorInfo("Bad request", null);
-            errorInfo.setException("Invalid HTTP message. Error ID: " + errorIdentifier);
-            return errorInfo;
-        }
+    public ErrorInfo handleBadMessageConversion(HttpMessageConversionException e) {
+        return new ErrorInfo("Bad request", e);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT) // 409
     @ExceptionHandler(FlowableTaskAlreadyClaimedException.class)
     @ResponseBody
-    public ErrorInfo handleTaskAlreadyClaimed(FlowableTaskAlreadyClaimedException e, HttpServletRequest request) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Task was already claimed. Message: {}, Request: {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
-        }
+    public ErrorInfo handleTaskAlreadyClaimed(FlowableTaskAlreadyClaimedException e) {
         return new ErrorInfo("Task was already claimed", e);
     }
 
@@ -140,25 +97,9 @@ public class BaseExceptionHandlerAdvice {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR) // 500
     @ExceptionHandler(Exception.class)
     @ResponseBody
-    public ErrorInfo handleOtherException(Exception e, HttpServletRequest request) {
-        if (sendFullErrorException) {
-            logger.error("Unhandled exception. Request: {} {}", request.getMethod(), request.getRequestURI(), e);
-            return new ErrorInfo("Internal server error", e);
-        } else {
-
-            String errorIdentifier = UUID.randomUUID().toString();
-            logger.error("Unhandled exception. Error ID: {}. Request: {} {}", errorIdentifier, request.getMethod(), request.getRequestURI(), e);
-            ErrorInfo errorInfo = new ErrorInfo("Internal server error", e);
-            errorInfo.setException("Error with ID: " + errorIdentifier);
-            return errorInfo;
-        }
+    public ErrorInfo handleOtherException(Exception e) {
+        LOGGER.error("Unhandled exception", e);
+        return new ErrorInfo("Internal server error", e);
     }
 
-    public boolean isSendFullErrorException() {
-        return sendFullErrorException;
-    }
-
-    public void setSendFullErrorException(boolean sendFullErrorException) {
-        this.sendFullErrorException = sendFullErrorException;
-    }
 }

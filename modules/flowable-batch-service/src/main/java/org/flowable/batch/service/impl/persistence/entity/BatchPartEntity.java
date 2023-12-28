@@ -21,8 +21,6 @@ import org.flowable.common.engine.impl.persistence.entity.Entity;
 
 public interface BatchPartEntity extends BatchPart, Entity, HasRevision {
 
-    void setType(String type);
-
     void setBatchType(String batchType);
 
     void setBatchId(String batchId);
@@ -33,10 +31,6 @@ public interface BatchPartEntity extends BatchPart, Entity, HasRevision {
 
     @Override
     boolean isCompleted();
-
-    void setSearchKey(String searchKey);
-
-    void setSearchKey2(String searchKey);
 
     void setBatchSearchKey(String searchKey);
 

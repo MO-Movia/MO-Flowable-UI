@@ -30,7 +30,6 @@ import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.eventregistry.api.EventRegistry;
 import org.flowable.eventregistry.api.EventRegistryEvent;
 import org.flowable.eventregistry.api.EventRegistryEventConsumer;
-import org.flowable.eventregistry.api.EventRegistryProcessingInfo;
 import org.flowable.eventregistry.api.runtime.EventInstance;
 import org.flowable.eventregistry.api.runtime.EventPayloadInstance;
 import org.flowable.eventregistry.impl.EventRegistryEngineConfiguration;
@@ -53,9 +52,9 @@ public abstract class BaseEventRegistryEventConsumer implements EventRegistryEve
     }
 
     @Override
-    public EventRegistryProcessingInfo eventReceived(EventRegistryEvent event) {
+    public void eventReceived(EventRegistryEvent event) {
         if (event.getEventObject() != null && event.getEventObject() instanceof EventInstance) {
-            return eventReceived((EventInstance) event.getEventObject());
+            eventReceived((EventInstance) event.getEventObject());
         } else {
             if (event.getEventObject() == null) {
                 throw new FlowableIllegalArgumentException("No event object was passed to the consumer");
@@ -65,7 +64,7 @@ public abstract class BaseEventRegistryEventConsumer implements EventRegistryEve
         }
     }
 
-    protected abstract EventRegistryProcessingInfo eventReceived(EventInstance eventInstance);
+    protected abstract void eventReceived(EventInstance eventInstance);
 
     /**
      * Generates all possible correlation keys for the given correlation parameters.

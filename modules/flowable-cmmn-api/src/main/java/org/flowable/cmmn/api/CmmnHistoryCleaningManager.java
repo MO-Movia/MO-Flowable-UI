@@ -12,12 +12,10 @@
  */
 package org.flowable.cmmn.api;
 
-import org.flowable.batch.api.BatchQuery;
 import org.flowable.cmmn.api.history.HistoricCaseInstanceQuery;
 
 public interface CmmnHistoryCleaningManager {
 
     HistoricCaseInstanceQuery createHistoricCaseInstanceCleaningQuery();
 
-    BatchQuery createBatchCleaningQuery();
 }

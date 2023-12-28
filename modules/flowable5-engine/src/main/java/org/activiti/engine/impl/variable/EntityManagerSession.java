@@ -13,8 +13,8 @@
 
 package org.activiti.engine.impl.variable;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.interceptor.Session;

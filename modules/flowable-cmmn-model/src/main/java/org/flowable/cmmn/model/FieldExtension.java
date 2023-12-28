@@ -91,7 +91,6 @@ public class FieldExtension extends BaseElement {
     }
 
     public void setValues(FieldExtension otherExtension) {
-        super.setValues(otherExtension);
         setFieldName(otherExtension.getFieldName());
         setStringValue(otherExtension.getStringValue());
         setExpression(otherExtension.getExpression());

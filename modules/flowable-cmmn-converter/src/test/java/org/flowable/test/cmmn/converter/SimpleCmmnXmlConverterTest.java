@@ -46,7 +46,6 @@ public class SimpleCmmnXmlConverterTest {
                 .containsExactlyInAnyOrder("test", "test2");
         assertThat(caze.getCandidateStarterGroups())
                 .containsExactlyInAnyOrder("group", "group2");
-        assertThat(caze.isAsync()).isFalse();
 
         // Plan model
         Stage planModel = caze.getPlanModel();
@@ -109,22 +108,6 @@ public class SimpleCmmnXmlConverterTest {
 
         assertThat(nrOfMileStones).isEqualTo(2);
         assertThat(nrOfTasks).isEqualTo(2);
-    }
-
-    @CmmnXmlConverterTest("org/flowable/test/cmmn/converter/simple-async.cmmn")
-    public void validateAsyncModel(CmmnModel cmmnModel) {
-        assertThat(cmmnModel).isNotNull();
-        assertThat(cmmnModel.getCases())
-                .extracting(Case::getId, Case::getInitiatorVariableName)
-                .containsExactly(tuple("myCase", "test"));
-
-        // Case
-        Case caze = cmmnModel.getCases().get(0);
-        assertThat(caze.getCandidateStarterUsers())
-                .containsExactlyInAnyOrder("test2");
-        assertThat(caze.getCandidateStarterGroups())
-                .containsExactlyInAnyOrder("group1");
-        assertThat(caze.isAsync()).isTrue();
     }
 
 }

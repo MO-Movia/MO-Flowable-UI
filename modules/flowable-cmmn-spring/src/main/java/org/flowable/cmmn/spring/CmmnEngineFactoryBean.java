@@ -49,6 +49,7 @@ public class CmmnEngineFactoryBean implements FactoryBean<CmmnEngine>, Disposabl
 
     @Override
     public CmmnEngine getObject() throws Exception {
+        configureExpressionManager();
         configureExternallyManagedTransactions();
         
         if (cmmnEngineConfiguration.getBeans() == null) {
@@ -59,6 +60,12 @@ public class CmmnEngineFactoryBean implements FactoryBean<CmmnEngine>, Disposabl
         return this.cmmnEngine;
     }
     
+    protected void configureExpressionManager() {
+        if (cmmnEngineConfiguration.getExpressionManager() == null && applicationContext != null) {
+            cmmnEngineConfiguration.setExpressionManager(new SpringCmmnExpressionManager(applicationContext, cmmnEngineConfiguration.getBeans()));
+        }
+    }
+
     protected void configureExternallyManagedTransactions() {
         if (cmmnEngineConfiguration instanceof SpringCmmnEngineConfiguration) { // remark: any config can be injected, so we cannot have SpringConfiguration as member
             SpringCmmnEngineConfiguration engineConfiguration = (SpringCmmnEngineConfiguration) cmmnEngineConfiguration;

@@ -25,7 +25,7 @@ public class ProcessExecutionLoggerConfigurator extends AbstractProcessEngineCon
     @Override
     public void beforeInit(AbstractEngineConfiguration engineConfiguration) {
         processExecutionLogger = new ProcessExecutionLogger();
-        engineConfiguration.addAgendaOperationExecutionListener(new LoggingAgendaOperationExecutionListener(processExecutionLogger));
+        engineConfiguration.setCommandInvoker(new LoggingCommandInvoker((commandContext, runnable) -> runnable.run(), processExecutionLogger));
     }
 
     @Override

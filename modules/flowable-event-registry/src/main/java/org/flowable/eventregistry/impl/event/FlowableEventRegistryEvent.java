@@ -12,8 +12,6 @@
  */
 package org.flowable.eventregistry.impl.event;
 
-import java.util.StringJoiner;
-
 import org.flowable.eventregistry.api.EventRegistryEvent;
 import org.flowable.eventregistry.api.runtime.EventInstance;
 
@@ -50,13 +48,5 @@ public class FlowableEventRegistryEvent implements EventRegistryEvent {
     @Override
     public EventInstance getEventObject() {
         return eventInstance;
-    }
-
-    @Override
-    public String toString() {
-        return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
-                .add("type='" + type + "'")
-                .add("eventInstance=" + eventInstance)
-                .toString();
     }
 }

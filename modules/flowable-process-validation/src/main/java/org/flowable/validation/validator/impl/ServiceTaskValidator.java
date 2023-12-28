@@ -80,18 +80,15 @@ public class ServiceTaskValidator extends ExternalInvocationTaskValidator {
                 case ServiceTask.EXTERNAL_WORKER_TASK:
                     validateExternalWorkerTask(process, (ExternalWorkerServiceTask) serviceTask, errors);
                     return;
-                case ServiceTask.CAMEL:
-                    // Camel has no special validation
+                case "mule":
+                case "camel":
+                    // Mule or camel have no special validation
                     return;
                 default:
-                    validateUnknownServiceTaskType(process, serviceTask, errors);
+                    addError(errors, Problems.SERVICE_TASK_INVALID_TYPE, process, serviceTask, "Invalid or unsupported service task type");
             }
 
         }
-    }
-
-    protected void validateUnknownServiceTaskType(Process process, ServiceTask serviceTask, List<ValidationError> errors) {
-        addError(errors, Problems.SERVICE_TASK_INVALID_TYPE, process, serviceTask, "Invalid or unsupported service task type");
     }
 
     protected void verifyResultVariableName(Process process, ServiceTask serviceTask, List<ValidationError> errors) {

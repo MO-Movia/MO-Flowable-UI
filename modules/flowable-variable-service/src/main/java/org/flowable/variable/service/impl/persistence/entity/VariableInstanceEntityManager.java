@@ -13,44 +13,30 @@
 package org.flowable.variable.service.impl.persistence.entity;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 import org.flowable.common.engine.impl.persistence.entity.EntityManager;
-import org.flowable.variable.api.persistence.entity.VariableInstance;
+import org.flowable.variable.api.types.VariableType;
 import org.flowable.variable.service.InternalVariableInstanceQuery;
-import org.flowable.variable.service.impl.VariableInstanceQueryImpl;
 
 /**
  * @author Joram Barrez
  */
 public interface VariableInstanceEntityManager extends EntityManager<VariableInstanceEntity> {
 
+    VariableInstanceEntity create(String name, VariableType type, Object value);
+
     /**
-     * Creates a variable instance for the given tenant, name and value.
+     * Create a variable instance without setting the value on it.
+     * <b>IMPORTANT:</b> If you use this method you would have to call {@link VariableInstanceEntity#setValue(Object)}
+     * for setting the value
+     * @param name the name of the variable to create
+     * @param type the type of the created variable
      *
-     * @param name the name of the variable instance
      * @return the {@link VariableInstanceEntity} to be used
      */
-    VariableInstanceEntity create(String name);
-
-    /**
-     * Inserts a variable instance with the given value.
-     * @param variable the variable instance to insert
-     * @param value the value to set
-     * @param tenantId  the tenant id of the variable instance
-     */
-    void insertWithValue(VariableInstanceEntity variable, Object value, String tenantId);
+    VariableInstanceEntity create(String name, VariableType type);
 
     InternalVariableInstanceQuery createInternalVariableInstanceQuery();
-    
-    List<VariableInstance> findVariableInstancesByQueryCriteria(VariableInstanceQueryImpl variableInstanceQuery);
-    
-    long findVariableInstanceCountByQueryCriteria(VariableInstanceQueryImpl variableInstanceQuery);
-
-    List<VariableInstance> findVariableInstancesByNativeQuery(Map<String, Object> parameterMap);
-    
-    long findVariableInstanceCountByNativeQuery(Map<String, Object> parameterMap);
 
     void deleteVariablesByTaskId(String taskId);
 

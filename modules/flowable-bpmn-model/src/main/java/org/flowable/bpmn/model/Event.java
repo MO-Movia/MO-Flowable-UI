@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Tijs Rademakers
  */
-public abstract class Event extends FlowNode implements HasOutParameters, HasInParameters {
+public abstract class Event extends FlowNode {
 
     protected List<EventDefinition> eventDefinitions = new ArrayList<>();
     protected List<IOParameter> inParameters = new ArrayList<>();
@@ -36,32 +36,18 @@ public abstract class Event extends FlowNode implements HasOutParameters, HasInP
         eventDefinitions.add(eventDefinition);
     }
     
-    @Override
     public List<IOParameter> getInParameters() {
         return inParameters;
     }
 
-    @Override
-    public void addInParameter(IOParameter inParameter) {
-        inParameters.add(inParameter);
-    }
-
-    @Override
     public void setInParameters(List<IOParameter> inParameters) {
         this.inParameters = inParameters;
     }
 
-    @Override
     public List<IOParameter> getOutParameters() {
         return outParameters;
     }
 
-    @Override
-    public void addOutParameter(IOParameter outParameter) {
-        this.outParameters.add(outParameter);
-    }
-
-    @Override
     public void setOutParameters(List<IOParameter> outParameters) {
         this.outParameters = outParameters;
     }

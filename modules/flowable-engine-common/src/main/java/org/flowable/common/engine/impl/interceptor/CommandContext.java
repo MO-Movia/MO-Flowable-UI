@@ -38,7 +38,6 @@ public class CommandContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandContext.class);
 
     protected Map<String, AbstractEngineConfiguration> engineConfigurations;
-    protected LinkedList<String> engineCfgStack = new LinkedList<>();
     protected Command<?> command;
     protected Map<Class<?>, SessionFactory> sessionFactories;
     protected Map<Class<?>, Session> sessions = new HashMap<>();
@@ -52,15 +51,9 @@ public class CommandContext {
     protected boolean useClassForNameClassLoading;
     protected Clock clock;
     protected ObjectMapper objectMapper;
-    /**
-     * The start time when the command context was created.
-     * This is the result of {@link System#currentTimeMillis()} when the command context was created.
-     */
-    protected final long startTime;
     
     public CommandContext(Command<?> command) {
         this.command = command;
-        this.startTime = System.currentTimeMillis();
     }
 
     public void close() {
@@ -71,8 +64,8 @@ public class CommandContext {
         try {
             try {
                 try {
+                    executeCloseListenersClosing();
                     if (exception == null) {
-                        executeCloseListenersClosing();
                         flushSessions();
                     }
                 } catch (Throwable exception) {
@@ -260,16 +253,6 @@ public class CommandContext {
         }
         return null;
     }
-
-    public void removeAttribute(String key) {
-        if (attributes != null) {
-            attributes.remove(key);
-
-            if (attributes.isEmpty()) {
-                attributes = null;
-            }
-        }
-    }
     
     @SuppressWarnings({ "unchecked" })
     public <T> T getSession(Class<T> sessionClass) {
@@ -300,40 +283,6 @@ public class CommandContext {
     
     public void setEngineConfigurations(Map<String, AbstractEngineConfiguration> engineConfigurations) {
         this.engineConfigurations = engineConfigurations;
-    }
-
-    public void pushEngineCfgToStack(String engineCfgKey) {
-        engineCfgStack.push(engineCfgKey);
-    }
-
-    public String popEngineCfgStack() {
-        return engineCfgStack.pop();
-    }
-
-    /**
-     * @return Returns whether (at the time of calling this method) the current engine
-     * is being executed as the 'root engine'. Or said differently: this will return
-     * <em>false</em> when the current engine is being used in a nested {@link Command} execution call
-     * and will return <em>true</em> if it is the root usage of the current engine.
-     *
-     * For example:
-     * CMMN engine executes process task, that in its turn calls a CMMN task.
-     * The hierarchy of engine will be CMMN (a) - BPMN (b) - CMMN (c).
-     *
-     * If this method is called in the context of (c), false is returned.
-     * In the context of (a), true will be returned. For (b), there is but one
-     * usage and it will be true.
-     */
-    public boolean isRootUsageOfCurrentEngine() {
-        String currentEngineCfgKey = engineCfgStack.peek();
-        if (currentEngineCfgKey != null) {
-            for (int i = 1; i < engineCfgStack.size(); i++) {
-                if (currentEngineCfgKey.equals(engineCfgStack.get(i))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
     
     public void addEngineConfiguration(String engineKey, String scopeType, AbstractEngineConfiguration engineConfiguration) {
@@ -415,7 +364,4 @@ public class CommandContext {
         resultStack.add(result);
     }
     
-    public long getStartTime() {
-        return startTime;
-    }
 }

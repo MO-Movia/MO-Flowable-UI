@@ -170,6 +170,7 @@ public class HistoricTaskInstanceQueryResourceTest extends BaseSpringRestTestCas
         requestNode.put("caseDefinitionKeyLike", "%notExisting");
         assertResultsPresentInPostDataResponse(url, requestNode, 0);
 
+
         requestNode = objectMapper.createObjectNode();
         requestNode.put("caseDefinitionKeyLikeIgnoreCase", "%case");
         assertResultsPresentInPostDataResponse(url, requestNode, 3, task.getId(), task2.getId());
@@ -186,10 +187,6 @@ public class HistoricTaskInstanceQueryResourceTest extends BaseSpringRestTestCas
 
         requestNode = objectMapper.createObjectNode();
         requestNode.put("caseInstanceIdWithChildren", "nonexisting");
-        assertResultsPresentInPostDataResponse(url, requestNode, 0);
-        
-        requestNode = objectMapper.createObjectNode();
-        requestNode.put("withoutScopeId", true);
         assertResultsPresentInPostDataResponse(url, requestNode, 0);
 
         requestNode = objectMapper.createObjectNode();
@@ -251,14 +248,6 @@ public class HistoricTaskInstanceQueryResourceTest extends BaseSpringRestTestCas
         requestNode = objectMapper.createObjectNode();
         requestNode.put("taskDefinitionKey", "task1");
         assertResultsPresentInPostDataResponse(url, requestNode, finishedTaskCase1.getId(), task2.getId());
-        
-        requestNode = objectMapper.createObjectNode();
-        requestNode.put("withoutProcessInstanceId", true);
-        assertResultsPresentInPostDataResponse(url, requestNode, 3, task.getId(), finishedTaskCase1.getId(), task2.getId());
-
-        requestNode = objectMapper.createObjectNode();
-        requestNode.put("planItemInstanceId", finishedTaskCase1.getSubScopeId());
-        assertResultsPresentInPostDataResponse(url, requestNode, 1, finishedTaskCase1.getId());
     }
 
     @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/twoHumanTaskCase.cmmn" })
@@ -279,47 +268,6 @@ public class HistoricTaskInstanceQueryResourceTest extends BaseSpringRestTestCas
         requestNode.put("taskCandidateGroup", "test");
         requestNode.put("ignoreTaskAssignee", true);
         assertResultsPresentInPostDataResponse(url, requestNode, task.getId());
-    }
-
-    public void testQueryTaskByCategory() throws Exception {
-        Task t1 = taskService.newTask();
-        t1.setName("t1");
-        t1.setCategory("Cat 1");
-        taskService.saveTask(t1);
-
-        Task t2 = taskService.newTask();
-        t2.setName("t2");
-        t2.setCategory("Cat 2");
-        taskService.saveTask(t2);
-
-        Task t3 = taskService.newTask();
-        t3.setName("t3");
-        taskService.saveTask(t3);
-
-        try {
-            String url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_HISTORIC_TASK_INSTANCE_QUERY);
-
-            ObjectNode requestNode = objectMapper.createObjectNode();
-            requestNode.put("taskCategory", "Cat 1");
-            assertResultsPresentInPostDataResponse(url, requestNode, t1.getId());
-
-            requestNode.removeAll() ;
-            requestNode.putArray("taskCategoryIn").add("Cat 1").add("non-existing");
-            assertResultsPresentInPostDataResponse(url, requestNode, t1.getId());
-
-            requestNode.removeAll() ;
-            requestNode.putArray("taskCategoryNotIn").add("Cat 1").add("non-existing");
-            assertResultsPresentInPostDataResponse(url, requestNode, t2.getId());
-
-            requestNode.removeAll() ;
-            requestNode.put("taskWithoutCategory", Boolean.TRUE);
-            assertResultsPresentInPostDataResponse(url, requestNode, t3.getId());
-
-        } finally {
-            taskService.deleteTask(t1.getId(), true);
-            taskService.deleteTask(t2.getId(), true);
-            taskService.deleteTask(t3.getId(), true);
-        }
     }
 
     protected void assertResultsPresentInPostDataResponse(String url, ObjectNode body, int numberOfResultsExpected, String... expectedTaskIds)

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
@@ -37,6 +36,7 @@ import org.flowable.app.engine.impl.db.EntityDependencyOrder;
 import org.flowable.app.engine.impl.deployer.AppDeployer;
 import org.flowable.app.engine.impl.deployer.AppDeploymentManager;
 import org.flowable.app.engine.impl.deployer.AppResourceConverterImpl;
+import org.flowable.app.engine.impl.el.AppExpressionManager;
 import org.flowable.app.engine.impl.interceptor.AppCommandInvoker;
 import org.flowable.app.engine.impl.persistence.entity.AppDefinitionEntityManager;
 import org.flowable.app.engine.impl.persistence.entity.AppDefinitionEntityManagerImpl;
@@ -64,7 +64,6 @@ import org.flowable.common.engine.impl.calendar.DurationBusinessCalendar;
 import org.flowable.common.engine.impl.calendar.MapBusinessCalendarManager;
 import org.flowable.common.engine.impl.cfg.BeansConfigurationHelper;
 import org.flowable.common.engine.impl.db.SchemaManager;
-import org.flowable.common.engine.impl.el.DefaultExpressionManager;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.CommandInterceptor;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
@@ -87,7 +86,6 @@ import org.flowable.variable.service.impl.types.ByteArrayType;
 import org.flowable.variable.service.impl.types.DateType;
 import org.flowable.variable.service.impl.types.DefaultVariableTypes;
 import org.flowable.variable.service.impl.types.DoubleType;
-import org.flowable.variable.service.impl.types.EmptyCollectionType;
 import org.flowable.variable.service.impl.types.InstantType;
 import org.flowable.variable.service.impl.types.IntegerType;
 import org.flowable.variable.service.impl.types.JodaDateTimeType;
@@ -135,7 +133,6 @@ public class AppEngineConfiguration extends AbstractEngineConfiguration implemen
     protected DeploymentCache<AppDefinitionCacheEntry> appDefinitionCache;
 
     protected ExpressionManager expressionManager;
-    protected Collection<Consumer<ExpressionManager>> expressionManagerConfigurers;
     protected SchemaManager identityLinkSchemaManager;
     protected SchemaManager variableSchemaManager;
 
@@ -201,12 +198,10 @@ public class AppEngineConfiguration extends AbstractEngineConfiguration implemen
         initConfigurators();
         configuratorsBeforeInit();
         initClock();
-        initObjectMapper();
         initCommandContextFactory();
         initTransactionContextFactory();
         initCommandExecutors();
         initIdGenerator();
-        initBeans();
         initExpressionManager();
         
         if (usingRelationalDatabase) {
@@ -220,6 +215,7 @@ public class AppEngineConfiguration extends AbstractEngineConfiguration implemen
 
         configureVariableServiceConfiguration();
         initVariableTypes();
+        initBeans();
         initTransactionFactory();
 
         if (usingRelationalDatabase) {
@@ -279,17 +275,12 @@ public class AppEngineConfiguration extends AbstractEngineConfiguration implemen
 
     @Override
     public void initMybatisTypeHandlers(Configuration configuration) {
-        super.initMybatisTypeHandlers(configuration);
         configuration.getTypeHandlerRegistry().register(VariableType.class, JdbcType.VARCHAR, new IbatisVariableTypeHandler(variableTypes));
     }
 
     public void initExpressionManager() {
         if (expressionManager == null) {
-            expressionManager = new DefaultExpressionManager(beans);
-
-            if (expressionManagerConfigurers != null) {
-                expressionManagerConfigurers.forEach(configurer -> configurer.accept(expressionManager));
-            }
+            expressionManager = new AppExpressionManager(beans);
         }
     }
 
@@ -436,7 +427,6 @@ public class AppEngineConfiguration extends AbstractEngineConfiguration implemen
             // longJsonType only needed for reading purposes
             variableTypes.addType(JsonType.longJsonType(getMaxLengthString(), objectMapper, jsonVariableTypeTrackObjects));
             variableTypes.addType(new ByteArrayType());
-            variableTypes.addType(new EmptyCollectionType());
             variableTypes.addType(new SerializableType(serializableVariableTypeTrackDeserializedObjects));
             if (customPostVariableTypes != null) {
                 for (VariableType customVariableType : customPostVariableTypes) {
@@ -691,19 +681,6 @@ public class AppEngineConfiguration extends AbstractEngineConfiguration implemen
     @Override
     public AppEngineConfiguration setExpressionManager(ExpressionManager expressionManager) {
         this.expressionManager = expressionManager;
-        return this;
-    }
-
-    public Collection<Consumer<ExpressionManager>> getExpressionManagerConfigurers() {
-        return expressionManagerConfigurers;
-    }
-
-    @Override
-    public AbstractEngineConfiguration addExpressionManagerConfigurer(Consumer<ExpressionManager> configurer) {
-        if (this.expressionManagerConfigurers == null) {
-            this.expressionManagerConfigurers = new ArrayList<>();
-        }
-        this.expressionManagerConfigurers.add(configurer);
         return this;
     }
 

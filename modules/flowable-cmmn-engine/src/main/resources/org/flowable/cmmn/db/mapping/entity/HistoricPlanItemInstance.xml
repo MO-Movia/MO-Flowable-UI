@@ -245,19 +245,6 @@
         delete from ${prefix}ACT_CMMN_HI_PLAN_ITEM_INST where CASE_DEF_ID_ = #{value}
     </delete>
     
-    <delete id="bulkDeleteHistoricPlanItemInstancesByCaseInstanceIds" parameterType="java.util.Collection">
-    delete from ${prefix}ACT_CMMN_HI_PLAN_ITEM_INST where 
-    <foreach item="listItem" index="listIndex" collection="collection">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        CASE_INST_ID_ in
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>
-  </delete>
-    
     <delete id="bulkDeleteHistoricPlanItemInstancesForNonExistingCaseInstances" parameterType="java.util.Map">
         delete <if test="_databaseId != 'postgres' and _databaseId != 'cockroachdb' and _databaseId != 'db2'"> PLANITEM </if> from ${prefix}ACT_CMMN_HI_PLAN_ITEM_INST PLANITEM where PLANITEM.CASE_INST_ID_ is not null and PLANITEM.CASE_INST_ID_ != '' and
         NOT EXISTS (select CASEINST.ID_ from ${prefix}ACT_CMMN_HI_CASE_INST CASEINST where PLANITEM.CASE_INST_ID_ = CASEINST.ID_)
@@ -314,11 +301,12 @@
     </select>
 
     <select id="selectHistoricPlanItemInstancesByQueryCriteria" parameterType="org.flowable.cmmn.engine.impl.history.HistoricPlanItemInstanceQueryImpl" resultMap="historicPlanItemInstanceResultMap">
-        <if test="needsPaging">${limitBefore}</if>
-        SELECT RES.* <if test="needsPaging">${limitBetween}</if>
+        <if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+        select RES.*
+        <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
         <include refid="selectHistoricPlanItemInstancesByQueryCriteriaSql"/>
         ${orderBy}
-        <if test="needsPaging">${limitAfter}</if>
+        <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
     </select>
 
     <select id="selectHistoricPlanItemInstancesCountByQueryCriteria" parameterType="org.flowable.cmmn.engine.impl.history.HistoricPlanItemInstanceQueryImpl" resultType="long">
@@ -475,22 +463,15 @@
                       <if test="involvedUser != null">
                         I.USER_ID_ = #{involvedUser}
                       </if>
-                      <if test="involvedUser != null &amp;&amp; involvedGroups != null &amp;&amp; !involvedGroups.empty">
+                      <if test="involvedUser != null &amp;&amp; involvedGroups != null &amp;&amp; involvedGroups.size() &gt; 0">
                         or
                       </if>
-                      <if test="involvedGroups != null &amp;&amp; !involvedGroups.empty">
-                        (
-                        <foreach item="involvedGroupListItem" index="groupIndex" collection="safeInvolvedGroups">
-                            <if test="groupIndex &gt; 0">
-                            or
-                            </if>
-                            I.GROUP_ID_ IN
-                            <foreach item="group" index="index" collection="involvedGroupListItem"
-                                  open="(" separator="," close=")">
-                              #{group}
-                            </foreach>
+                      <if test="involvedGroups != null &amp;&amp; involvedGroups.size() &gt; 0">
+                        I.GROUP_ID_ IN
+                        <foreach item="involvedGroup" index="index" collection="involvedGroups"
+                                 open="(" separator="," close=")">
+                          #{involvedGroup}
                         </foreach>
-                        )
                       </if>
                     )
                 )

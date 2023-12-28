@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.rest.api.DataResponse;
@@ -26,7 +29,6 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceBuilder;
-import org.flowable.rest.service.api.BulkDeleteInstancesRestActionRequest;
 import org.flowable.rest.service.api.engine.variable.RestVariable;
 import org.flowable.variable.api.history.HistoricVariableInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +37,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -68,42 +69,40 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
 
     @ApiOperation(value = "List process instances", nickname ="listProcessInstances", tags = { "Process Instances" })
     @ApiImplicitParams({
-        @ApiImplicitParam(name = "id", dataType = "string", value = "Only return models with the given version.", paramType = "query"),
-        @ApiImplicitParam(name = "name", dataType = "string", value = "Only return models with the given name.", paramType = "query"),
-        @ApiImplicitParam(name = "nameLike", dataType = "string", value = "Only return models like the given name.", paramType = "query"),
-        @ApiImplicitParam(name = "nameLikeIgnoreCase", dataType = "string", value = "Only return models like the given name ignoring case.", paramType = "query"),
-        @ApiImplicitParam(name = "processDefinitionKey", dataType = "string", value = "Only return process instances with the given process definition key.", paramType = "query"),
-        @ApiImplicitParam(name = "processDefinitionId", dataType = "string", value = "Only return process instances with the given process definition id.", paramType = "query"),
-        @ApiImplicitParam(name = "processDefinitionCategory", dataType = "string", value = "Only return process instances with the given process definition category.", paramType = "query"),
-        @ApiImplicitParam(name = "processDefinitionVersion", dataType = "integer", value = "Only return process instances with the given process definition version.", paramType = "query"),
-        @ApiImplicitParam(name = "processDefinitionEngineVersion", dataType = "string", value = "Only return process instances with the given process definition engine version.", paramType = "query"),
-        @ApiImplicitParam(name = "businessKey", dataType = "string", value = "Only return process instances with the given businessKey.", paramType = "query"),
-        @ApiImplicitParam(name = "businessKeyLike", dataType = "string", value = "Only return process instances with the businessKey like the given key.", paramType = "query"),
-        @ApiImplicitParam(name = "startedBy", dataType = "string", value = "Only return process instances started by the given user.", paramType = "query"),
-        @ApiImplicitParam(name = "startedBefore", dataType = "string", format = "date-time", value = "Only return process instances started before the given date.", paramType = "query"),
-        @ApiImplicitParam(name = "startedAfter", dataType = "string", format = "date-time", value = "Only return process instances started after the given date.", paramType = "query"),
-        @ApiImplicitParam(name = "activeActivityId", dataType = "string", value = "Only return process instances which have an active activity instance with the provided activity id.", paramType = "query"),
-        @ApiImplicitParam(name = "involvedUser", dataType = "string", value = "Only return process instances in which the given user is involved.", paramType = "query"),
-        @ApiImplicitParam(name = "suspended", dataType = "boolean", value = "If true, only return process instance which are suspended. If false, only return process instances which are not suspended (active).", paramType = "query"),
-        @ApiImplicitParam(name = "superProcessInstanceId", dataType = "string", value = "Only return process instances which have the given super process-instance id (for processes that have a call-activities).", paramType = "query"),
-        @ApiImplicitParam(name = "rootScopeId", dataType = "string", value = "Only return process instances which have the given root scope id (that can be a process or case instance ID).", paramType = "query"),
-        @ApiImplicitParam(name = "parentScopeId", dataType = "string", value = "Only return process instances which have the given parent scope id (that can be a process or case instance ID).", paramType = "query"),
-        @ApiImplicitParam(name = "subProcessInstanceId", dataType = "string", value = "Only return process instances which have the given sub process-instance id (for processes started as a call-activity).", paramType = "query"),
-        @ApiImplicitParam(name = "excludeSubprocesses", dataType = "boolean", value = "Return only process instances which are not sub processes.", paramType = "query"),
-        @ApiImplicitParam(name = "includeProcessVariables", dataType = "boolean", value = "Indication to include process variables in the result.", paramType = "query"),
-        @ApiImplicitParam(name = "callbackId", dataType = "string", value = "Only return process instances with the given callbackId.", paramType = "query"),
-        @ApiImplicitParam(name = "callbackType", dataType = "string", value = "Only return process instances with the given callbackType.", paramType = "query"),
-        @ApiImplicitParam(name = "tenantId", dataType = "string", value = "Only return process instances with the given tenantId.", paramType = "query"),
-        @ApiImplicitParam(name = "tenantIdLike", dataType = "string", value = "Only return process instances with a tenantId like the given value.", paramType = "query"),
-        @ApiImplicitParam(name = "withoutTenantId", dataType = "boolean", value = "If true, only returns process instances without a tenantId set. If false, the withoutTenantId parameter is ignored.", paramType = "query"),
-        @ApiImplicitParam(name = "sort", dataType = "string", value = "Property to sort on, to be used together with the order.", allowableValues = "id,processDefinitionId,tenantId,processDefinitionKey", paramType = "query"),
+            @ApiImplicitParam(name = "id", dataType = "string", value = "Only return models with the given version.", paramType = "query"),
+            @ApiImplicitParam(name = "name", dataType = "string", value = "Only return models with the given name.", paramType = "query"),
+            @ApiImplicitParam(name = "nameLike", dataType = "string", value = "Only return models like the given name.", paramType = "query"),
+            @ApiImplicitParam(name = "nameLikeIgnoreCase", dataType = "string", value = "Only return models like the given name ignoring case.", paramType = "query"),
+            @ApiImplicitParam(name = "processDefinitionKey", dataType = "string", value = "Only return process instances with the given process definition key.", paramType = "query"),
+            @ApiImplicitParam(name = "processDefinitionId", dataType = "string", value = "Only return process instances with the given process definition id.", paramType = "query"),
+            @ApiImplicitParam(name = "processDefinitionCategory", dataType = "string", value = "Only return process instances with the given process definition category.", paramType = "query"),
+            @ApiImplicitParam(name = "processDefinitionVersion", dataType = "integer", value = "Only return process instances with the given process definition version.", paramType = "query"),
+            @ApiImplicitParam(name = "processDefinitionEngineVersion", dataType = "string", value = "Only return process instances with the given process definition engine version.", paramType = "query"),
+            @ApiImplicitParam(name = "businessKey", dataType = "string", value = "Only return process instances with the given businessKey.", paramType = "query"),
+            @ApiImplicitParam(name = "businessKeyLike", dataType = "string", value = "Only return process instances with the businessKey like the given key.", paramType = "query"),
+            @ApiImplicitParam(name = "startedBy", dataType = "string", value = "Only return process instances started by the given user.", paramType = "query"),
+            @ApiImplicitParam(name = "startedBefore", dataType = "string", format = "date-time", value = "Only return process instances started before the given date.", paramType = "query"),
+            @ApiImplicitParam(name = "startedAfter", dataType = "string", format = "date-time", value = "Only return process instances started after the given date.", paramType = "query"),
+            @ApiImplicitParam(name = "activeActivityId", dataType = "string", value = "Only return process instances which have an active activity instance with the provided activity id.", paramType = "query"),
+            @ApiImplicitParam(name = "involvedUser", dataType = "string", value = "Only return process instances in which the given user is involved.", paramType = "query"),
+            @ApiImplicitParam(name = "suspended", dataType = "boolean", value = "If true, only return process instance which are suspended. If false, only return process instances which are not suspended (active).", paramType = "query"),
+            @ApiImplicitParam(name = "superProcessInstanceId", dataType = "string", value = "Only return process instances which have the given super process-instance id (for processes that have a call-activities).", paramType = "query"),
+            @ApiImplicitParam(name = "subProcessInstanceId", dataType = "string", value = "Only return process instances which have the given sub process-instance id (for processes started as a call-activity).", paramType = "query"),
+            @ApiImplicitParam(name = "excludeSubprocesses", dataType = "boolean", value = "Return only process instances which are not sub processes.", paramType = "query"),
+            @ApiImplicitParam(name = "includeProcessVariables", dataType = "boolean", value = "Indication to include process variables in the result.", paramType = "query"),
+            @ApiImplicitParam(name = "callbackId", dataType = "string", value = "Only return process instances with the given callbackId.", paramType = "query"),
+            @ApiImplicitParam(name = "callbackType", dataType = "string", value = "Only return process instances with the given callbackType.", paramType = "query"),
+            @ApiImplicitParam(name = "tenantId", dataType = "string", value = "Only return process instances with the given tenantId.", paramType = "query"),
+            @ApiImplicitParam(name = "tenantIdLike", dataType = "string", value = "Only return process instances with a tenantId like the given value.", paramType = "query"),
+            @ApiImplicitParam(name = "withoutTenantId", dataType = "boolean", value = "If true, only returns process instances without a tenantId set. If false, the withoutTenantId parameter is ignored.", paramType = "query"),
+            @ApiImplicitParam(name = "sort", dataType = "string", value = "Property to sort on, to be used together with the order.", allowableValues = "id,processDefinitionId,tenantId,processDefinitionKey", paramType = "query"),
     })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Indicates request was successful and the process-instances are returned"),
             @ApiResponse(code = 400, message = "Indicates a parameter was passed in the wrong format . The status-message contains additional information.")
     })
     @GetMapping(value = "/runtime/process-instances", produces = "application/json")
-    public DataResponse<ProcessInstanceResponse> getProcessInstances(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<ProcessInstanceResponse> getProcessInstances(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         // Populate query based on request
         ProcessInstanceQueryRequest queryRequest = new ProcessInstanceQueryRequest();
 
@@ -175,14 +174,6 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
             queryRequest.setSuspended(Boolean.valueOf(allRequestParams.get("suspended")));
         }
 
-        if (allRequestParams.containsKey("rootScopeId")) {
-            queryRequest.setRootScopeId(allRequestParams.get("rootScopeId"));
-        }
-
-        if (allRequestParams.containsKey("parentScopeId")) {
-            queryRequest.setParentScopeId(allRequestParams.get("parentScopeId"));
-        }
-
         if (allRequestParams.containsKey("superProcessInstanceId")) {
             queryRequest.setSuperProcessInstanceId(allRequestParams.get("superProcessInstanceId"));
         }
@@ -216,7 +207,7 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
         }
 
         if (allRequestParams.containsKey("withoutTenantId")) {
-            if (Boolean.parseBoolean(allRequestParams.get("withoutTenantId"))) {
+            if (Boolean.valueOf(allRequestParams.get("withoutTenantId"))) {
                 queryRequest.setWithoutTenantId(Boolean.TRUE);
             }
         }
@@ -229,15 +220,13 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
             + "Only one of *processDefinitionId*, *processDefinitionKey* or *message* can be used in the request body. \n\n"
             + "Parameters *businessKey*, *variables* and *tenantId* are optional.\n\n "
             + "If tenantId is omitted, the default tenant will be used. More information about the variable format can be found in the REST variables section.\n\n "
-            + "Note that the variable-scope that is supplied is ignored, process-variables are always local.\n\n",
-            code = 201)
+            + "Note that the variable-scope that is supplied is ignored, process-variables are always local.\n\n")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Indicates the process instance was created."),
             @ApiResponse(code = 400, message = "Indicates either the process-definition was not found (based on id or key), no process is started by sending the given message or an invalid variable has been passed. Status description contains additional information about the error.")
     })
     @PostMapping(value = "/runtime/process-instances", produces = "application/json")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ProcessInstanceResponse createProcessInstance(@RequestBody ProcessInstanceCreateRequest request) {
+    public ProcessInstanceResponse createProcessInstance(@RequestBody ProcessInstanceCreateRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
 
         if (request.getProcessDefinitionId() == null && request.getProcessDefinitionKey() == null && request.getMessage() == null) {
             throw new FlowableIllegalArgumentException("Either processDefinitionId, processDefinitionKey or message is required.");
@@ -259,7 +248,7 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
         Map<String, Object> startVariables = null;
         Map<String, Object> transientVariables = null;
         Map<String, Object> startFormVariables = null;
-        if (request.getStartFormVariables() != null && !request.getStartFormVariables().isEmpty()) {
+        if (request.getStartFormVariables() != null && request.getStartFormVariables().size()>0) {
             startFormVariables = new HashMap<>();
             for (RestVariable variable : request.getStartFormVariables()) {
                 if (variable.getName() == null) {
@@ -270,7 +259,7 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
             
         } else {
             
-            if (request.getVariables() != null && !request.getVariables().isEmpty()) {
+            if (request.getVariables() != null && request.getVariables().size()>0) {
                 startVariables = new HashMap<>();
                 for (RestVariable variable : request.getVariables()) {
                     if (variable.getName() == null) {
@@ -280,7 +269,7 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
                 }
             }
     
-            if (request.getTransientVariables() != null && !request.getTransientVariables().isEmpty()) {
+            if (request.getTransientVariables() != null && request.getTransientVariables().size()>0) {
                 transientVariables = new HashMap<>();
                 for (RestVariable variable : request.getTransientVariables()) {
                     if (variable.getName() == null) {
@@ -314,7 +303,7 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
             if (request.isTenantSet()) {
                 processInstanceBuilder.tenantId(request.getTenantId());
             }
-            if (request.getOverrideDefinitionTenantId() != null && !request.getOverrideDefinitionTenantId().isEmpty()) {
+            if (request.getOverrideDefinitionTenantId() != null && request.getOverrideDefinitionTenantId().length() > 0) {
                 processInstanceBuilder.overrideProcessDefinitionTenantId(request.getOverrideDefinitionTenantId());
             }
             if (startFormVariables != null) {
@@ -335,6 +324,8 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
             }
 
             instance = processInstanceBuilder.start();
+
+            response.setStatus(HttpStatus.CREATED.value());
 
             ProcessInstanceResponse processInstanceResponse = null;
             if (request.getReturnVariables()) {
@@ -357,30 +348,11 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
                 processInstanceResponse.setProcessDefinitionName(processDefinition.getName());
                 processInstanceResponse.setProcessDefinitionDescription(processDefinition.getDescription());
             }
-
+            
             return processInstanceResponse;
 
         } catch (FlowableObjectNotFoundException e) {
             throw new FlowableIllegalArgumentException(e.getMessage(), e);
-        }
-    }
-
-    @ApiOperation(value = "Bulk delete process instances", tags = { "Process Instances" }, nickname = "deleteProcessInstances", code = 204)
-    @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Indicates the bulk of process instances was found and deleted. Response body is left empty intentionally."),
-            @ApiResponse(code = 404, message = "Indicates at least one requested process instance was not found.")
-    })
-    @PostMapping(value = "/runtime/process-instances/delete")
-    @ResponseStatus(value = HttpStatus.NO_CONTENT)
-    public void bulkDeleteProcessInstances(@RequestBody BulkDeleteInstancesRestActionRequest request) {
-        if (BulkDeleteInstancesRestActionRequest.DELETE_ACTION.equals(request.getAction())) {
-
-            if (restApiInterceptor != null) {
-                restApiInterceptor.bulkDeleteProcessInstances(request.getInstanceIds());
-            }
-            runtimeService.bulkDeleteProcessInstances(request.getInstanceIds(), request.getDeleteReason());
-        } else {
-            throw new FlowableIllegalArgumentException("Illegal action: '" + request.getAction() + "'.");
         }
     }
 }

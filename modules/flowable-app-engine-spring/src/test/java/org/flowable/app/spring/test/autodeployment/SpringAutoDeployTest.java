@@ -189,9 +189,8 @@ public class SpringAutoDeployTest {
         properties.put("deploymentMode", "default");
         properties.put("deploymentResources", DEFAULT_INVALID_DEPLOYMENT_RESOURCES);
         assertThatThrownBy(() -> createAppContext(properties))
-            .cause()
             .hasMessageContaining("Error reading app resource")
-            .isInstanceOf(FlowableException.class)
+            .hasCauseInstanceOf(FlowableException.class)
             .hasRootCauseInstanceOf(JsonParseException.class);
         assertThat(repositoryService).isNull();
 

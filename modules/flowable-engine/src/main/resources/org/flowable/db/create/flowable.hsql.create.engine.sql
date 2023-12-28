@@ -68,7 +68,6 @@ create table ACT_RU_EXECUTION (
     REFERENCE_ID_ varchar(255),
     REFERENCE_TYPE_ varchar(255),
     PROPAGATED_STAGE_INST_ID_ varchar(255),
-    BUSINESS_STATUS_ varchar(255),
     primary key (ID_)
 );
 
@@ -140,7 +139,6 @@ create table ACT_RU_ACTINST (
 
 create index ACT_IDX_EXEC_BUSKEY on ACT_RU_EXECUTION(BUSINESS_KEY_);
 create index ACT_IDX_EXE_ROOT on ACT_RU_EXECUTION(ROOT_PROC_INST_ID_);
-create index ACT_IDX_EXEC_REF_ID_ on ACT_RU_EXECUTION(REFERENCE_ID_);
 create index ACT_IDX_VARIABLE_TASK_ID on ACT_RU_VARIABLE(TASK_ID_);
 create index ACT_IDX_ATHRZ_PROCEDEF on ACT_RU_IDENTITYLINK(PROC_DEF_ID_);
 create index ACT_IDX_INFO_PROCDEF on ACT_PROCDEF_INFO(PROC_DEF_ID_);
@@ -151,7 +149,6 @@ create index ACT_IDX_RU_ACTI_PROC on ACT_RU_ACTINST(PROC_INST_ID_);
 create index ACT_IDX_RU_ACTI_PROC_ACT on ACT_RU_ACTINST(PROC_INST_ID_, ACT_ID_);
 create index ACT_IDX_RU_ACTI_EXEC on ACT_RU_ACTINST(EXECUTION_ID_);
 create index ACT_IDX_RU_ACTI_EXEC_ACT on ACT_RU_ACTINST(EXECUTION_ID_, ACT_ID_);
-create index ACT_IDX_RU_ACTI_TASK on ACT_RU_ACTINST(TASK_ID_);
 
 alter table ACT_GE_BYTEARRAY
     add constraint ACT_FK_BYTEARR_DEPL
@@ -317,7 +314,7 @@ alter table ACT_PROCDEF_INFO
     unique (PROC_DEF_ID_);
 
 insert into ACT_GE_PROPERTY
-values ('schema.version', '7.0.1.1', 1);
+values ('schema.version', '6.6.0.1', 1);
 
 insert into ACT_GE_PROPERTY
-values ('schema.history', 'create(7.0.1.1)', 1);
+values ('schema.history', 'create(6.6.0.1)', 1);

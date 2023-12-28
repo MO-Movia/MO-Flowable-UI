@@ -28,20 +28,19 @@ public class JsonPointerBasedInboundEventKeyDetector implements InboundEventKeyD
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonPointerBasedInboundEventKeyDetector.class);
 
-    protected ObjectMapper objectMapper;
+    protected ObjectMapper objectMapper = new ObjectMapper();
 
     protected String jsonPointerValue;
     protected JsonPointer jsonPointerExpression;
 
-    public JsonPointerBasedInboundEventKeyDetector(String jsonPointerExpression, ObjectMapper objectMapper) {
+    public JsonPointerBasedInboundEventKeyDetector(String jsonPointerExpression) {
         this.jsonPointerValue = jsonPointerExpression;
         this.jsonPointerExpression = JsonPointer.compile(jsonPointerExpression);
-        this.objectMapper = objectMapper;
     }
 
     @Override
-    public String detectEventDefinitionKey(JsonNode payload) {
-        JsonNode result = payload.at(jsonPointerExpression);
+    public String detectEventDefinitionKey(JsonNode event) {
+        JsonNode result = event.at(jsonPointerExpression);
 
         if (result == null || result.isMissingNode() || result.isNull()) {
             LOGGER.warn("JsonPointer expression {} did not detect event key", jsonPointerExpression);

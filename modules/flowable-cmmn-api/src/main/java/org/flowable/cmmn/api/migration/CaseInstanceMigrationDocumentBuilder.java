@@ -38,26 +38,10 @@ public interface CaseInstanceMigrationDocumentBuilder {
     CaseInstanceMigrationDocumentBuilder addMoveToAvailablePlanItemDefinitionMappings(List<MoveToAvailablePlanItemDefinitionMapping> planItemDefinitionMappings);
 
     CaseInstanceMigrationDocumentBuilder addMoveToAvailablePlanItemDefinitionMapping(MoveToAvailablePlanItemDefinitionMapping planItemDefinitionMapping);
-    
-    CaseInstanceMigrationDocumentBuilder addWaitingForRepetitionPlanItemDefinitionMappings(List<WaitingForRepetitionPlanItemDefinitionMapping> planItemDefinitionMappings);
 
-    CaseInstanceMigrationDocumentBuilder addWaitingForRepetitionPlanItemDefinitionMapping(WaitingForRepetitionPlanItemDefinitionMapping planItemDefinitionMapping);
-    
-    CaseInstanceMigrationDocumentBuilder addRemoveWaitingForRepetitionPlanItemDefinitionMappings(List<RemoveWaitingForRepetitionPlanItemDefinitionMapping> planItemDefinitionMappings);
-
-    CaseInstanceMigrationDocumentBuilder addRemoveWaitingForRepetitionPlanItemDefinitionMapping(RemoveWaitingForRepetitionPlanItemDefinitionMapping planItemDefinitionMapping);
-
-    CaseInstanceMigrationDocumentBuilder addChangePlanItemIdMapping(ChangePlanItemIdMapping mapping);
-    
-    CaseInstanceMigrationDocumentBuilder addChangePlanItemIdWithDefinitionIdMapping(ChangePlanItemIdWithDefinitionIdMapping mapping);
-    
     CaseInstanceMigrationDocumentBuilder addCaseInstanceVariable(String variableName, Object variableValue);
 
     CaseInstanceMigrationDocumentBuilder addCaseInstanceVariables(Map<String, Object> caseInstanceVariables);
-
-    CaseInstanceMigrationDocumentBuilder preUpgradeExpression(String preUpgradeExpression);
-
-    CaseInstanceMigrationDocumentBuilder postUpgradeExpression(String postUpgradeExpression);
 
     CaseInstanceMigrationDocument build();
 

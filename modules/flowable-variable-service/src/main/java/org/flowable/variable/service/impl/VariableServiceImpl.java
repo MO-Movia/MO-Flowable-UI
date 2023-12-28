@@ -13,6 +13,7 @@
 package org.flowable.variable.service.impl;
 
 import org.flowable.common.engine.impl.service.CommonServiceImpl;
+import org.flowable.variable.api.types.VariableType;
 import org.flowable.variable.service.InternalVariableInstanceQuery;
 import org.flowable.variable.service.VariableService;
 import org.flowable.variable.service.VariableServiceConfiguration;
@@ -35,8 +36,13 @@ public class VariableServiceImpl extends CommonServiceImpl<VariableServiceConfig
     }
 
     @Override
-    public VariableInstanceEntity createVariableInstance(String name) {
-        return getVariableInstanceEntityManager().create(name);
+    public VariableInstanceEntity createVariableInstance(String name, VariableType type, Object value) {
+        return getVariableInstanceEntityManager().create(name, type, value);
+    }
+
+    @Override
+    public VariableInstanceEntity createVariableInstance(String name, VariableType type) {
+        return getVariableInstanceEntityManager().create(name, type);
     }
 
     @Override
@@ -45,8 +51,8 @@ public class VariableServiceImpl extends CommonServiceImpl<VariableServiceConfig
     }
 
     @Override
-    public void insertVariableInstanceWithValue(VariableInstanceEntity variable, Object value, String tenantId) {
-        getVariableInstanceEntityManager().insertWithValue(variable, value, tenantId);
+    public void updateVariableInstance(VariableInstanceEntity variableInstance) {
+        getVariableInstanceEntityManager().update(variableInstance, true);
     }
 
     @Override

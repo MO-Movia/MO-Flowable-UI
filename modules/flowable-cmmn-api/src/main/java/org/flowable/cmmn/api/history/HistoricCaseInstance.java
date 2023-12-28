@@ -24,7 +24,6 @@ public interface HistoricCaseInstance {
     String getName();
     String getParentId();
     String getBusinessKey();
-    String getBusinessStatus();
     String getCaseDefinitionId();
     String getCaseDefinitionKey();
     String getCaseDefinitionName();
@@ -34,8 +33,6 @@ public interface HistoricCaseInstance {
     Date getStartTime();
     Date getEndTime();
     String getStartUserId();
-    Date getLastReactivationTime();
-    String getLastReactivationUserId();
     String getCallbackId();
     String getCallbackType();
     String getReferenceId();
@@ -43,7 +40,4 @@ public interface HistoricCaseInstance {
     String getTenantId();
 
     Map<String, Object> getCaseVariables();
-
-    /** Sets an optional localized name for the case. */
-    void setLocalizedName(String localizedName);
 }

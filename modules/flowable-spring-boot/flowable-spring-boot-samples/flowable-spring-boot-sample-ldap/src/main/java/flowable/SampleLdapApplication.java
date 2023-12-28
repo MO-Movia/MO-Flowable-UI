@@ -12,8 +12,6 @@
  */
 package flowable;
 
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
 import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.idm.api.Privilege;
 import org.springframework.boot.CommandLineRunner;
@@ -23,9 +21,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 
@@ -39,22 +36,20 @@ public class SampleLdapApplication {
         SpringApplication.run(SampleLdapApplication.class, args);
     }
 
-    @Configuration(proxyBeanMethods = false)
-    class ApiWebSecurityConfigurationAdapter {
+    @Order(99)
+    @Configuration
+    class ApiWebSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
 
-        @Bean
-        @Order(99)
-        public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
             http
-                .securityMatcher(antMatcher("/process-api/**"))
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(antMatcher("/process-api/repository/**")).hasAnyAuthority("repository-privilege")
-                        .requestMatchers(antMatcher("/process-api/management/**")).hasAnyAuthority("management-privilege")
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(Customizer.withDefaults());
-
-            return http.build();
+                .antMatcher("/process-api/**")
+                .authorizeRequests()
+                .antMatchers("/process-api/repository/**").hasAnyAuthority("repository-privilege")
+                .antMatchers("/process-api/management/**").hasAnyAuthority("management-privilege")
+                .anyRequest().authenticated()
+                .and()
+                .httpBasic();
         }
     }
 

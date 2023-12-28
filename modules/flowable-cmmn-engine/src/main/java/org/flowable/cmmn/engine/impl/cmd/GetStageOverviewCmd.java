@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -73,7 +74,10 @@ public class GetStageOverviewCmd implements Command<List<StageResponse>>, Serial
             .orderByEndTime().asc());
 
         // Filter out the states that shouldn't be returned in the overview
-        planItemInstances.removeIf(planItemInstance -> PlanItemInstanceState.INTERMEDIARY_STATES.contains(planItemInstance.getState()));
+        planItemInstances.removeIf(planItemInstance -> {
+            return Objects.equals(PlanItemInstanceState.WAITING_FOR_REPETITION, planItemInstance.getState())
+                || Objects.equals(PlanItemInstanceState.ASYNC_ACTIVE, planItemInstance.getState());
+        });
 
         CmmnDeploymentManager deploymentManager = cmmnEngineConfiguration.getDeploymentManager();
         CaseDefinition caseDefinition = deploymentManager.findDeployedCaseDefinitionById(caseInstance.getCaseDefinitionId());
@@ -139,7 +143,7 @@ public class GetStageOverviewCmd implements Command<List<StageResponse>>, Serial
         Object stageValueObject = stageExpression.getValue(variableContainer);
         if (!(stageValueObject instanceof Boolean)) {
             throw new FlowableException("Include in stage overview expression does not resolve to a boolean value " + 
-                            includeInStageOverview + ": " + stageValueObject + " for " + variableContainer);
+                            includeInStageOverview + ": " + stageValueObject);
         }
         
         return (Boolean) stageValueObject;

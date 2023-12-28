@@ -16,9 +16,7 @@ package org.flowable.rest.service.api.runtime;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -34,29 +32,18 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.impl.cmd.ChangeDeploymentTenantIdCmd;
 import org.flowable.engine.repository.ProcessDefinition;
-import org.flowable.engine.runtime.ActivityInstance;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
-import org.flowable.form.api.FormEngineConfigurationApi;
-import org.flowable.form.api.FormInfo;
-import org.flowable.form.api.FormRepositoryService;
-import org.flowable.form.api.FormService;
+import org.flowable.form.api.FormDefinition;
+import org.flowable.form.api.FormDeployment;
+import org.flowable.form.api.FormInstance;
 import org.flowable.rest.service.BaseSpringRestTestCase;
 import org.flowable.rest.service.api.RestUrls;
 import org.flowable.task.api.Task;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.mockito.quality.Strictness;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -72,29 +59,6 @@ import net.javacrumbs.jsonunit.core.Option;
  * @author Filip Hrisafov
  */
 public class ProcessInstanceCollectionResourceTest extends BaseSpringRestTestCase {
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
-
-    @Mock
-    protected FormEngineConfigurationApi formEngineConfiguration;
-
-    @Mock
-    protected FormRepositoryService formRepositoryService;
-
-    @Mock
-    protected FormService formEngineFormService;
-
-    @Before
-    public void initializeMocks() {
-        Map engineConfigurations = processEngineConfiguration.getEngineConfigurations();
-        engineConfigurations.put(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG, formEngineConfiguration);
-    }
-
-    @After
-    public void resetMocks() {
-        processEngineConfiguration.getEngineConfigurations().remove(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG);
-    }
 
     // check if process instance query with business key with and without includeProcess Variables
     // related to https://activiti.atlassian.net/browse/ACT-1992
@@ -158,7 +122,6 @@ public class ProcessInstanceCollectionResourceTest extends BaseSpringRestTestCas
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("processOne", "myBusinessKey");
         String id = processInstance.getId();
         runtimeService.addUserIdentityLink(id, "kermit", "whatever");
-        runtimeService.setProcessInstanceName(processInstance.getId(), "myProcessInstance");
 
         // Test without any parameters
         String url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION);
@@ -169,25 +132,6 @@ public class ProcessInstanceCollectionResourceTest extends BaseSpringRestTestCas
         assertResultsPresentInDataResponse(url, id);
 
         url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?id=anotherId";
-        assertResultsPresentInDataResponse(url);
-        
-        // Process instance name
-        url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?name=myProcessInstance";
-        assertResultsPresentInDataResponse(url, id);
-        
-        url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?name=otherName";
-        assertResultsPresentInDataResponse(url);
-        
-        url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?nameLike=" + encode("my%Instance");
-        assertResultsPresentInDataResponse(url, id);
-        
-        url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?nameLike=" + encode("other%");
-        assertResultsPresentInDataResponse(url);
-        
-        url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?nameLikeIgnoreCase=" + encode("MY%instance");
-        assertResultsPresentInDataResponse(url, id);
-        
-        url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?nameLikeIgnoreCase=" + encode("OTHER%");
         assertResultsPresentInDataResponse(url);
 
         // Process instance business key
@@ -571,75 +515,90 @@ public class ProcessInstanceCollectionResourceTest extends BaseSpringRestTestCas
     }
 
     @Test
-    @Deployment(resources = { "org/flowable/rest/service/api/runtime/ProcessInstanceResourceTest.process-with-form.bpmn20.xml" })
+    @Deployment(resources = { "org/flowable/rest/service/api/runtime/ProcessInstanceResourceTest.process-with-form.bpmn20.xml",
+            "org/flowable/rest/service/api/runtime/simple.form" })
     public void testStartProcessWithForm() throws Exception {
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("processOne").singleResult();
+        try {
+            FormDefinition formDefinition = formRepositoryService.createFormDefinitionQuery().formDefinitionKey("form1").singleResult();
+            assertThat(formDefinition).isNotNull();
 
-        FormInfo formInfo = new FormInfo();
-        formInfo.setId("formDefId");
-        formInfo.setKey("formDefKey");
-        formInfo.setName("Form Definition Name");
+            FormInstance formInstance = formEngineFormService.createFormInstanceQuery().formDefinitionId(formDefinition.getId()).singleResult();
+            assertThat(formInstance).isNull();
 
-        when(formEngineConfiguration.getFormRepositoryService()).thenReturn(formRepositoryService);
-        when(formRepositoryService.getFormModelByKeyAndParentDeploymentId("form1", processDefinition.getDeploymentId(), processDefinition.getTenantId(),
-                processEngineConfiguration.isFallbackToDefaultTenant()))
-                .thenReturn(formInfo);
+            String url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_DEFINITION_START_FORM, processDefinition.getId());
+            CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + url), HttpStatus.SC_OK);
+            JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
+            closeResponse(response);
+            assertThatJson(responseNode)
+                    .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
+                    .isEqualTo("{"
+                            + " id: '" + formDefinition.getId() + "',"
+                            + " key: '" + formDefinition.getKey() + "',"
+                            + " name: '" + formDefinition.getName() + "',"
+                            + " fields : [ {"
+                            + "               id: 'user'"
+                            + "          }, {"
+                            + "               id: 'number'"
+                            + "          } ]"
+                            + "}");
 
-        String url = RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_DEFINITION_START_FORM, processDefinition.getId());
-        CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + url), HttpStatus.SC_OK);
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + " id: 'formDefId',"
-                        + " key: 'formDefKey',"
-                        + " name: 'Form Definition Name',"
-                        + " type: 'startForm',"
-                        + " definitionKey: 'processOne'"
-                        + "}");
+            ArrayNode formVariablesNode = objectMapper.createArrayNode();
 
-        ArrayNode formVariablesNode = objectMapper.createArrayNode();
+            // String variable
+            ObjectNode stringVarNode = formVariablesNode.addObject();
+            stringVarNode.put("name", "user");
+            stringVarNode.put("value", "simple string value");
+            stringVarNode.put("type", "string");
 
-        // String variable
-        ObjectNode stringVarNode = formVariablesNode.addObject();
-        stringVarNode.put("name", "user");
-        stringVarNode.put("value", "simple string value");
-        stringVarNode.put("type", "string");
+            ObjectNode integerVarNode = formVariablesNode.addObject();
+            integerVarNode.put("name", "number");
+            integerVarNode.put("value", 1234);
+            integerVarNode.put("type", "integer");
 
-        ObjectNode integerVarNode = formVariablesNode.addObject();
-        integerVarNode.put("name", "number");
-        integerVarNode.put("value", 1234);
-        integerVarNode.put("type", "integer");
+            ObjectNode requestNode = objectMapper.createObjectNode();
 
-        ObjectNode requestNode = objectMapper.createObjectNode();
+            // Start using process definition key, passing in variables
+            requestNode.put("processDefinitionKey", "processOne");
+            requestNode.set("startFormVariables", formVariablesNode);
 
-        // Start using process definition key, passing in variables
-        requestNode.put("processDefinitionKey", "processOne");
-        requestNode.set("startFormVariables", formVariablesNode);
+            HttpPost httpPost = new HttpPost(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION));
+            httpPost.setEntity(new StringEntity(requestNode.toString()));
+            response = executeRequest(httpPost, HttpStatus.SC_CREATED);
 
-        when(formRepositoryService.getFormModelByKeyAndParentDeploymentId("form1", processDefinition.getDeploymentId()))
-                .thenReturn(formInfo);
-        when(formEngineConfiguration.getFormService()).thenReturn(formEngineFormService);
-        when(formEngineFormService.getVariablesFromFormSubmission("theStart", "startEvent", null,
-                processDefinition.getId(), ScopeTypes.BPMN, formInfo, Map.of("user", "simple string value", "number", 1234), null))
-                .thenReturn(Map.of("user", "simple string value return", "number", 1234L));
+            responseNode = objectMapper.readTree(response.getEntity().getContent());
+            closeResponse(response);
+            assertThatJson(responseNode)
+                    .when(Option.IGNORING_EXTRA_FIELDS)
+                    .isEqualTo("{"
+                            + "   ended: false"
+                            + "}");
 
-        HttpPost httpPost = new HttpPost(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION));
-        httpPost.setEntity(new StringEntity(requestNode.toString()));
-        response = executeRequest(httpPost, HttpStatus.SC_CREATED);
+            String processInstanceId = responseNode.get("id").asText();
+            assertThat(runtimeService.getVariable(processInstanceId, "user")).isEqualTo("simple string value");
+            assertThat(runtimeService.getVariable(processInstanceId, "number")).isEqualTo(1234);
 
-        responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS)
-                .isEqualTo("{"
-                        + "   ended: false"
-                        + "}");
+            formInstance = formEngineFormService.createFormInstanceQuery().formDefinitionId(formDefinition.getId()).singleResult();
+            assertThat(formInstance).isNotNull();
+            byte[] valuesBytes = formEngineFormService.getFormInstanceValues(formInstance.getId());
+            assertThat(valuesBytes).isNotNull();
+            JsonNode instanceNode = objectMapper.readTree(valuesBytes);
+            assertThatJson(instanceNode)
+                    .isEqualTo("{"
+                            + "values: {"
+                            + "        number: '1234',"
+                            + "        user: 'simple string value'"
+                            + "        }"
+                            + "}");
 
-        String processInstanceId = responseNode.get("id").asText();
-        assertThat(runtimeService.getVariable(processInstanceId, "user")).isEqualTo("simple string value return");
-        assertThat(runtimeService.getVariable(processInstanceId, "number")).isEqualTo(1234L);
+        } finally {
+            formEngineFormService.deleteFormInstancesByProcessDefinition(processDefinition.getId());
+
+            List<FormDeployment> formDeployments = formRepositoryService.createDeploymentQuery().list();
+            for (FormDeployment formDeployment : formDeployments) {
+                formRepositoryService.deleteDeployment(formDeployment.getId(), true);
+            }
+        }
     }
 
     @Test
@@ -815,152 +774,5 @@ public class ProcessInstanceCollectionResourceTest extends BaseSpringRestTestCas
                 + "   processDefinitionId: '" + processInstance.getProcessDefinitionId() + "'"
                 + "} ]"
                 + "}");
-    }
-
-    /**
-     * Test bulk deletion of process instances.
-     */
-    @Test
-    @Deployment(resources = { "org/flowable/rest/service/api/runtime/ProcessInstanceResourceTest.process-one.bpmn20.xml" })
-    public void testBulkDeleteProcessInstance() throws Exception {
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("processOne", "myBusinessKey");
-        ProcessInstance processInstance2 = runtimeService.startProcessInstanceByKey("processOne", "myBusinessKey2");
-        ProcessInstance processInstance3 = runtimeService.startProcessInstanceByKey("processOne", "myBusinessKey2");
-
-        String url = SERVER_URL_PREFIX + RestUrls.SEGMENT_RUNTIME_RESOURCES + "/" + RestUrls.SEGMENT_PROCESS_INSTANCE_RESOURCE+ "/delete";
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("action", "delete");
-        body.putArray("instanceIds").add(processInstance.getId()).add(processInstance2.getId());
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_NO_CONTENT));
-        // Check if process-instance is gone
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(processInstance.getId()).count()).isZero();
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(processInstance2.getId()).count()).isZero();
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(processInstance3.getId()).singleResult()).isNotNull();
-
-    }
-
-    /**
-     * Test bulk deletion of process instances  with invalid instance id.
-     */
-    @Test
-    @Deployment(resources = { "org/flowable/rest/service/api/runtime/ProcessInstanceResourceTest.process-one.bpmn20.xml" })
-    public void testInvalidBulkDeleteProcessInstance() throws Exception {
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("processOne", "myBusinessKey");
-        ProcessInstance processInstance2 = runtimeService.startProcessInstanceByKey("processOne", "myBusinessKey2");
-
-        String url = SERVER_URL_PREFIX + RestUrls.SEGMENT_RUNTIME_RESOURCES + "/" + RestUrls.SEGMENT_PROCESS_INSTANCE_RESOURCE+ "/delete";
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("action", "delete");
-        body.putArray("instanceIds").add(processInstance.getId()).add(processInstance2.getId()).add("invalidIds");
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_NOT_FOUND));
-        // Check if process-instance is gone
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(processInstance.getId()).count()).isEqualTo(1);
-        assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(processInstance2.getId()).count()).isEqualTo(1);
-
-        body = objectMapper.createObjectNode();
-        body.put("action", "delete");
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_BAD_REQUEST));
-
-        body = objectMapper.createObjectNode();
-        body.put("action", "invalidAction");
-        body.putArray("instanceIds").add(processInstance.getId()).add(processInstance2.getId());
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_BAD_REQUEST));
-
-    }
-
-    @Test
-    @Deployment(resources = {
-            "org/flowable/rest/service/api/oneTaskProcess.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleParallelCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleInnerCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleProcessWithUserTasks.bpmn20.xml"
-
-    })
-    public void testQueryByRootScopeId() throws IOException {
-        runtimeService.startProcessInstanceByKey("simpleParallelCallActivity");
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleParallelCallActivity");
-
-        ActivityInstance firstLevelCallActivity1 = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(processInstance.getId())
-                .activityId("callActivity1").singleResult();
-
-        ActivityInstance secondLevelCallActivity1_1 = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(firstLevelCallActivity1.getCalledProcessInstanceId())
-                .activityId("callActivity1").singleResult();
-
-        ActivityInstance thirdLevelCallActivity1_1_1 = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(secondLevelCallActivity1_1.getCalledProcessInstanceId())
-                .activityId("callActivity1").singleResult();
-
-        ActivityInstance secondLevelCallActivity1_2 = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(firstLevelCallActivity1.getCalledProcessInstanceId())
-                .activityId("callActivity2").singleResult();
-
-        ActivityInstance firstLevelCallActivity2 = runtimeService.createActivityInstanceQuery().processInstanceId(processInstance.getId())
-                .activityId("callActivity2").singleResult();
-
-        String url = SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION)
-                + "?rootScopeId=" + processInstance.getId();
-        CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
-
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + "  data: ["
-                        + "    { id: '" + firstLevelCallActivity1.getCalledProcessInstanceId() + "' },"
-                        + "    { id: '" + secondLevelCallActivity1_1.getCalledProcessInstanceId() + "' },"
-                        + "    { id: '" + thirdLevelCallActivity1_1_1.getCalledProcessInstanceId() + "' },"
-                        + "    { id: '" + secondLevelCallActivity1_2.getCalledProcessInstanceId() + "' },"
-                        + "    { id: '" + firstLevelCallActivity2.getCalledProcessInstanceId() + "' }"
-                        + "  ]"
-                        + "}");
-
-    }
-
-    @Test
-    @Deployment(resources = {
-            "org/flowable/rest/service/api/oneTaskProcess.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleParallelCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleInnerCallActivity.bpmn20.xml",
-            "org/flowable/rest/service/api/runtime/simpleProcessWithUserTasks.bpmn20.xml"
-    })
-    public void testQueryByParentScopeId() throws IOException {
-        runtimeService.startProcessInstanceByKey("oneTaskProcess");
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("simpleParallelCallActivity");
-
-        ActivityInstance firstLevelCallActivity1 = runtimeService.createActivityInstanceQuery().processInstanceId(processInstance.getId())
-                .activityId("callActivity1").singleResult();
-
-        ActivityInstance secondLevelCallActivity1 = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(firstLevelCallActivity1.getCalledProcessInstanceId())
-                .activityId("callActivity1").singleResult();
-        ActivityInstance secondLevelCallActivity2 = runtimeService.createActivityInstanceQuery()
-                .processInstanceId(firstLevelCallActivity1.getCalledProcessInstanceId())
-                .activityId("callActivity2").singleResult();
-
-        String url = SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_PROCESS_INSTANCE_COLLECTION) + "?parentScopeId="
-                + firstLevelCallActivity1.getCalledProcessInstanceId();
-        CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
-
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + "  data: ["
-                        + "    { id: '" + secondLevelCallActivity1.getCalledProcessInstanceId() + "' },"
-                        + "    { id: '" + secondLevelCallActivity2.getCalledProcessInstanceId() + "' }"
-                        + "  ]"
-                        + "}");
     }
 }

@@ -12,6 +12,8 @@
  */
 package org.flowable.app.rest.service.api.repository;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.app.api.AppRepositoryService;
 import org.flowable.app.api.repository.AppDefinition;
 import org.flowable.app.rest.AppRestApiInterceptor;
@@ -54,7 +56,7 @@ public class AppDefinitionResource {
             @ApiResponse(code = 404, message = "Indicates the app definition was not found.")
     })
     @GetMapping(value = "/app-repository/app-definitions/{appDefinitionId}", produces = "application/json")
-    public AppDefinitionResponse getAppDefinition(@ApiParam(name = "appDefinitionId") @PathVariable String appDefinitionId) {
+    public AppDefinitionResponse getAppDefinition(@ApiParam(name = "appDefinitionId") @PathVariable String appDefinitionId, HttpServletRequest request) {
         AppDefinition appDefinition = appRepositoryService.getAppDefinition(appDefinitionId);
 
         if (appDefinition == null) {
@@ -78,7 +80,8 @@ public class AppDefinitionResource {
     @PutMapping(value = "/app-repository/app-definitions/{appDefinitionId}", produces = "application/json")
     public AppDefinitionResponse executeAppDefinitionAction(
             @ApiParam(name = "appDefinitionId") @PathVariable String appDefinitionId,
-            @ApiParam(required = true) @RequestBody AppDefinitionActionRequest actionRequest) {
+            @ApiParam(required = true) @RequestBody AppDefinitionActionRequest actionRequest,
+            HttpServletRequest request) {
 
         if (actionRequest == null) {
             throw new FlowableIllegalArgumentException("No action found in request body.");

@@ -193,7 +193,7 @@ public class AppDeploymentEntityImpl extends AbstractAppEngineNoRevisionEntity i
 
     @Override
     public String toString() {
-        return "AppDeploymentEntity[id=" + id + ", name=" + name + "]";
+        return "CmmnDeploymentEntity[id=" + id + ", name=" + name + "]";
     }
 
 }

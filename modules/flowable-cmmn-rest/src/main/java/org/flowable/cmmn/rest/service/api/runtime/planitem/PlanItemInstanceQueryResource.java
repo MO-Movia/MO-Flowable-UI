@@ -15,6 +15,8 @@ package org.flowable.cmmn.rest.service.api.runtime.planitem;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.rest.api.DataResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,8 +46,8 @@ public class PlanItemInstanceQueryResource extends PlanItemInstanceBaseResource 
     })
     @PostMapping(value = "/cmmn-query/plan-item-instances", produces = "application/json")
     public DataResponse<PlanItemInstanceResponse> queryPlanItemInstances(@RequestBody PlanItemInstanceQueryRequest queryRequest, 
-                    @ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+                    @ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
 
-        return getQueryResponse(queryRequest, allRequestParams);
+        return getQueryResponse(queryRequest, allRequestParams, request.getRequestURL().toString().replace("/query/plan-item-instances", ""));
     }
 }

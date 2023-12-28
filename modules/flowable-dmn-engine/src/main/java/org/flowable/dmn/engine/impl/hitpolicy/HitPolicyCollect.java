@@ -27,7 +27,6 @@ import org.flowable.dmn.model.HitPolicy;
 
 /**
  * @author Yvo Swillens
- * @author martin.grofcik
  */
 public class HitPolicyCollect extends AbstractHitPolicy implements ComposeDecisionResultBehavior {
 
@@ -67,17 +66,7 @@ public class HitPolicyCollect extends AbstractHitPolicy implements ComposeDecisi
                 }
             }
         }
-
-        updateStackWithDecisionResults(decisionResults, executionContext);
-
-        // put decision results on audit container
         executionContext.getAuditContainer().setDecisionResult(decisionResults);
-        // the `multipleResults` flag depends on the aggregator. If there is no aggregation there are more results.
-        executionContext.getAuditContainer().setMultipleResults(isMultipleResults(executionContext.getAggregator()));
-    }
-
-    protected boolean isMultipleResults(BuiltinAggregator aggregator) {
-        return aggregator == null;
     }
 
     protected Entry<String, List<Double>> composeOutputValues(ELExecutionContext executionContext) {
@@ -96,7 +85,7 @@ public class HitPolicyCollect extends AbstractHitPolicy implements ComposeDecisi
 
         for (Map<String, Object> ruleResult : ruleResults) {
             for (Entry<String, Object> entry : ruleResult.entrySet()) {
-                if (distinctOutputDoubleValues.containsKey(entry.getKey()) && distinctOutputDoubleValues.get(entry.getKey()) != null) {
+                if (distinctOutputDoubleValues.containsKey(entry.getKey()) && distinctOutputDoubleValues.get(entry.getKey()) instanceof List) {
                     distinctOutputDoubleValues.get(entry.getKey()).add((Double) entry.getValue());
                 } else {
                     List<Double> valuesList = new ArrayList<>();
@@ -117,8 +106,8 @@ public class HitPolicyCollect extends AbstractHitPolicy implements ComposeDecisi
 
     protected Double aggregateSum(List<Double> values) {
         double aggregate = 0;
-        for (Double value : values) {
-            aggregate += value;
+        for (Object value : values) {
+            aggregate += (Double) value;
         }
         return aggregate;
     }

@@ -33,8 +33,6 @@ public interface EventInstance {
     String getEventKey();
 
     Collection<EventPayloadInstance> getPayloadInstances();
-    
-    Collection<EventPayloadInstance> getHeaderInstances();
 
     Collection<EventPayloadInstance> getCorrelationParameterInstances();
 

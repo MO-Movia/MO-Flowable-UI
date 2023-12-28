@@ -13,6 +13,9 @@
 
 package org.flowable.rest.service.api.runtime.task;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.engine.task.Attachment;
 import org.flowable.engine.task.Comment;
@@ -23,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.Api;
@@ -46,7 +48,7 @@ public class TaskAttachmentResource extends TaskBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested task was not found or the tasks does not have a attachment with the given ID.")
     })
     @GetMapping(value = "/runtime/tasks/{taskId}/attachments/{attachmentId}", produces = "application/json")
-    public AttachmentResponse getAttachment(@ApiParam(name = "taskId") @PathVariable("taskId") String taskId, @ApiParam(name = "attachmentId") @PathVariable("attachmentId") String attachmentId) {
+    public AttachmentResponse getAttachment(@ApiParam(name = "taskId") @PathVariable("taskId") String taskId, @ApiParam(name = "attachmentId") @PathVariable("attachmentId") String attachmentId, HttpServletRequest request) {
 
         HistoricTaskInstance task = getHistoricTaskFromRequest(taskId);
 
@@ -58,26 +60,22 @@ public class TaskAttachmentResource extends TaskBaseResource {
         return restResponseFactory.createAttachmentResponse(attachment);
     }
 
-    @ApiOperation(value = "Delete an attachment on a task", tags = { "Task Attachments"}, code = 204)
+    @ApiOperation(value = "Delete an attachment on a task", tags = { "Task Attachments"})
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Indicates the task and attachment were found and the attachment is deleted. Response body is left empty intentionally."),
             @ApiResponse(code = 404, message = "Indicates the requested task was not found or the tasks does not have a attachment with the given ID.")
     })
     @DeleteMapping(value = "/runtime/tasks/{taskId}/attachments/{attachmentId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteAttachment(@ApiParam(name = "taskId") @PathVariable("taskId") String taskId, @ApiParam(name = "attachmentId") @PathVariable("attachmentId") String attachmentId) {
+    public void deleteAttachment(@ApiParam(name = "taskId") @PathVariable("taskId") String taskId, @ApiParam(name = "attachmentId") @PathVariable("attachmentId") String attachmentId, HttpServletResponse response) {
 
-        Task task = getTaskFromRequestWithoutAccessCheck(taskId);
+        Task task = getTaskFromRequest(taskId);
 
         Attachment attachment = taskService.getAttachment(attachmentId);
         if (attachment == null || !task.getId().equals(attachment.getTaskId())) {
             throw new FlowableObjectNotFoundException("Task '" + task.getId() + "' does not have an attachment with id '" + attachmentId + "'.", Comment.class);
         }
 
-        if (restApiInterceptor != null) {
-            restApiInterceptor.deleteTaskAttachment(task, attachment);
-        }
-
         taskService.deleteAttachment(attachmentId);
+        response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 }

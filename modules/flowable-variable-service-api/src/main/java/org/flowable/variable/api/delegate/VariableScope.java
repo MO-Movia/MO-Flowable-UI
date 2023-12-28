@@ -33,13 +33,6 @@ import org.flowable.variable.api.persistence.entity.VariableInstance;
 public interface VariableScope extends VariableContainer {
 
     /**
-     * @return an empty (null object) variable scope.
-     */
-    public static VariableScope empty() {
-        return EmptyVariableScope.INSTANCE;
-    }
-
-    /**
      * Returns all variables. This will include all variables of parent scopes too.
      */
     Map<String, Object> getVariables();

@@ -19,7 +19,8 @@ import org.flowable.spring.boot.idm.IdmEngineServicesAutoConfiguration;
 import org.flowable.spring.security.FlowableUserDetailsService;
 import org.flowable.spring.security.SpringSecurityAuthenticationContext;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -34,6 +35,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  *
  * @author Josh Long
  */
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnClass({
     AuthenticationManager.class,
     IdmIdentityService.class,
@@ -41,10 +43,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
     GlobalAuthenticationConfigurerAdapter.class
 })
 @ConditionalOnBean(IdmIdentityService.class)
-@AutoConfiguration(after = {
+@AutoConfigureBefore(org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class)
+@AutoConfigureAfter({
     IdmEngineServicesAutoConfiguration.class,
     ProcessEngineAutoConfiguration.class
-}, before = org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class)
+})
 public class FlowableSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
@@ -52,7 +55,10 @@ public class FlowableSecurityAutoConfiguration {
     public static class SpringSecurityAuthenticationContextConfiguration {
 
         public SpringSecurityAuthenticationContextConfiguration(ObjectProvider<AuthenticationContext> authenticationContext) {
-            AuthenticationContext context = authenticationContext.getIfAvailable(SpringSecurityAuthenticationContext::new);
+            AuthenticationContext context = authenticationContext.getIfAvailable();
+            if (context == null) {
+                context = new SpringSecurityAuthenticationContext();
+            }
 
             Authentication.setAuthenticationContext(context);
         }

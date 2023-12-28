@@ -69,8 +69,6 @@ public interface JobService {
     void updateAllJobTypesTenantIdForDeployment(String deploymentId, String newTenantId);
     
     void createAsyncJob(JobEntity job, boolean isExclusive);
-
-    void createAsyncJobNoTriggerAsyncExecutor(JobEntity job, boolean isExclusive);
     
     JobEntity createJob();
     

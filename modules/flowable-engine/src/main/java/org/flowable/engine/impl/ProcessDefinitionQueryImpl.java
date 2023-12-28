@@ -44,10 +44,8 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
     protected String categoryNotEquals;
     protected String name;
     protected String nameLike;
-    protected String nameLikeIgnoreCase;
     protected String deploymentId;
     protected Set<String> deploymentIds;
-    protected String parentDeploymentId;
     protected String key;
     protected String keyLike;
     protected String resourceName;
@@ -61,7 +59,6 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
     protected SuspensionState suspensionState;
     protected String authorizationUserId;
     protected Collection<String> authorizationGroups;
-    private List<List<String>> safeAuthorizationGroups;
     protected boolean authorizationGroupsSet;
     protected String procDefId;
     protected String tenantId;
@@ -143,15 +140,6 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
     }
 
     @Override
-    public ProcessDefinitionQueryImpl processDefinitionNameLikeIgnoreCase(String nameLikeIgnoreCase) {
-        if (nameLikeIgnoreCase == null) {
-            throw new FlowableIllegalArgumentException("nameLikeIgnoreCase is null");
-        }
-        this.nameLikeIgnoreCase = nameLikeIgnoreCase;
-        return this;
-    }
-
-    @Override
     public ProcessDefinitionQueryImpl deploymentId(String deploymentId) {
         if (deploymentId == null) {
             throw new FlowableIllegalArgumentException("id is null");
@@ -166,15 +154,6 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
             throw new FlowableIllegalArgumentException("ids are null");
         }
         this.deploymentIds = deploymentIds;
-        return this;
-    }
-
-    @Override
-    public ProcessDefinitionQueryImpl parentDeploymentId(String parentDeploymentId) {
-        if (parentDeploymentId == null) {
-            throw new FlowableIllegalArgumentException("parentDeploymentId is null");
-        }
-        this.parentDeploymentId = parentDeploymentId;
         return this;
     }
 
@@ -443,10 +422,6 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
         return deploymentIds;
     }
 
-    public String getParentDeploymentId() {
-        return parentDeploymentId;
-    }
-
     public String getId() {
         return id;
     }
@@ -461,10 +436,6 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
 
     public String getNameLike() {
         return nameLike;
-    }
-
-    public String getNameLikeIgnoreCase() {
-        return nameLikeIgnoreCase;
     }
 
     public String getKey() {
@@ -561,13 +532,5 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
 
     public boolean isIncludeAuthorization() {
         return authorizationUserId != null || (authorizationGroups != null && !authorizationGroups.isEmpty());
-    }
-
-    public List<List<String>> getSafeAuthorizationGroups() {
-        return safeAuthorizationGroups;
-    }
-
-    public void setSafeAuthorizationGroups(List<List<String>> safeAuthorizationGroups) {
-        this.safeAuthorizationGroups = safeAuthorizationGroups;
     }
 }

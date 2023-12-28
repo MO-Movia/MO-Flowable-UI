@@ -37,12 +37,4 @@ public class PlanItemDefinitionMappingBuilder {
     public static MoveToAvailablePlanItemDefinitionMapping createMoveToAvailablePlanItemDefinitionMappingFor(String planItemDefinitionId) {
         return new MoveToAvailablePlanItemDefinitionMapping(planItemDefinitionId);
     }
-    
-    public static WaitingForRepetitionPlanItemDefinitionMapping createWaitingForRepetitionPlanItemDefinitionMappingFor(String planItemDefinitionId) {
-        return new WaitingForRepetitionPlanItemDefinitionMapping(planItemDefinitionId);
-    }
-    
-    public static RemoveWaitingForRepetitionPlanItemDefinitionMapping createRemoveWaitingForRepetitionPlanItemDefinitionMappingFor(String planItemDefinitionId) {
-        return new RemoveWaitingForRepetitionPlanItemDefinitionMapping(planItemDefinitionId);
-    }
 }

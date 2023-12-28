@@ -66,7 +66,7 @@ public class AddCommentCmd implements Command<Comment> {
             }
 
             if (task.isSuspended()) {
-                throw new FlowableException("Cannot add a comment to a suspended " + task);
+                throw new FlowableException(getSuspendedTaskException());
             }
         }
 
@@ -79,7 +79,7 @@ public class AddCommentCmd implements Command<Comment> {
             }
 
             if (execution.isSuspended()) {
-                throw new FlowableException("Cannot add a comment to a suspended " + execution);
+                throw new FlowableException(getSuspendedExceptionMessage());
             }
         }
 
@@ -90,7 +90,7 @@ public class AddCommentCmd implements Command<Comment> {
             processDefinitionId = task.getProcessDefinitionId();
         }
 
-        if (Flowable5Util.isFlowable5ProcessDefinitionId(commandContext, processDefinitionId)) {
+        if (processDefinitionId != null && Flowable5Util.isFlowable5ProcessDefinitionId(commandContext, processDefinitionId)) {
             Flowable5CompatibilityHandler compatibilityHandler = Flowable5Util.getFlowable5CompatibilityHandler();
             return compatibilityHandler.addComment(taskId, processInstanceId, type, message);
         }
@@ -115,5 +115,13 @@ public class AddCommentCmd implements Command<Comment> {
         processEngineConfiguration.getCommentEntityManager().insert(comment);
 
         return comment;
+    }
+
+    protected String getSuspendedTaskException() {
+        return "Cannot add a comment to a suspended task";
+    }
+
+    protected String getSuspendedExceptionMessage() {
+        return "Cannot add a comment to a suspended execution";
     }
 }

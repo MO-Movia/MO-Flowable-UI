@@ -12,8 +12,6 @@
  */
 package org.flowable.common.engine.impl.callback;
 
-import java.util.Map;
-
 /**
  * @author Joram Barrez
  */
@@ -24,18 +22,13 @@ public class CallbackData {
     protected String instanceId;
     protected String oldState;
     protected String newState;
-    protected Map<String, Object> additionalData = null;
-
-    public CallbackData(String callbackId, String callbackType, String instanceId, String oldState, String newState, Map<String, Object> additionalData) {
+    
+    public CallbackData(String callbackId, String callbackType, String instanceId, String oldState, String newState) {
         this.callbackId = callbackId;
         this.callbackType = callbackType;
         this.instanceId = instanceId;
         this.oldState = oldState;
         this.newState = newState;
-    }
-
-    public CallbackData(String callbackId, String callbackType, String instanceId, String oldState, String newState) {
-        this(callbackId, callbackType, instanceId, oldState, newState, null);
     }
 
     public String getCallbackId() {
@@ -77,13 +70,5 @@ public class CallbackData {
     public void setNewState(String newState) {
         this.newState = newState;
     }
-
-    public Map<String, Object> getAdditionalData() {
-        return additionalData;
-    }
-
-    public void setAdditionalData(Map<String, Object> additionalData) {
-        this.additionalData = additionalData;
-    }
-
+    
 }

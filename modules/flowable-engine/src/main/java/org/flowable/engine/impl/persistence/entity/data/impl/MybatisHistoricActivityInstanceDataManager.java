@@ -12,7 +12,6 @@
  */
 package org.flowable.engine.impl.persistence.entity.data.impl;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,6 @@ import org.flowable.engine.impl.persistence.entity.data.HistoricActivityInstance
 import org.flowable.engine.impl.persistence.entity.data.impl.cachematcher.HistoricActivityInstanceMatcher;
 import org.flowable.engine.impl.persistence.entity.data.impl.cachematcher.UnfinishedHistoricActivityInstanceByProcessInstanceIdMatcher;
 import org.flowable.engine.impl.persistence.entity.data.impl.cachematcher.UnfinishedHistoricActivityInstanceMatcher;
-import org.flowable.engine.runtime.ActivityInstance;
 
 /**
  * @author Joram Barrez
@@ -56,11 +54,6 @@ public class MybatisHistoricActivityInstanceDataManager extends AbstractProcessD
     @Override
     public HistoricActivityInstanceEntity create() {
         return new HistoricActivityInstanceEntityImpl();
-    }
-
-    @Override
-    public HistoricActivityInstanceEntity create(ActivityInstance activityInstance) {
-        return new HistoricActivityInstanceEntityImpl(activityInstance);
     }
 
     @Override
@@ -118,11 +111,6 @@ public class MybatisHistoricActivityInstanceDataManager extends AbstractProcessD
         getDbSqlSession().delete("bulkDeleteHistoricActivityInstances", historicActivityInstanceQuery, HistoricActivityInstanceEntityImpl.class);
     }
     
-    @Override
-    public void bulkDeleteHistoricActivityInstancesByProcessInstanceIds(Collection<String> historicProcessInstanceIds) {
-        getDbSqlSession().delete("bulkDeleteHistoricActivityInstancesForProcessInstanceIds", createSafeInValuesList(historicProcessInstanceIds), HistoricActivityInstanceEntityImpl.class);
-    }
-
     @Override
     public void deleteHistoricActivityInstancesForNonExistingProcessInstances() {
         getDbSqlSession().delete("bulkDeleteHistoricActivityInstancesForNonExistingProcessInstances", null, HistoricActivityInstanceEntityImpl.class);

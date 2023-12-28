@@ -12,7 +12,6 @@
  */
 package org.flowable.cmmn.engine.impl.history;
 
-import java.util.Collection;
 import java.util.Date;
 
 import org.flowable.cmmn.api.repository.CaseDefinition;
@@ -21,7 +20,6 @@ import org.flowable.cmmn.engine.impl.persistence.entity.MilestoneInstanceEntity;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.entitylink.service.impl.persistence.entity.EntityLinkEntity;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
-import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskLogEntryBuilder;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
@@ -34,20 +32,14 @@ public interface CmmnHistoryManager {
     void recordCaseInstanceStart(CaseInstanceEntity caseInstanceEntity);
 
     void recordCaseInstanceEnd(CaseInstanceEntity caseInstanceEntity, String state, Date endTime);
-
-    void recordHistoricCaseInstanceReactivated(CaseInstanceEntity caseInstanceEntity);
     
     void recordUpdateCaseInstanceName(CaseInstanceEntity caseInstanceEntity, String name);
 
     void recordUpdateBusinessKey(CaseInstanceEntity caseInstanceEntity, String businessKey);
-    
-    void recordUpdateBusinessStatus(CaseInstanceEntity caseInstanceEntity, String businessStatus);
 
     void recordMilestoneReached(MilestoneInstanceEntity milestoneInstanceEntity);
 
     void recordHistoricCaseInstanceDeleted(String caseInstanceId, String tenantId);
-    
-    void recordBulkDeleteHistoricCaseInstances(Collection<String> caseInstanceIds);
 
     void recordIdentityLinkCreated(IdentityLinkEntity identityLink);
 
@@ -65,16 +57,12 @@ public interface CmmnHistoryManager {
 
     void recordTaskCreated(TaskEntity task);
 
-    void recordTaskEnd(TaskEntity task, String userId, String deleteReason, Date endTime);
+    void recordTaskEnd(TaskEntity task, String deleteReason, Date endTime);
 
     void recordTaskInfoChange(TaskEntity taskEntity, Date changeTime);
 
-    void recordHistoricTaskDeleted(HistoricTaskInstance task);
-
     void recordPlanItemInstanceCreated(PlanItemInstanceEntity planItemInstanceEntity);
-
-    void recordPlanItemInstanceReactivated(PlanItemInstanceEntity planItemInstanceEntity);
-
+    
     void recordPlanItemInstanceUpdated(PlanItemInstanceEntity planItemInstanceEntity);
 
     void recordPlanItemInstanceAvailable(PlanItemInstanceEntity planItemInstanceEntity);

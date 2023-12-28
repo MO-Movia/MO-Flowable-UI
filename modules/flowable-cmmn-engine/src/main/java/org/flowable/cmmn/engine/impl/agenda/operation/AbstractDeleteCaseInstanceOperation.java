@@ -21,7 +21,6 @@ import org.flowable.cmmn.engine.impl.persistence.entity.CaseInstanceEntity;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CmmnLoggingSessionUtil;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
-import org.flowable.common.engine.impl.callback.CallbackData;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.logging.CmmnLoggingSessionConstants;
 
@@ -39,18 +38,17 @@ public abstract class AbstractDeleteCaseInstanceOperation extends AbstractChange
     }
 
     @Override
-    public void internalExecute() {
+    public void run() {
+        super.run();
         deleteCaseInstance();
     }
-
+    
     protected void deleteCaseInstance() {
         updateChildPlanItemInstancesState();
         
         String newState = getNewState();
-        CallbackData callBackData = new CallbackData(caseInstanceEntity.getCallbackId(), caseInstanceEntity.getCallbackType(),
-            caseInstanceEntity.getId(), caseInstanceEntity.getState(), newState);
-        addAdditionalCallbackData(callBackData);
-        CommandContextUtil.getCaseInstanceHelper(commandContext).callCaseInstanceStateChangeCallbacks(callBackData);
+        CommandContextUtil.getCaseInstanceHelper(commandContext).callCaseInstanceStateChangeCallbacks(commandContext, 
+                caseInstanceEntity, caseInstanceEntity.getState(), newState);
         
         CmmnEngineConfiguration cmmnEngineConfiguration = CommandContextUtil.getCmmnEngineConfiguration(commandContext);
         CommandContextUtil.getCmmnHistoryManager(commandContext)
@@ -74,8 +72,8 @@ public abstract class AbstractDeleteCaseInstanceOperation extends AbstractChange
         List<PlanItemInstanceEntity> childPlanItemInstances = caseInstanceEntity.getChildPlanItemInstances();
         if (childPlanItemInstances != null) {
             for (PlanItemInstanceEntity childPlanItemInstance : childPlanItemInstances) {
-                // if the child plan item is not yet in a terminal state, terminate it
-                if (!PlanItemInstanceState.isInTerminalState(childPlanItemInstance)) {
+                if (PlanItemInstanceState.ACTIVE.equals(childPlanItemInstance.getState())
+                        || PlanItemInstanceState.AVAILABLE.equals(childPlanItemInstance.getState())) {
                     changeStateForChildPlanItemInstance(childPlanItemInstance);
                 }
             }
@@ -83,8 +81,5 @@ public abstract class AbstractDeleteCaseInstanceOperation extends AbstractChange
     }
 
     public abstract String getDeleteReason();
-
-    public void addAdditionalCallbackData(CallbackData callbackData) {
-        // meant to be overridden
-    }
+    
 }

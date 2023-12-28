@@ -36,9 +36,4 @@ public class ConditionParser extends BaseChildElementParser {
 
         ((ConditionalEventDefinition) parentElement).setConditionExpression(xtr.getElementText().trim());
     }
-
-    @Override
-    public boolean accepts(BaseElement element) {
-        return element instanceof ConditionalEventDefinition;
-    }
 }

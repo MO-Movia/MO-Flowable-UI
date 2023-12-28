@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -192,6 +193,8 @@ public class SerializableVariablesDiabledTest {
 
             response.close();
 
+        } catch (ClientProtocolException e) {
+            fail(e.getMessage());
         } catch (IOException e) {
             fail(e.getMessage());
         }

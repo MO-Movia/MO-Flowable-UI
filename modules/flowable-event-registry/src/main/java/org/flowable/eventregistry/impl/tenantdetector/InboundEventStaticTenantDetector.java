@@ -26,7 +26,7 @@ public class InboundEventStaticTenantDetector<T> implements InboundEventTenantDe
     }
 
     @Override
-    public String detectTenantId(T payload) {
+    public String detectTenantId(T event) {
         return staticTenantId;
     }
 

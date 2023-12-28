@@ -102,7 +102,7 @@ There are two ways of querying data from the engine: the query API and native qu
 Sometimes you need more powerful queries, for example, queries using an OR operator or restrictions you cannot express using the Query API. For these cases, we have native queries, which allow you to write your own SQL queries. The return type is defined by the Query object you use and the data is mapped into the correct objects (Task, ProcessInstance, Execution, …​). Since the query will be fired at the database you have to use table and column names as they are defined in the database; this requires some knowledge about the internal data structure and it is recommended to use native queries with care. The table names can be retrieved through the API to keep the dependency as small as possible.
 
     List<Task> tasks = taskService.createNativeTaskQuery()
-      .sql("SELECT * FROM " + managementService.getTableName(Task.class) +
+      .sql("SELECT count(*) FROM " + managementService.getTableName(Task.class) +
           " T WHERE T.NAME_ = #{taskName}")
       .parameter("taskName", "gonzoTask")
       .list();
@@ -320,7 +320,7 @@ To make working with process variables easier, a set of out-of-the-box functions
 
 -   **variables:containsAny(varName, value1, value2, …​)** : similar to the *contains* function, but *true* will be returned if **any** (and not all) the passed values is contained in the variable.
 
--   **variables:base64(varName)** : converts a Binary or String variable to a Base64 String
+-   \*variables:base64(varName): converts a Binary or String Variable in Base64 String
 
 -   Comparator functions:
 

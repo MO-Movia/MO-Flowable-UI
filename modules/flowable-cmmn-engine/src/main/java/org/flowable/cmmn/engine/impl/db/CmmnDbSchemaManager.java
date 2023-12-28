@@ -69,8 +69,7 @@ public class CmmnDbSchemaManager extends LiquibaseBasedSchemaManager {
             getTaskSchemaManager().schemaCreate();
             getVariableSchemaManager().schemaCreate();
             getJobSchemaManager().schemaCreate();
-            getBatchSchemaManager().schemaCreate();
-
+            
             super.schemaCreate();
         } catch (Exception e) {
             throw new FlowableException("Error creating CMMN engine tables", e);
@@ -83,12 +82,6 @@ public class CmmnDbSchemaManager extends LiquibaseBasedSchemaManager {
             super.schemaDrop();
         } catch (Exception e) {
             logger.info("Error dropping CMMN engine tables", e);
-        }
-
-        try {
-            getBatchSchemaManager().schemaDrop();
-        } catch (Exception e) {
-            logger.info("Error dropping batch tables", e);
         }
         
         try {
@@ -147,7 +140,6 @@ public class CmmnDbSchemaManager extends LiquibaseBasedSchemaManager {
                 getTaskSchemaManager().schemaUpdate();
                 getVariableSchemaManager().schemaUpdate();
                 getJobSchemaManager().schemaUpdate();
-                getBatchSchemaManager().schemaUpdate();
             }
 
             super.schemaUpdate();
@@ -184,9 +176,5 @@ public class CmmnDbSchemaManager extends LiquibaseBasedSchemaManager {
     
     protected SchemaManager getJobSchemaManager() {
         return CommandContextUtil.getCmmnEngineConfiguration().getJobSchemaManager();
-    }
-
-    protected SchemaManager getBatchSchemaManager() {
-        return CommandContextUtil.getCmmnEngineConfiguration().getBatchSchemaManager();
     }
 }

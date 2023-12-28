@@ -93,46 +93,6 @@
     delete from ${prefix}ACT_HI_IDENTITYLINK where SCOPE_DEFINITION_ID_ = #{scopeDefinitionId} and SCOPE_TYPE_ = #{scopeType}
   </delete>
   
-  <delete id="bulkDeleteHistoricIdentityLinksForProcessInstanceIds" parameterType="java.util.Collection">
-    delete from ${prefix}ACT_HI_IDENTITYLINK where 
-    <foreach item="listItem" index="listIndex" collection="collection">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        PROC_INST_ID_ in 
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>
-  </delete>
-  
-  <delete id="bulkDeleteHistoricIdentityLinksForTaskIds" parameterType="java.util.Collection">
-    delete from ${prefix}ACT_HI_IDENTITYLINK where 
-    <foreach item="listItem" index="listIndex" collection="collection">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        TASK_ID_ in 
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>
-  </delete>
-  
-  <delete id="bulkDeleteHistoricIdentityLinksForScopeIdsAndScopeType" parameterType="map">
-    delete from ${prefix}ACT_HI_IDENTITYLINK where 
-    (<foreach item="listItem" index="listIndex" collection="scopeIds">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        SCOPE_ID_ in 
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>)
-    and SCOPE_TYPE_ = #{scopeType}
-  </delete>
-  
   <delete id="bulkDeleteHistoricProcessIdentityLinks" parameterType="java.util.Map">
     delete <if test="_databaseId != 'postgres' and _databaseId != 'cockroachdb' and _databaseId != 'db2'"> LINK </if> from ${prefix}ACT_HI_IDENTITYLINK LINK where LINK.PROC_INST_ID_ is not null and LINK.PROC_INST_ID_ != '' and
     NOT EXISTS (select PROCINST.ID_ from ${prefix}ACT_HI_PROCINST PROCINST where LINK.PROC_INST_ID_ = PROCINST.ID_)
@@ -147,12 +107,7 @@
     delete from ${prefix}ACT_HI_IDENTITYLINK where PROC_INST_ID_ is not null and PROC_INST_ID_ != '' and 
     PROC_INST_ID_ NOT IN (select PROCINST.ID_ from ${prefix}ACT_HI_PROCINST PROCINST)
   </delete>
-
-  <delete id="bulkDeleteHistoricProcessIdentityLinks" databaseId="hsql" parameterType="java.util.Map">
-    delete from ${prefix}ACT_HI_IDENTITYLINK where PROC_INST_ID_ is not null and PROC_INST_ID_ != '' and
-    PROC_INST_ID_ NOT IN (select PROCINST.ID_ from ${prefix}ACT_HI_PROCINST PROCINST)
-  </delete>
-
+  
   <delete id="bulkDeleteHistoricCaseIdentityLinks" parameterType="java.util.Map">
     delete <if test="_databaseId != 'postgres' and _databaseId != 'cockroachdb' and _databaseId != 'db2'"> LINK </if> from ${prefix}ACT_HI_IDENTITYLINK LINK where LINK.SCOPE_ID_ is not null and LINK.SCOPE_ID_ != '' and LINK.SCOPE_TYPE_ = 'cmmn' and
     NOT EXISTS (select CASEINST.ID_ from ${prefix}ACT_CMMN_HI_CASE_INST CASEINST where LINK.SCOPE_ID_ = CASEINST.ID_)
@@ -167,12 +122,7 @@
     delete from ${prefix}ACT_HI_IDENTITYLINK where SCOPE_ID_ is not null and SCOPE_ID_ != '' and SCOPE_TYPE_ = 'cmmn' and
     SCOPE_ID_ NOT IN (select CASEINST.ID_ from ${prefix}ACT_CMMN_HI_CASE_INST CASEINST)
   </delete>
-
-  <delete id="bulkDeleteHistoricCaseIdentityLinks" databaseId="hsql" parameterType="java.util.Map">
-    delete from ${prefix}ACT_HI_IDENTITYLINK where SCOPE_ID_ is not null and SCOPE_ID_ != '' and SCOPE_TYPE_ = 'cmmn' and
-    SCOPE_ID_ NOT IN (select CASEINST.ID_ from ${prefix}ACT_CMMN_HI_CASE_INST CASEINST)
-  </delete>
-
+  
   <delete id="bulkDeleteHistoricTaskIdentityLinks" parameterType="java.util.Map">
     delete <if test="_databaseId != 'postgres' and _databaseId != 'cockroachdb' and _databaseId != 'db2'"> LINK </if> from ${prefix}ACT_HI_IDENTITYLINK LINK where LINK.TASK_ID_ is not null and LINK.TASK_ID_ != '' and
     NOT EXISTS (select TASK.ID_ from ${prefix}ACT_HI_TASKINST TASK where LINK.TASK_ID_ = TASK.ID_)
@@ -188,12 +138,8 @@
     TASK_ID_ NOT IN (select TASK.ID_ from ${prefix}ACT_HI_TASKINST TASK)
   </delete>
   
-  <delete id="bulkDeleteHistoricTaskIdentityLinks" databaseId="hsql"  parameterType="java.util.Map">
-    delete from ${prefix}ACT_HI_IDENTITYLINK where TASK_ID_ is not null and TASK_ID_ != '' and
-    TASK_ID_ NOT IN (select TASK.ID_ from ${prefix}ACT_HI_TASKINST TASK)
-  </delete>
-
   <!-- HISTORIC IDENTITY LINK RESULTMAP -->
+
   <resultMap id="historicIdentityLinkResultMap" type="org.flowable.identitylink.service.impl.persistence.entity.HistoricIdentityLinkEntityImpl">
     <id property="id" column="ID_" jdbcType="VARCHAR" />
     <result property="type" column="TYPE_" jdbcType="VARCHAR" />

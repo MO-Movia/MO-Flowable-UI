@@ -17,8 +17,6 @@ import java.util.Collection;
 import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.eventregistry.api.EventRegistryEvent;
 import org.flowable.eventregistry.api.EventRepositoryService;
-import org.flowable.eventregistry.api.FlowableEventInfo;
-import org.flowable.eventregistry.api.InboundEvent;
 import org.flowable.eventregistry.api.InboundEventDeserializer;
 import org.flowable.eventregistry.api.InboundEventKeyDetector;
 import org.flowable.eventregistry.api.InboundEventPayloadExtractor;
@@ -27,20 +25,15 @@ import org.flowable.eventregistry.api.InboundEventTenantDetector;
 import org.flowable.eventregistry.api.InboundEventTransformer;
 import org.flowable.eventregistry.api.runtime.EventInstance;
 import org.flowable.eventregistry.api.runtime.EventPayloadInstance;
-import org.flowable.eventregistry.impl.FlowableEventInfoImpl;
 import org.flowable.eventregistry.impl.runtime.EventInstanceImpl;
+import org.flowable.eventregistry.model.ChannelModel;
 import org.flowable.eventregistry.model.EventModel;
-import org.flowable.eventregistry.model.InboundChannelModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Joram Barrez
  * @author Filip Hrisafov
  */
 public class DefaultInboundEventProcessingPipeline<T> implements InboundEventProcessingPipeline {
-
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected EventRepositoryService eventRepositoryService;
     protected InboundEventDeserializer<T> inboundEventDeserializer;
@@ -65,17 +58,8 @@ public class DefaultInboundEventProcessingPipeline<T> implements InboundEventPro
     }
 
     @Override
-    public Collection<EventRegistryEvent> run(InboundChannelModel inboundChannel, InboundEvent inboundEvent) {
-
-        boolean debugLoggingEnabled = logger.isDebugEnabled();
-        if (debugLoggingEnabled) {
-            logger.debug("Running inbound pipeline for inbound {} channel {}. Inbound event: {}", inboundChannel.getChannelType(), inboundChannel.getKey(), inboundEvent);
-        }
-
-        T deserializedBody = deserialize(inboundEvent.getBody());
-
-        FlowableEventInfo<T> event = new FlowableEventInfoImpl<>(inboundEvent, deserializedBody, inboundChannel);
-        
+    public Collection<EventRegistryEvent> run(String channelKey, String rawEvent) {
+        T event = deserialize(rawEvent);
         String eventKey = detectEventDefinitionKey(event);
 
         boolean multiTenant = false;
@@ -85,12 +69,8 @@ public class DefaultInboundEventProcessingPipeline<T> implements InboundEventPro
             multiTenant = true;
         }
 
-        if (debugLoggingEnabled) {
-            logger.debug("Detected event {} and tenant {} for inbound {} channel {}. Inbound event: {}", eventKey, tenantId, inboundChannel.getChannelType(),
-                    inboundChannel.getKey(), inboundEvent);
-        }
-
         EventModel eventModel = multiTenant ? eventRepositoryService.getEventModelByKey(eventKey, tenantId) : eventRepositoryService.getEventModelByKey(eventKey);
+        ChannelModel channelModel = multiTenant ? eventRepositoryService.getChannelModelByKey(channelKey, tenantId) : eventRepositoryService.getChannelModelByKey(channelKey);
         
         EventInstanceImpl eventInstance = new EventInstanceImpl(
             eventModel.getKey(),
@@ -98,29 +78,18 @@ public class DefaultInboundEventProcessingPipeline<T> implements InboundEventPro
             tenantId
         );
 
-        if (debugLoggingEnabled) {
-            logger.debug("Transforming {} for inbound {} channel {}. Inbound event: {}", eventInstance, inboundChannel.getChannelType(),
-                    inboundChannel.getKey(), inboundEvent);
-        }
-        Collection<EventRegistryEvent> registryEvents = transform(eventInstance);
-
-        if (debugLoggingEnabled) {
-            logger.debug("Transformed {} to {} for inbound {} channel {}. Inbound event: {}", eventInstance, registryEvents, inboundChannel.getChannelType(),
-                    inboundChannel.getKey(), inboundEvent);
-        }
-
-        return registryEvents;
+        return transform(eventInstance);
     }
 
-    public T deserialize(Object rawEvent) {
+    public T deserialize(String rawEvent) {
         return inboundEventDeserializer.deserialize(rawEvent);
     }
 
-    public String detectEventDefinitionKey(FlowableEventInfo<T> event) {
+    public String detectEventDefinitionKey(T event) {
         return inboundEventKeyDetector.detectEventDefinitionKey(event);
     }
 
-    public Collection<EventPayloadInstance> extractPayload(EventModel eventDefinition, FlowableEventInfo<T> event) {
+    public Collection<EventPayloadInstance> extractPayload(EventModel eventDefinition, T event) {
         return inboundEventPayloadExtractor.extractPayload(eventDefinition, event);
     }
 
@@ -139,11 +108,9 @@ public class DefaultInboundEventProcessingPipeline<T> implements InboundEventPro
     public InboundEventKeyDetector<T> getInboundEventKeyDetector() {
         return inboundEventKeyDetector;
     }
-    
     public void setInboundEventKeyDetector(InboundEventKeyDetector<T> inboundEventKeyDetector) {
         this.inboundEventKeyDetector = inboundEventKeyDetector;
     }
-    
     public InboundEventTenantDetector<T> getInboundEventTenantDetector() {
         return inboundEventTenantDetector;
     }
@@ -159,7 +126,7 @@ public class DefaultInboundEventProcessingPipeline<T> implements InboundEventPro
     public void setInboundEventPayloadExtractor(InboundEventPayloadExtractor<T> inboundEventPayloadExtractor) {
         this.inboundEventPayloadExtractor = inboundEventPayloadExtractor;
     }
-
+    
     public InboundEventTransformer getInboundEventTransformer() {
         return inboundEventTransformer;
     }

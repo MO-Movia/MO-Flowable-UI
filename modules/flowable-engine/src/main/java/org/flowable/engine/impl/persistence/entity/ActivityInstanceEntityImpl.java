@@ -19,7 +19,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.impl.util.CommandContextUtil;
 
@@ -237,21 +236,7 @@ public class ActivityInstanceEntityImpl extends AbstractBpmnEngineEntity impleme
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ActivityInstanceEntity[id=").append(id)
-                .append(", activityId=").append(activityId);
-        if (activityName != null) {
-            sb.append(", activityName=").append(activityName);
-        }
-
-        sb.append(", executionId=").append(executionId)
-                .append(", definitionId=").append(processDefinitionId);
-
-        if (StringUtils.isNotEmpty(tenantId)) {
-            sb.append(", tenantId=").append(tenantId);
-        }
-        sb.append("]");
-        return sb.toString();
+        return "ActivityInstanceEntity[id=" + id + ", activityId=" + activityId + ", activityName=" + activityName + ", executionId= " + executionId + "]";
     }
 
 }

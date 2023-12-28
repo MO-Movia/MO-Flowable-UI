@@ -20,6 +20,7 @@ import org.flowable.cmmn.engine.impl.behavior.impl.EventRegistryEventListenerAct
 import org.flowable.cmmn.engine.impl.behavior.impl.ExternalWorkerTaskActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.impl.GenericEventListenerActivityBehaviour;
 import org.flowable.cmmn.engine.impl.behavior.impl.HumanTaskActivityBehavior;
+import org.flowable.cmmn.engine.impl.behavior.impl.MailActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.impl.MilestoneActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.impl.PlanItemDelegateExpressionActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.impl.PlanItemExpressionActivityBehavior;
@@ -31,7 +32,6 @@ import org.flowable.cmmn.engine.impl.behavior.impl.StageActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.impl.TaskActivityBehavior;
 import org.flowable.cmmn.engine.impl.behavior.impl.TimerEventListenerActivityBehaviour;
 import org.flowable.cmmn.engine.impl.behavior.impl.UserEventListenerActivityBehaviour;
-import org.flowable.cmmn.engine.impl.behavior.impl.VariableEventListenerActivityBehaviour;
 import org.flowable.cmmn.engine.impl.delegate.CmmnClassDelegate;
 import org.flowable.cmmn.model.CasePageTask;
 import org.flowable.cmmn.model.CaseTask;
@@ -50,7 +50,6 @@ import org.flowable.cmmn.model.Stage;
 import org.flowable.cmmn.model.Task;
 import org.flowable.cmmn.model.TimerEventListener;
 import org.flowable.cmmn.model.UserEventListener;
-import org.flowable.cmmn.model.VariableEventListener;
 
 /**
  * @author Joram Barrez
@@ -79,7 +78,7 @@ public interface CmmnActivityBehaviorFactory {
 
     CmmnActivityBehavior createHttpActivityBehavior(PlanItem planItem, ServiceTask task);
 
-    CmmnActivityBehavior createEmailActivityBehavior(PlanItem planItem, ServiceTask task);
+    MailActivityBehavior createEmailActivityBehavior(PlanItem planItem, ServiceTask task);
 
     SendEventActivityBehavior createSendEventActivityBehavior(PlanItem planItem, SendEventServiceTask sendEventServiceTask);
 
@@ -98,7 +97,5 @@ public interface CmmnActivityBehaviorFactory {
     GenericEventListenerActivityBehaviour createGenericEventListenerActivityBehavior(PlanItem planItem, GenericEventListener genericEventListener);
 
     EventRegistryEventListenerActivityBehaviour createEventRegistryEventListenerActivityBehaviour(PlanItem planItem, GenericEventListener genericEventListener);
-    
-    VariableEventListenerActivityBehaviour createVariableEventListenerActivityBehaviour(PlanItem planItem, VariableEventListener variableEventListener);
 
 }

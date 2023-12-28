@@ -17,6 +17,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.cmmn.api.CmmnManagementService;
 import org.flowable.cmmn.rest.service.api.CmmnRestApiInterceptor;
 import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
@@ -59,11 +61,9 @@ public class DeadLetterJobCollectionResource {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "id", dataType = "string", value = "Only return job with the given id", paramType = "query"),
             @ApiImplicitParam(name = "caseInstanceId", dataType = "string", value = "Only return jobs part of a case with the given id", paramType = "query"),
-            @ApiImplicitParam(name = "withoutScopeId", dataType = "boolean", value = "If true, only returns jobs without a scope id set. If false, the withoutScopeId parameter is ignored.", paramType = "query"),
             @ApiImplicitParam(name = "planItemInstanceId", dataType = "string", value = "Only return jobs part of a plan item instance with the given id", paramType = "query"),
             @ApiImplicitParam(name = "caseDefinitionId", dataType = "string", value = "Only return jobs with the given case definition id", paramType = "query"),
             @ApiImplicitParam(name = "scopeDefinitionId", dataType = "string", value = "Only return jobs with the given scope definition id", paramType = "query"),
-            @ApiImplicitParam(name = "scopeType", dataType = "string", value = "Only return jobs with the given scope type", paramType = "query"),
             @ApiImplicitParam(name = "elementId", dataType = "string", value = "Only return jobs with the given element id", paramType = "query"),
             @ApiImplicitParam(name = "elementName", dataType = "string", value = "Only return jobs with the given element name", paramType = "query"),
             @ApiImplicitParam(name = "timersOnly", dataType = "boolean", value = "If true, only return jobs which are timers. If false, this parameter is ignored. Cannot be used together with 'messagesOnly'.", paramType = "query"),
@@ -77,7 +77,6 @@ public class DeadLetterJobCollectionResource {
             @ApiImplicitParam(name = "withoutTenantId", dataType = "boolean", value = "If true, only returns jobs without a tenantId set. If false, the withoutTenantId parameter is ignored.", paramType = "query"),
             @ApiImplicitParam(name = "locked", dataType = "boolean", value = "If true, only return jobs which are locked.  If false, this parameter is ignored.", paramType = "query"),
             @ApiImplicitParam(name = "unlocked", dataType = "boolean", value = "If true, only return jobs which are unlocked. If false, this parameter is ignored.", paramType = "query"),
-            @ApiImplicitParam(name = "withoutProcessInstanceId", dataType = "boolean", value = "If true, only returns jobs without a process instance id set. If false, the withoutProcessInstanceId parameter is ignored.", paramType = "query"),
             @ApiImplicitParam(name = "sort", dataType = "string", value = "Property to sort on, to be used together with the order.", allowableValues = "id,dueDate,executionId,processInstanceId,retries,tenantId", paramType = "query")
     })
     @ApiResponses(value = {
@@ -85,7 +84,7 @@ public class DeadLetterJobCollectionResource {
             @ApiResponse(code = 400, message = "Indicates an illegal value has been used in a url query parameter or the both 'messagesOnly' and 'timersOnly' are used as parameters. Status description contains additional details about the error.")
     })
     @GetMapping(value = "/cmmn-management/deadletter-jobs", produces = "application/json")
-    public DataResponse<JobResponse> getJobs(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<JobResponse> getJobs(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         DeadLetterJobQuery query = managementService.createDeadLetterJobQuery();
 
         if (allRequestParams.containsKey("id")) {
@@ -94,9 +93,6 @@ public class DeadLetterJobCollectionResource {
         if (allRequestParams.containsKey("caseInstanceId")) {
             query.scopeId(allRequestParams.get("caseInstanceId"));
             query.scopeType(ScopeTypes.CMMN);
-        }
-        if (allRequestParams.containsKey("withoutScopeId") && Boolean.parseBoolean(allRequestParams.get("withoutScopeId"))) {
-            query.withoutScopeId();
         }
         if (allRequestParams.containsKey("planItemInstanceId")) {
             query.subScopeId(allRequestParams.get("planItemInstanceId"));
@@ -122,12 +118,14 @@ public class DeadLetterJobCollectionResource {
             if (allRequestParams.containsKey("messagesOnly")) {
                 throw new FlowableIllegalArgumentException("Only one of 'timersOnly' or 'messagesOnly' can be provided.");
             }
-            if (Boolean.parseBoolean(allRequestParams.get("timersOnly"))) {
+            if (Boolean.valueOf(allRequestParams.get("timersOnly"))) {
                 query.timers();
             }
         }
-        if (allRequestParams.containsKey("messagesOnly") && Boolean.parseBoolean(allRequestParams.get("messagesOnly"))) {
-            query.messages();
+        if (allRequestParams.containsKey("messagesOnly")) {
+            if (Boolean.valueOf(allRequestParams.get("messagesOnly"))) {
+                query.messages();
+            }
         }
         if (allRequestParams.containsKey("dueBefore")) {
             query.duedateLowerThan(RequestUtil.getDate(allRequestParams, "dueBefore"));
@@ -135,8 +133,10 @@ public class DeadLetterJobCollectionResource {
         if (allRequestParams.containsKey("dueAfter")) {
             query.duedateHigherThan(RequestUtil.getDate(allRequestParams, "dueAfter"));
         }
-        if (allRequestParams.containsKey("withException") && Boolean.parseBoolean(allRequestParams.get("withException"))) {
-            query.withException();
+        if (allRequestParams.containsKey("withException")) {
+            if (Boolean.valueOf(allRequestParams.get("withException"))) {
+                query.withException();
+            }
         }
         if (allRequestParams.containsKey("exceptionMessage")) {
             query.exceptionMessage(allRequestParams.get("exceptionMessage"));
@@ -147,20 +147,16 @@ public class DeadLetterJobCollectionResource {
         if (allRequestParams.containsKey("tenantIdLike")) {
             query.jobTenantIdLike(allRequestParams.get("tenantIdLike"));
         }
-        if (allRequestParams.containsKey("withoutTenantId") && Boolean.parseBoolean(allRequestParams.get("withoutTenantId"))) {
-            query.jobWithoutTenantId();
-        }
-        if (allRequestParams.containsKey("scopeType")) {
-            query.scopeType(allRequestParams.get("scopeType"));
-        }
-        if (allRequestParams.containsKey("withoutProcessInstanceId") && Boolean.parseBoolean(allRequestParams.get("withoutProcessInstanceId"))) {
-            query.withoutProcessInstanceId();
+        if (allRequestParams.containsKey("withoutTenantId")) {
+            if (Boolean.valueOf(allRequestParams.get("withoutTenantId"))) {
+                query.jobWithoutTenantId();
+            }
         }
         
         if (restApiInterceptor != null) {
             restApiInterceptor.accessDeadLetterJobInfoWithQuery(query);
         }
 
-        return paginateList(allRequestParams, query, "id", JobQueryProperties.PROPERTIES, restResponseFactory::createDeadLetterJobResponseList);
+        return paginateList(allRequestParams, query, "id", JobQueryProperties.PROPERTIES, restResponseFactory::createJobResponseList);
     }
 }

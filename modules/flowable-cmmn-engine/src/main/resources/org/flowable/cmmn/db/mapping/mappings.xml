@@ -9,7 +9,6 @@
    <typeAliases>
     <typeAlias type="org.flowable.common.engine.impl.persistence.entity.ByteArrayRefTypeHandler" alias="VariableByteArrayRefTypeHandler"/>
      <typeAlias type="org.flowable.common.engine.impl.persistence.entity.ByteArrayRefTypeHandler" alias="JobByteArrayRefTypeHandler"/>
-     <typeAlias type="org.flowable.common.engine.impl.persistence.entity.ByteArrayRefTypeHandler" alias="BatchByteArrayRefTypeHandler" />
   </typeAliases>
   <typeHandlers>
     <typeHandler handler="VariableByteArrayRefTypeHandler"
@@ -18,18 +17,12 @@
     <typeHandler handler="JobByteArrayRefTypeHandler" 
                  javaType="org.flowable.common.engine.impl.persistence.entity.ByteArrayRef"
                  jdbcType="VARCHAR"/>                 
-    <typeHandler handler="BatchByteArrayRefTypeHandler"
-                 javaType="org.flowable.common.engine.impl.persistence.entity.ByteArrayRef"
-                 jdbcType="VARCHAR" />
   </typeHandlers>
   <mappers>
     <!-- Common mappers -->
     <mapper resource="org/flowable/common/db/mapping/entity/Property.xml" />
     <mapper resource="org/flowable/common/db/mapping/entity/ByteArray.xml" />
     <mapper resource="org/flowable/common/db/mapping/entity/TableData.xml" />
-    <mapper resource="org/flowable/common/db/mapping/common.xml" />
-
-    <mapper resource="org/flowable/cmmn/db/mapping/ChangeTenantCmmn.xml" />
 
     <!-- Engine mappers -->
     <mapper resource="org/flowable/cmmn/db/mapping/entity/CmmnDeployment.xml" />
@@ -44,6 +37,7 @@
     <mapper resource="org/flowable/cmmn/db/mapping/entity/HistoricPlanItemInstance.xml" />
     
     <!-- Variable support -->
+    <mapper resource="org/flowable/variable/service/db/mapping/common.xml" />
     <mapper resource="org/flowable/variable/service/db/mapping/entity/VariableInstance.xml" />
     <mapper resource="org/flowable/variable/service/db/mapping/entity/HistoricVariableInstance.xml" />
     
@@ -59,6 +53,7 @@
     <mapper resource="org/flowable/eventsubscription/service/db/mapping/entity/EventSubscription.xml" />
     
     <!-- Task support -->
+    <mapper resource="org/flowable/task/service/db/mapping/common.xml" />
     <mapper resource="org/flowable/task/service/db/mapping/entity/Task.xml" />
     <mapper resource="org/flowable/task/service/db/mapping/entity/HistoricTaskLogEntry.xml" />
     <mapper resource="org/flowable/task/service/db/mapping/entity/HistoricTaskInstance.xml" />
@@ -71,9 +66,5 @@
     <mapper resource="org/flowable/job/service/db/mapping/entity/ExternalWorkerJob.xml" />
     <mapper resource="org/flowable/job/service/db/mapping/entity/TimerJob.xml" />
     
-    <!-- Batch support -->
-    <mapper resource="org/flowable/batch/service/db/mapping/entity/Batch.xml" />
-    <mapper resource="org/flowable/batch/service/db/mapping/entity/BatchPart.xml" />
-
   </mappers>
 </configuration>

@@ -16,9 +16,9 @@ package org.flowable.variable.service.impl;
 import java.io.Serializable;
 
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
-import org.flowable.variable.api.types.ValueFields;
 import org.flowable.variable.api.types.VariableType;
 import org.flowable.variable.service.VariableServiceConfiguration;
+import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 import org.flowable.variable.service.impl.types.ByteArrayType;
 import org.flowable.variable.service.impl.types.JPAEntityListVariableType;
 import org.flowable.variable.service.impl.types.JPAEntityVariableType;
@@ -35,11 +35,8 @@ public class QueryVariableValue implements Serializable {
     private Object value;
     private QueryOperator operator;
 
-    private ValueFields valueField;
-    private VariableType valueType;
+    private VariableInstanceEntity variableInstanceEntity;
     private boolean local;
-
-    private String scopeType;
 
     public QueryVariableValue(String name, Object value, QueryOperator operator, boolean local) {
         this.name = name;
@@ -48,29 +45,20 @@ public class QueryVariableValue implements Serializable {
         this.local = local;
     }
 
-    public QueryVariableValue(String name, Object value, QueryOperator operator, boolean local, String scopeType) {
-        this(name, value, operator, local);
-        this.scopeType = scopeType;
-    }
-
-    public void initialize(VariableValueProvider valueProvider) {
-        if (valueField == null) {
-            valueType = valueProvider.findVariableType(value);
-            if (valueType instanceof ByteArrayType) {
+    public void initialize(VariableServiceConfiguration variableServiceConfiguration) {
+        if (variableInstanceEntity == null) {
+            VariableType type = variableServiceConfiguration.getVariableTypes().findVariableType(value);
+            if (type instanceof ByteArrayType) {
                 throw new FlowableIllegalArgumentException("Variables of type ByteArray cannot be used to query");
-            } else if (valueType instanceof JPAEntityVariableType && operator != QueryOperator.EQUALS) {
+            } else if (type instanceof JPAEntityVariableType && operator != QueryOperator.EQUALS) {
                 throw new FlowableIllegalArgumentException("JPA entity variables can only be used in 'variableValueEquals'");
-            } else if (valueType instanceof JPAEntityListVariableType) {
+            } else if (type instanceof JPAEntityListVariableType) {
                 throw new FlowableIllegalArgumentException("Variables containing a list of JPA entities cannot be used to query");
             } else {
                 // Type implementation determines which fields are set on the entity
-                valueField = valueProvider.createValueFields(name, valueType, value);
+                variableInstanceEntity = variableServiceConfiguration.getVariableInstanceEntityManager().create(name, type, value);
             }
         }
-    }
-
-    public void initialize(VariableServiceConfiguration variableServiceConfiguration) {
-        initialize(new VariableServiceConfigurationVariableValueProvider(variableServiceConfiguration));
     }
 
     public String getName() {
@@ -85,36 +73,36 @@ public class QueryVariableValue implements Serializable {
     }
 
     public String getTextValue() {
-        if (valueField != null) {
-            return valueField.getTextValue();
+        if (variableInstanceEntity != null) {
+            return variableInstanceEntity.getTextValue();
         }
         return null;
     }
 
     public Long getLongValue() {
-        if (valueField != null) {
-            return valueField.getLongValue();
+        if (variableInstanceEntity != null) {
+            return variableInstanceEntity.getLongValue();
         }
         return null;
     }
 
     public Double getDoubleValue() {
-        if (valueField != null) {
-            return valueField.getDoubleValue();
+        if (variableInstanceEntity != null) {
+            return variableInstanceEntity.getDoubleValue();
         }
         return null;
     }
 
     public String getTextValue2() {
-        if (valueField != null) {
-            return valueField.getTextValue2();
+        if (variableInstanceEntity != null) {
+            return variableInstanceEntity.getTextValue2();
         }
         return null;
     }
 
     public String getType() {
-        if (valueType != null) {
-            return valueType.getTypeName();
+        if (variableInstanceEntity != null) {
+            return variableInstanceEntity.getType().getTypeName();
         }
         return null;
     }
@@ -125,8 +113,8 @@ public class QueryVariableValue implements Serializable {
             return false;
         }
 
-        if (valueField != null) {
-            return !NullType.TYPE_NAME.equals(valueType.getTypeName());
+        if (variableInstanceEntity != null) {
+            return !NullType.TYPE_NAME.equals(variableInstanceEntity.getType().getTypeName());
         }
 
         return false;
@@ -134,9 +122,5 @@ public class QueryVariableValue implements Serializable {
 
     public boolean isLocal() {
         return local;
-    }
-
-    public String getScopeType() {
-        return scopeType;
     }
 }

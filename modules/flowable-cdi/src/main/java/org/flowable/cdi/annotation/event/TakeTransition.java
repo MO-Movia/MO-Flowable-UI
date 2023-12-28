@@ -15,7 +15,7 @@ package org.flowable.cdi.annotation.event;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import jakarta.inject.Qualifier;
+import javax.inject.Qualifier;
 
 /**
  * Can be used to qualify events fired when a transition is taken

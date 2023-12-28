@@ -12,7 +12,6 @@
  */
 package org.flowable.task.service.impl.persistence.entity.data;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -30,14 +29,8 @@ public interface HistoricTaskInstanceDataManager extends DataManager<HistoricTas
     HistoricTaskInstanceEntity create(TaskEntity task);
 
     List<HistoricTaskInstanceEntity> findHistoricTasksByParentTaskId(String parentTaskId);
-    
-    List<String> findHistoricTaskIdsByParentTaskIds(Collection<String> parentTaskIds);
 
     List<HistoricTaskInstanceEntity> findHistoricTasksByProcessInstanceId(String processInstanceId);
-    
-    List<String> findHistoricTaskIdsForProcessInstanceIds(Collection<String> processInstanceIds);
-    
-    List<String> findHistoricTaskIdsForScopeIdsAndScopeType(Collection<String> scopeIds, String scopeType);
 
     long findHistoricTaskInstanceCountByQueryCriteria(HistoricTaskInstanceQueryImpl historicTaskInstanceQuery);
 
@@ -50,8 +43,6 @@ public interface HistoricTaskInstanceDataManager extends DataManager<HistoricTas
     long findHistoricTaskInstanceCountByNativeQuery(Map<String, Object> parameterMap);
 
     void deleteHistoricTaskInstances(HistoricTaskInstanceQueryImpl historicTaskInstanceQuery);
-    
-    void bulkDeleteHistoricTaskInstancesForIds(Collection<String> taskIds);
     
     void deleteHistoricTaskInstancesForNonExistingProcessInstances();
     

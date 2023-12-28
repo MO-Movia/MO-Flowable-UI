@@ -29,12 +29,12 @@ public class StringToJsonDeserializer implements InboundEventDeserializer<JsonNo
     protected ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public JsonNode deserialize(Object rawEvent) {
+    public JsonNode deserialize(String rawEvent) {
         try {
-            return objectMapper.readTree(rawEvent.toString());
+            return objectMapper.readTree(rawEvent);
         } catch (IOException e) {
             throw new FlowableException("Could not deserialize event to json", e);
         }
     }
-    
+
 }

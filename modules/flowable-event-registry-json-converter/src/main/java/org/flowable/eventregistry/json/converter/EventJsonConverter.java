@@ -37,24 +37,19 @@ public class EventJsonConverter {
 
             eventModel.setKey(modelNode.path("key").asText(null));
             eventModel.setName(modelNode.path("name").asText(null));
-            
+
             JsonNode payloadNode = modelNode.path("payload");
 
             if (payloadNode.isArray()) {
                 for (JsonNode node : payloadNode) {
                     String name = node.path("name").asText(null);
                     String type = node.path("type").asText(null);
-
-                    EventPayload payload = new EventPayload(name, type);
-                    if (node.path("isFullPayload").asBoolean(false)) {
-                        payload.setFullPayload(true);
+                    boolean correlationParameter = node.path("correlationParameter").asBoolean(false);
+                    if (correlationParameter) {
+                        eventModel.addCorrelation(name, type);
                     } else {
-                        payload.setCorrelationParameter(node.path("correlationParameter").asBoolean(false));
-                        payload.setHeader(node.path("header").asBoolean(false));
-                        payload.setMetaParameter(node.path("metaParameter").asBoolean(false));
+                        eventModel.addPayload(name, type);
                     }
-
-                    eventModel.addPayload(payload);
                 }
             }
 
@@ -68,7 +63,6 @@ public class EventJsonConverter {
             }
 
             return eventModel;
-            
         } catch (Exception e) {
             throw new FlowableEventJsonException("Error reading event json", e);
         }
@@ -84,7 +78,7 @@ public class EventJsonConverter {
         if (definition.getName() != null) {
             modelNode.put("name", definition.getName());
         }
-        
+
         Collection<EventPayload> payload = definition.getPayload();
         if (!payload.isEmpty()) {
             ArrayNode payloadNode = modelNode.putArray("payload");
@@ -97,21 +91,9 @@ public class EventJsonConverter {
                 if (eventPayload.getType() != null) {
                     eventPayloadNode.put("type", eventPayload.getType());
                 }
-                
-                if (eventPayload.isHeader() && !eventPayload.isFullPayload()) {
-                    eventPayloadNode.put("header", true);
-                }
 
-                if (eventPayload.isCorrelationParameter() && !eventPayload.isFullPayload()) {
+                if (eventPayload.isCorrelationParameter()) {
                     eventPayloadNode.put("correlationParameter", true);
-                }
-                
-                if (eventPayload.isFullPayload()) {
-                    eventPayloadNode.put("isFullPayload", true);
-                }
-
-                if (eventPayload.isMetaParameter()) {
-                    eventPayloadNode.put("metaParameter", true);
                 }
             }
         }

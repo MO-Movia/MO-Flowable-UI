@@ -177,8 +177,6 @@ public interface Flowable5CompatibilityHandler {
     void deleteJob(String jobId);
 
     void leaveExecution(DelegateExecution execution);
-    
-    void leaveMIExecution(DelegateExecution execution, Object v5MultiInstanceActivityBehavior);
 
     void propagateError(BpmnError bpmnError, DelegateExecution execution);
 

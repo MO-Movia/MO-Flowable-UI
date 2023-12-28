@@ -68,7 +68,6 @@ public class BatchEntityImpl extends AbstractBatchServiceEntity implements Batch
         return createTime;
     }
 
-    @Override
     public void setCreateTime(Date time) {
         this.createTime = time;
     }
@@ -78,7 +77,6 @@ public class BatchEntityImpl extends AbstractBatchServiceEntity implements Batch
         return completeTime;
     }
 
-    @Override
     public void setCompleteTime(Date completeTime) {
         this.completeTime = completeTime;
     }

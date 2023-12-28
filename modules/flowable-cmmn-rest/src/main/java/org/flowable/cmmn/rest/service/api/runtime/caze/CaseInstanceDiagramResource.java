@@ -15,6 +15,8 @@ package org.flowable.cmmn.rest.service.api.runtime.caze;
 
 import java.io.InputStream;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.io.IOUtils;
 import org.flowable.cmmn.api.CmmnRepositoryService;
 import org.flowable.cmmn.api.repository.CaseDefinition;
@@ -58,7 +60,7 @@ public class CaseInstanceDiagramResource extends BaseCaseInstanceResource {
             @ApiResponse(code = 404, message = "Indicates the requested case instance was not found.")
     })
     @GetMapping(value = "/cmmn-runtime/case-instances/{caseInstanceId}/diagram")
-    public ResponseEntity<byte[]> getCaseInstanceDiagram(@ApiParam(name = "caseInstanceId") @PathVariable String caseInstanceId) {
+    public ResponseEntity<byte[]> getCaseInstanceDiagram(@ApiParam(name = "caseInstanceId") @PathVariable String caseInstanceId, HttpServletResponse response) {
         CaseInstance caseInstance = getCaseInstanceFromRequest(caseInstanceId);
 
         CaseDefinition caseDef = repositoryService.getCaseDefinition(caseInstance.getCaseDefinitionId());

@@ -23,9 +23,6 @@ import org.flowable.dmn.rest.service.api.decision.DmnRuleServiceRequest;
 
 public interface DmnRestApiInterceptor {
 
-    void executeDecision(DmnRuleServiceRequest request);
-
-    @Deprecated
     void executeDecisionTable(DmnRuleServiceRequest request);
     
     void accessDecisionTableInfoById(DmnDecision decisionTable);

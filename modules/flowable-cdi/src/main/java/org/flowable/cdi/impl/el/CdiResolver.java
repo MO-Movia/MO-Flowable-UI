@@ -15,9 +15,9 @@ package org.flowable.cdi.impl.el;
 import java.beans.FeatureDescriptor;
 import java.util.Iterator;
 
-import jakarta.el.FunctionMapper;
-import jakarta.el.VariableMapper;
-import jakarta.enterprise.inject.spi.BeanManager;
+import javax.el.FunctionMapper;
+import javax.el.VariableMapper;
+import javax.enterprise.inject.spi.BeanManager;
 
 import org.flowable.cdi.impl.util.BeanManagerLookup;
 import org.flowable.cdi.impl.util.ProgrammaticBeanLookup;
@@ -25,29 +25,16 @@ import org.flowable.common.engine.impl.javax.el.ELContext;
 import org.flowable.common.engine.impl.javax.el.ELResolver;
 
 /**
- * Resolver wrapping an instance of jakarta.el.ELResolver obtained from the {@link BeanManager}. Allows flowable-engine to resolve Cdi-Beans.
- *
- * This {@link ELResolver} implementation performs lazy lookup of the Cdi-BeanManager and can thus be configured using the spring-based configuration of the process engine:
- *
- * <pre>
- * &lt;property name="customElResolvers"&gt;
- *      &lt;list&gt;
- *          &lt;bean class="org.flowable.cdi.impl.el.CdiResolver" /&gt;
- *      &lt;/list&gt;
- * &lt;/property&gt;
- * </pre>
- *
- * <b>IMPORTANT:</b> If you are using the {@link org.flowable.cdi.CdiStandaloneProcessEngineConfiguration} or {@link org.flowable.cdi.CdiJtaProcessEngineConfiguration}
- * then you don't need to configure this.
+ * Resolver wrapping an instance of javax.el.ELResolver obtained from the {@link BeanManager}. Allows flowable-engine to resolve Cdi-Beans.
  * 
  * @author Daniel Meyer
  */
 public class CdiResolver extends ELResolver {
 
-    protected jakarta.el.ELContext context;
+    protected javax.el.ELContext context;
 
     public CdiResolver() {
-        context = new jakarta.el.ELContext() {
+        context = new javax.el.ELContext() {
 
             @Override
             public VariableMapper getVariableMapper() {
@@ -60,7 +47,7 @@ public class CdiResolver extends ELResolver {
             }
 
             @Override
-            public jakarta.el.ELResolver getELResolver() {
+            public javax.el.ELResolver getELResolver() {
                 return getWrappedResolver();
             }
         };
@@ -70,9 +57,9 @@ public class CdiResolver extends ELResolver {
         return BeanManagerLookup.getBeanManager();
     }
 
-    protected jakarta.el.ELResolver getWrappedResolver() {
+    protected javax.el.ELResolver getWrappedResolver() {
         BeanManager beanManager = getBeanManager();
-        jakarta.el.ELResolver resolver = beanManager.getELResolver();
+        javax.el.ELResolver resolver = beanManager.getELResolver();
         return resolver;
     }
 

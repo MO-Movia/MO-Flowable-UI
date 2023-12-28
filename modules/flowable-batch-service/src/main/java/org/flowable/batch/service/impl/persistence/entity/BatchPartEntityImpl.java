@@ -26,14 +26,11 @@ public class BatchPartEntityImpl extends AbstractBatchServiceEntity implements B
 
     protected static final String BATCH_RESULT_LABEL = "batchPartResult";
 
-    protected String type;
     protected String batchType;
     protected String batchId;
     protected String scopeId;
     protected String subScopeId;
     protected String scopeType;
-    protected String searchKey;
-    protected String searchKey2;
     protected String batchSearchKey;
     protected String batchSearchKey2;
     protected Date createTime;
@@ -46,14 +43,14 @@ public class BatchPartEntityImpl extends AbstractBatchServiceEntity implements B
     public Object getPersistentState() {
         Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("batchId", batchId);
-        persistentState.put("type", type);
+        persistentState.put("batchType", batchType);
         persistentState.put("scopeId", scopeId);
         persistentState.put("subScopeId", subScopeId);
         persistentState.put("scopeType", scopeType);
         persistentState.put("createTime", createTime);
         persistentState.put("completeTime", completeTime);
-        persistentState.put("searchKey", searchKey);
-        persistentState.put("searchKey2", searchKey2);
+        persistentState.put("batchSearchKey", batchSearchKey);
+        persistentState.put("batchSearchKey2", batchSearchKey2);
         persistentState.put("status", status);
         persistentState.put("tenantId", tenantId);
         
@@ -62,16 +59,6 @@ public class BatchPartEntityImpl extends AbstractBatchServiceEntity implements B
         }
 
         return persistentState;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
-
-    @Override
-    public void setType(String type) {
-        this.type = type;
     }
 
     @Override
@@ -147,26 +134,6 @@ public class BatchPartEntityImpl extends AbstractBatchServiceEntity implements B
     @Override
     public void setScopeType(String scopeType) {
         this.scopeType = scopeType;
-    }
-
-    @Override
-    public String getSearchKey() {
-        return searchKey;
-    }
-
-    @Override
-    public void setSearchKey(String searchKey) {
-        this.searchKey = searchKey;
-    }
-
-    @Override
-    public String getSearchKey2() {
-        return searchKey2;
-    }
-
-    @Override
-    public void setSearchKey2(String searchKey2) {
-        this.searchKey2 = searchKey2;
     }
 
     @Override

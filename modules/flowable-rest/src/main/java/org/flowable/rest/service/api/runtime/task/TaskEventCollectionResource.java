@@ -15,6 +15,8 @@ package org.flowable.rest.service.api.runtime.task;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.rest.service.api.engine.EventResponse;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +43,7 @@ public class TaskEventCollectionResource extends TaskBaseResource {
             @ApiResponse(code = 404, message = "Indicates the requested task was not found.")
     })
     @GetMapping(value = "/runtime/tasks/{taskId}/events", produces = "application/json")
-    public List<EventResponse> getEvents(@ApiParam(name = "taskId") @PathVariable String taskId) {
+    public List<EventResponse> getEvents(@ApiParam(name = "taskId") @PathVariable String taskId, HttpServletRequest request) {
         HistoricTaskInstance task = getHistoricTaskFromRequest(taskId);
         return restResponseFactory.createEventResponseList(taskService.getTaskEvents(task.getId()));
     }

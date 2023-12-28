@@ -13,8 +13,6 @@
 
 package org.activiti.engine.test.history;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -25,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.activiti.engine.impl.test.PluggableFlowableTestCase;
-import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.engine.impl.runtime.Clock;
@@ -107,9 +104,9 @@ public class HistoricTaskInstanceTest extends PluggableFlowableTestCase {
         assertEquals(0, historyService.createHistoricTaskInstanceQuery().count());
     }
 
-    public void testDeleteUnexistingHistoricTaskInstance() throws Exception {
-        assertThatThrownBy(() -> historyService.deleteHistoricTaskInstance("unexistingId"))
-                .isExactlyInstanceOf(FlowableObjectNotFoundException.class);
+    public void testDeleteHistoricTaskInstance() throws Exception {
+        // deleting unexisting historic task instance should be silently ignored
+        historyService.deleteHistoricTaskInstance("unexistingId");
     }
 
     @Deployment

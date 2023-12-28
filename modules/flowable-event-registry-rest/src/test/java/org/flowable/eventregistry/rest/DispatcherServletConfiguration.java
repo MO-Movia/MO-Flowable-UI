@@ -14,6 +14,9 @@ package org.flowable.eventregistry.rest;
 
 import java.util.List;
 
+import org.flowable.common.rest.multipart.PutAwareStandardServletMultiPartResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -21,8 +24,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.multipart.MultipartResolver;
-import org.springframework.web.multipart.support.StandardServletMultipartResolver;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,12 +37,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ComponentScan({ "org.flowable.eventregistry.rest.service.api" })
 public class DispatcherServletConfiguration extends WebMvcConfigurationSupport {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DispatcherServletConfiguration.class);
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Bean
+    public SessionLocaleResolver localeResolver() {
+        return new SessionLocaleResolver();
+    }
+
+    @Override
+    protected void addInterceptors(InterceptorRegistry registry) {
+        LOGGER.debug("Configuring localeChangeInterceptor");
+        LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
+        localeChangeInterceptor.setParamName("language");
+        registry.addInterceptor(localeChangeInterceptor);
+    }
+
+    @Bean
     public MultipartResolver multipartResolver() {
-        return new StandardServletMultipartResolver();
+        return new PutAwareStandardServletMultiPartResolver();
+    }
+
+    @Override
+    protected RequestMappingHandlerMapping createRequestMappingHandlerMapping() {
+        LOGGER.debug("Creating requestMappingHandlerMapping");
+        RequestMappingHandlerMapping requestMappingHandlerMapping = new RequestMappingHandlerMapping();
+        requestMappingHandlerMapping.setUseSuffixPatternMatch(false);
+        return requestMappingHandlerMapping;
     }
 
     @Override
@@ -48,6 +78,11 @@ public class DispatcherServletConfiguration extends WebMvcConfigurationSupport {
                 break;
             }
         }
+    }
+
+    @Override
+    protected void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer.favorPathExtension(false);
     }
 
 }

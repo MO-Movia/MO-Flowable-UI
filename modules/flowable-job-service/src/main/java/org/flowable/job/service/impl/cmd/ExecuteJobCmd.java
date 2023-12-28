@@ -14,6 +14,7 @@ package org.flowable.job.service.impl.cmd;
 
 import java.io.Serializable;
 
+import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
@@ -68,7 +69,12 @@ public class ExecuteJobCmd implements Command<Object>, Serializable {
 
         commandContext.addCloseListener(new FailedJobListener(jobServiceConfiguration.getCommandExecutor(), job, jobServiceConfiguration));
 
-        jobServiceConfiguration.getJobManager().execute(job);
+        try {
+            jobServiceConfiguration.getJobManager().execute(job);
+        } catch (Throwable exception) {
+            // Finally, Throw the exception to indicate the ExecuteJobCmd failed
+            throw new FlowableException("Job " + jobId + " failed", exception);
+        }
 
         return null;
     }

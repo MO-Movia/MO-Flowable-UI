@@ -85,12 +85,15 @@ public class DefaultInternalJobManager extends ScopeAwareInternalJobManager {
                 
                 if (job instanceof TimerJobEntity) {
                     TimerJobEntity timerJobEntity = (TimerJobEntity) job;
+                    execution.getTimerJobs().add(timerJobEntity);
+    
                     if (CountingEntityUtil.isExecutionRelatedEntityCountEnabled(execution)) {
                         countingExecutionEntity.setTimerJobCount(countingExecutionEntity.getTimerJobCount() + 1);
                     }
                     
                 } else if (job instanceof JobEntity) {
                     JobEntity jobEntity = (JobEntity) job;
+                    execution.getJobs().add(jobEntity);
 
                     if (CountingEntityUtil.isExecutionRelatedEntityCountEnabled(execution)) {
                         countingExecutionEntity.setJobCount(countingExecutionEntity.getJobCount() + 1);
@@ -126,9 +129,11 @@ public class DefaultInternalJobManager extends ScopeAwareInternalJobManager {
             if (CountingEntityUtil.isExecutionRelatedEntityCountEnabled(executionEntity)) {
                 CountingExecutionEntity countingExecutionEntity = (CountingExecutionEntity) executionEntity;
                 if (job instanceof JobEntity) {
+                    executionEntity.getJobs().remove(job);
                     countingExecutionEntity.setJobCount(countingExecutionEntity.getJobCount() - 1);
                 
                 } else if (job instanceof TimerJobEntity) {
+                    executionEntity.getTimerJobs().remove(job);
                     countingExecutionEntity.setTimerJobCount(countingExecutionEntity.getTimerJobCount() - 1);
                 
                 } else if (job instanceof SuspendedJobEntity) {
@@ -148,15 +153,13 @@ public class DefaultInternalJobManager extends ScopeAwareInternalJobManager {
         ExecutionEntityManager executionEntityManager = getExecutionEntityManager();
         ExecutionEntity execution = executionEntityManager.findById(job.getExecutionId());
         if (execution != null) {
-            String lockOwner = null;
-            Date lockExpirationTime = null;
+            String lockOwner;
+            Date lockExpirationTime;
 
             if (job instanceof JobInfoEntity) {
                 lockOwner = ((JobInfoEntity) job).getLockOwner();
                 lockExpirationTime = ((JobInfoEntity) job).getLockExpirationTime();
-            }
-
-            if (lockOwner == null || lockExpirationTime == null) {
+            } else {
                 int lockMillis = processEngineConfiguration.getAsyncExecutor().getAsyncJobLockTimeInMillis();
                 GregorianCalendar lockCal = new GregorianCalendar();
                 lockCal.setTime(processEngineConfiguration.getClock().getCurrentTime());
@@ -219,7 +222,7 @@ public class DefaultInternalJobManager extends ScopeAwareInternalJobManager {
                         jobEntity.setEndDate((Date) endDateValue);
                     } else {
                         throw new FlowableException("Timer '" + ((ExecutionEntity) variableScope).getActivityId()
-                                + "' in " + variableScope + " was not configured with a valid duration/time, either hand in a java.util.Date or a String in format 'yyyy-MM-dd'T'hh:mm:ss'");
+                                + "' was not configured with a valid duration/time, either hand in a java.util.Date or a String in format 'yyyy-MM-dd'T'hh:mm:ss'");
                     }
 
                     if (jobEntity.getEndDate() == null) {

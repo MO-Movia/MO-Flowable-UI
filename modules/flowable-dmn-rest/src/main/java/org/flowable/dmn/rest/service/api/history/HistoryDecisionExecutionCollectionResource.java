@@ -17,6 +17,8 @@ import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.engine.api.query.QueryProperty;
 import org.flowable.common.rest.api.DataResponse;
 import org.flowable.dmn.api.DmnHistoricDecisionExecutionQuery;
@@ -72,7 +74,6 @@ public class HistoryDecisionExecutionCollectionResource {
             @ApiImplicitParam(name = "executionId", dataType = "string", value = "Only return historic decision executions with the given execution id.", paramType = "query"),
             @ApiImplicitParam(name = "instanceId", dataType = "string", value = "Only return historic decision executions with the given instance id.", paramType = "query"),
             @ApiImplicitParam(name = "scopeType", dataType = "string", value = "Only return historic decision executions with the given scope type.", paramType = "query"),
-            @ApiImplicitParam(name = "withoutScopeType", dataType = "string", value = "Only return historic decision executions without a scope type.", paramType = "query"),
             @ApiImplicitParam(name = "processInstanceIdWithChildren", dataType = "string", value = "Return all historic decision executions with the given process instance id or its entity link children.", paramType = "query"),
             @ApiImplicitParam(name = "caseInstanceIdWithChildren", dataType = "string", value = "Return all historic decision executions with the given case instance id or its entity link children.", paramType = "query"),
             @ApiImplicitParam(name = "failed", dataType = "string", value = "Only return historic decision executions with the failed state.", paramType = "query"),
@@ -85,7 +86,7 @@ public class HistoryDecisionExecutionCollectionResource {
             @ApiResponse(code = 400, message = "Indicates a parameter was passed in the wrong format. The status-message contains additional information.")
     })
     @GetMapping(value = "/dmn-history/historic-decision-executions", produces = "application/json")
-    public DataResponse<HistoricDecisionExecutionResponse> getDecisionTables(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<HistoricDecisionExecutionResponse> getDecisionTables(@ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         DmnHistoricDecisionExecutionQuery historicDecisionExecutionQuery = dmnHistoryService.createHistoricDecisionExecutionQuery();
 
         // Populate filter-parameters
@@ -112,9 +113,6 @@ public class HistoryDecisionExecutionCollectionResource {
         }
         if (allRequestParams.containsKey("scopeType")) {
             historicDecisionExecutionQuery.scopeType(allRequestParams.get("scopeType"));
-        }
-        if (Boolean.TRUE.equals(Boolean.valueOf(allRequestParams.get("withoutScopeType")))) {
-            historicDecisionExecutionQuery.withoutScopeType();
         }
         if (allRequestParams.containsKey("processInstanceIdWithChildren")) {
             historicDecisionExecutionQuery.processInstanceIdWithChildren(allRequestParams.get("processInstanceIdWithChildren"));

@@ -17,8 +17,6 @@ import java.util.List;
 import org.flowable.cmmn.api.delegate.DelegatePlanItemInstance;
 import org.flowable.cmmn.api.delegate.PlanItemFutureJavaDelegate;
 import org.flowable.cmmn.api.delegate.PlanItemJavaDelegate;
-import org.flowable.cmmn.api.delegate.PlanItemVariableAggregator;
-import org.flowable.cmmn.api.delegate.PlanItemVariableAggregatorContext;
 import org.flowable.cmmn.api.listener.CaseInstanceLifecycleListener;
 import org.flowable.cmmn.api.listener.PlanItemInstanceLifecycleListener;
 import org.flowable.cmmn.api.runtime.CaseInstance;
@@ -34,13 +32,11 @@ import org.flowable.common.engine.impl.el.FixedValue;
 import org.flowable.common.engine.impl.util.ReflectUtil;
 import org.flowable.task.service.delegate.DelegateTask;
 import org.flowable.task.service.delegate.TaskListener;
-import org.flowable.variable.api.persistence.entity.VariableInstance;
 
 /**
  * @author Joram Barrez
  */
-public class CmmnClassDelegate implements CmmnTriggerableActivityBehavior, TaskListener, PlanItemInstanceLifecycleListener, CaseInstanceLifecycleListener,
-        PlanItemVariableAggregator {
+public class CmmnClassDelegate implements CmmnTriggerableActivityBehavior, TaskListener, PlanItemInstanceLifecycleListener, CaseInstanceLifecycleListener {
 
     protected String sourceState;
     protected String targetState;
@@ -106,7 +102,7 @@ public class CmmnClassDelegate implements CmmnTriggerableActivityBehavior, TaskL
 
     protected TaskListener getTaskListenerInstance(DelegateTask delegateTask) {
         Object delegateInstance = instantiate(className);
-        applyFieldExtensions(fieldExtensions, delegateInstance, false);
+        applyFieldExtensions(fieldExtensions, delegateTask, false);
 
         if (delegateInstance instanceof TaskListener) {
             return (TaskListener) delegateInstance;
@@ -144,26 +140,6 @@ public class CmmnClassDelegate implements CmmnTriggerableActivityBehavior, TaskL
             return (CaseInstanceLifecycleListener) delegateInstance;
         } else {
             throw new FlowableIllegalArgumentException(delegateInstance.getClass().getName() + " doesn't implement " + CaseInstanceLifecycleListener.class);
-        }
-    }
-
-    @Override
-    public Object aggregateSingleVariable(DelegatePlanItemInstance planItemInstance, PlanItemVariableAggregatorContext context) {
-        return getPlanItemVariableAggregator().aggregateSingleVariable(planItemInstance, context);
-    }
-
-    @Override
-    public Object aggregateMultiVariables(DelegatePlanItemInstance planItemInstance, List<? extends VariableInstance> instances, PlanItemVariableAggregatorContext context) {
-        return getPlanItemVariableAggregator().aggregateMultiVariables(planItemInstance, instances, context);
-    }
-
-    protected PlanItemVariableAggregator getPlanItemVariableAggregator() {
-        Object delegateInstance = instantiate(className);
-        applyFieldExtensions(fieldExtensions, delegateInstance, false);
-        if (delegateInstance instanceof PlanItemVariableAggregator) {
-            return (PlanItemVariableAggregator) delegateInstance;
-        } else {
-            throw new FlowableIllegalArgumentException(delegateInstance.getClass().getName() + " doesn't implement " + PlanItemVariableAggregator.class);
         }
     }
 

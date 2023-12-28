@@ -12,6 +12,9 @@
  */
 package org.flowable.common.engine.impl.el;
 
+import java.util.function.BiFunction;
+
+import org.flowable.common.engine.api.delegate.FlowableFunctionDelegate;
 import org.flowable.common.engine.impl.javax.el.ELContext;
 import org.flowable.common.engine.impl.javax.el.ELResolver;
 import org.flowable.common.engine.impl.javax.el.ExpressionFactory;
@@ -29,9 +32,9 @@ import org.flowable.common.engine.impl.javax.el.VariableMapper;
  */
 public class ParsingElContext extends ELContext {
 
-    protected FlowableFunctionResolver functionResolver;
+    protected BiFunction<String, String, FlowableFunctionDelegate> functionResolver;
 
-    public ParsingElContext(FlowableFunctionResolver functionResolver) {
+    public ParsingElContext(BiFunction<String, String, FlowableFunctionDelegate> functionResolver) {
         this.functionResolver = functionResolver;
     }
 

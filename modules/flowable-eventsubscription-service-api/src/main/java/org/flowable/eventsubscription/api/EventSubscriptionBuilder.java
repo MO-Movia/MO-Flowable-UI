@@ -35,8 +35,6 @@ public interface EventSubscriptionBuilder {
     EventSubscriptionBuilder scopeId(String scopeId);
     
     EventSubscriptionBuilder scopeDefinitionId(String scopeDefinitionId);
-    
-    EventSubscriptionBuilder scopeDefinitionKey(String scopeDefinitionKey);
 
     EventSubscriptionBuilder scopeType(String scopeType);
 
@@ -65,8 +63,6 @@ public interface EventSubscriptionBuilder {
     String getScopeId();
     
     String getScopeDefinitionId();
-    
-    String getScopeDefinitionKey();
     
     String getScopeType();
 

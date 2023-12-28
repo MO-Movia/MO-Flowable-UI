@@ -147,7 +147,7 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
                 .isEqualTo("{"
                         + "  name: 'variable',"
                         + "  type: 'localDate',"
-                        + "  value: '" + now + "'"
+                        + "  value: '" + now.toString() + "'"
                         + "}");
     }
 
@@ -174,7 +174,7 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
                 .isEqualTo("{"
                         + "  name: 'variable',"
                         + "  type: 'localDateTime',"
-                        + "  value: '" + nowWithoutNanos + "'"
+                        + "  value: '" + nowWithoutNanos.toString() + "'"
                         + "}");
     }
 
@@ -297,7 +297,6 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         assertThatJson(responseNode)
                 .when(Option.IGNORING_EXTRA_FIELDS)
                 .isEqualTo("{"
-                        + "scope: null,"
                         + "value: 'updatedValue'"
                         + "}");
 
@@ -335,7 +334,7 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         httpPut.setEntity(new StringEntity(requestNode.toString()));
         CloseableHttpResponse response = executeRequest(httpPut, HttpStatus.SC_OK);
 
-        assertThat(runtimeService.getVariable(processInstance.getId(), "myVar")).isEqualTo(tenDaysLaterWithoutNanos);
+        assertThatJson(runtimeService.getVariable(processInstance.getId(), "myVar")).isEqualTo(tenDaysLaterWithoutNanos);
 
         JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
         closeResponse(response);
@@ -343,8 +342,7 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         assertThatJson(responseNode)
                 .when(Option.IGNORING_EXTRA_FIELDS)
                 .isEqualTo("{"
-                        + "  scope: null,"
-                        + "  value: '2019-12-13T12:32:45.583Z'"
+                        + "  value: '2019-12-13T12:32:45.583345Z'"
                         + "}");
     }
 
@@ -368,7 +366,7 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         httpPut.setEntity(new StringEntity(requestNode.toString()));
         CloseableHttpResponse response = executeRequest(httpPut, HttpStatus.SC_OK);
 
-        assertThat(runtimeService.getVariable(processInstance.getId(), "myVar")).isEqualTo(tenDaysLater);
+        assertThatJson(runtimeService.getVariable(processInstance.getId(), "myVar")).isEqualTo(tenDaysLater);
 
         JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
         closeResponse(response);
@@ -376,7 +374,6 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         assertThatJson(responseNode)
                 .when(Option.IGNORING_EXTRA_FIELDS)
                 .isEqualTo("{"
-                        + "  scope: null,"
                         + "  value: '2020-01-28'"
                         + "}");
     }
@@ -401,7 +398,7 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         httpPut.setEntity(new StringEntity(requestNode.toString()));
         CloseableHttpResponse response = executeRequest(httpPut, HttpStatus.SC_OK);
 
-        assertThat(runtimeService.getVariable(processInstance.getId(), "myVar"))
+        assertThatJson(runtimeService.getVariable(processInstance.getId(), "myVar"))
                 .isEqualTo(tenDaysLater);
 
         JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
@@ -410,7 +407,6 @@ public class ProcessInstanceVariableResourceTest extends BaseSpringRestTestCase 
         assertThatJson(responseNode)
                 .when(Option.IGNORING_EXTRA_FIELDS)
                 .isEqualTo("{"
-                        + "  scope: null,"
                         + "  value: '2020-01-28T12:32:45'"
                         + "}");
     }

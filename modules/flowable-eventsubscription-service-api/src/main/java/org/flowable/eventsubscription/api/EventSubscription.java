@@ -72,11 +72,6 @@ public interface EventSubscription {
     String getScopeDefinitionId();
     
     /**
-     * Key of the scope definition for this event subscription.
-     */
-    String getScopeDefinitionKey();
-    
-    /**
      * Scope type for this event subscription.
      */
     String getScopeType();
@@ -90,16 +85,6 @@ public interface EventSubscription {
      * Gets the date/time when this event subscription was created.
      */
     Date getCreated();
-
-    /**
-     * Gets the owner of this event subscription, if it was locked.
-     */
-    String getLockOwner();
-
-    /**
-     * Gets the date/time when this event subscription was locked.
-     */
-    Date getLockTime();
 
     /**
      * The tenant identifier of this process instance

@@ -13,8 +13,6 @@
 
 package org.flowable.job.api;
 
-import java.util.Collection;
-
 import org.flowable.common.engine.api.query.Query;
 
 /**
@@ -31,14 +29,7 @@ public interface HistoryJobQuery extends Query<HistoryJobQuery, HistoryJob> {
     /** Select jobs which have given job handler type */
     HistoryJobQuery handlerType(String handlerType);
 
-    /**
-     * Select jobs which have given job handler type
-     */
-    HistoryJobQuery handlerTypes(Collection<String> handlerType);
-
-    /**
-     * Only select jobs that failed due to an exception.
-     */
+    /** Only select jobs that failed due to an exception. */
     HistoryJobQuery withException();
 
     /** Only select jobs that failed due to an exception with the given message. */
@@ -48,11 +39,6 @@ public interface HistoryJobQuery extends Query<HistoryJobQuery, HistoryJob> {
      * Only select jobs with the given scope type.
      */
     HistoryJobQuery scopeType(String scopeType);
-
-    /**
-     * Only return jobs that do not have a scope type.
-     */
-    HistoryJobQuery withoutScopeType();
 
     /**
      * Only select jobs that have the given tenant id.

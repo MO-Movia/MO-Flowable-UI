@@ -19,7 +19,6 @@ import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.model.ScriptServiceTask;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.common.engine.impl.scripting.ScriptEngineRequest;
 import org.flowable.common.engine.impl.scripting.ScriptingEngines;
 
 /**
@@ -38,20 +37,12 @@ public class ScriptTaskActivityBehavior extends TaskActivityBehavior {
     public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
         ScriptingEngines scriptingEngines = CommandContextUtil.getCmmnEngineConfiguration().getScriptingEngines();
         if (scriptingEngines == null) {
-            throw new FlowableException("Could not execute script task instance: no scripting engines found. For " + planItemInstanceEntity);
+            throw new FlowableException("Could not execute script task instance: no scripting engines found.");
         }
         String scriptFormat = scriptTask.getScriptFormat() != null ? scriptTask.getScriptFormat() : ScriptingEngines.DEFAULT_SCRIPTING_LANGUAGE;
         
         try {
-            ScriptEngineRequest.Builder request = ScriptEngineRequest.builder()
-                    .language(scriptFormat)
-                    .script(scriptTask.getScript())
-                    .variableContainer(planItemInstanceEntity)
-                    .traceEnhancer(trace -> trace.addTraceTag("type", "scriptTask"));
-            if (scriptTask.isAutoStoreVariables()) {
-                request.storeScriptVariables();
-            }
-            Object result = scriptingEngines.evaluate(request.build()).getResult();
+            Object result = scriptingEngines.evaluate(scriptTask.getScript(), scriptFormat, planItemInstanceEntity, scriptTask.isAutoStoreVariables());
             String resultVariableName = scriptTask.getResultVariableName();
             if (StringUtils.isNotBlank(scriptTask.getResultVariableName())) {
                 planItemInstanceEntity.setVariable(resultVariableName.trim(), result);

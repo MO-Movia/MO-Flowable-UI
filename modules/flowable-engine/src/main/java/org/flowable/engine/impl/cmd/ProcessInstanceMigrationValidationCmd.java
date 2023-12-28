@@ -67,7 +67,6 @@ public class ProcessInstanceMigrationValidationCmd implements Command<ProcessIns
 
         this.processDefinitionKey = processDefinitionKey;
         this.processDefinitionVersion = processDefinitionVersion;
-        this.processInstanceMigrationDocument = processInstanceMigrationDocument;
         this.processDefinitionTenantId = processDefinitionTenantId;
     }
 

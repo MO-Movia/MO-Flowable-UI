@@ -49,7 +49,6 @@ public class CmmnXmlUtil implements CmmnXmlConstants {
     public static ExtensionElement parseExtensionElement(XMLStreamReader xtr) throws Exception {
         ExtensionElement extensionElement = new ExtensionElement();
         extensionElement.setName(xtr.getLocalName());
-        addXMLLocation(extensionElement, xtr);
         if (StringUtils.isNotEmpty(xtr.getNamespaceURI())) {
             extensionElement.setNamespace(xtr.getNamespaceURI());
         }
@@ -128,7 +127,7 @@ public class CmmnXmlUtil implements CmmnXmlConstants {
         return result;
     }
 
-    public static void writeDefaultAttribute(String attributeName, String value, XMLStreamWriter xtw) throws XMLStreamException {
+    public static void writeDefaultAttribute(String attributeName, String value, XMLStreamWriter xtw) throws Exception {
         if (StringUtils.isNotEmpty(value) && !"null".equalsIgnoreCase(value)) {
             xtw.writeAttribute(attributeName, value);
         }

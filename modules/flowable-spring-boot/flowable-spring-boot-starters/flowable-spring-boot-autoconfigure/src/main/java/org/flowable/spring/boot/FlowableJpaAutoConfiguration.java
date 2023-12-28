@@ -12,22 +12,24 @@
  */
 package org.flowable.spring.boot;
 
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManagerFactory;
 
 import org.flowable.spring.SpringProcessEngineConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Filip Hrisafov
  */
-@ConditionalOnBean(type = "jakarta.persistence.EntityManagerFactory")
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnBean(type = "javax.persistence.EntityManagerFactory")
 @ConditionalOnClass(SpringProcessEngineConfiguration.class)
-@AutoConfiguration(after = {
+@AutoConfigureAfter({
     HibernateJpaAutoConfiguration.class
 })
 public class FlowableJpaAutoConfiguration {

@@ -12,8 +12,6 @@
  */
 package org.flowable.batch.service.impl.persistence.entity;
 
-import java.util.Date;
-
 import org.flowable.batch.api.Batch;
 import org.flowable.common.engine.impl.db.HasRevision;
 import org.flowable.common.engine.impl.persistence.entity.ByteArrayRef;
@@ -24,10 +22,6 @@ public interface BatchEntity extends Batch, Entity, HasRevision {
     ByteArrayRef getBatchDocRefId();
     
     void setBatchType(String batchType);
-
-    void setCreateTime(Date createTime);
-
-    void setCompleteTime(Date completeTime);
 
     void setBatchSearchKey(String searchKey);
 

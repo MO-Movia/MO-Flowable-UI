@@ -31,7 +31,6 @@ import org.flowable.eventregistry.impl.persistence.entity.EventDeploymentEntity;
 import org.flowable.eventregistry.impl.persistence.entity.EventDeploymentEntityManager;
 import org.flowable.eventregistry.impl.persistence.entity.EventResourceEntity;
 import org.flowable.eventregistry.model.ChannelModel;
-import org.flowable.eventregistry.model.InboundChannelModel;
 
 /**
  * @author Tijs Rademakers
@@ -238,32 +237,20 @@ public class EventDeploymentManager {
             removeChannelDefinitionFromCache(channelDefinition);
         }
     }
-
+    
     public void removeChannelDefinitionFromCache(ChannelDefinition channelDefinition) {
-        removeChannelDefinitionFromCache(channelDefinition.getId());
-    }
-
-    public ChannelDefinition removeChannelDefinitionFromCache(String channelDefinitionId) {
-        ChannelDefinitionCacheEntry cacheEntry = channelDefinitionCache.get(channelDefinitionId);
-        ChannelDefinition channelDefinition = null;
-
+        ChannelDefinitionCacheEntry cacheEntry = channelDefinitionCache.get(channelDefinition.getId());
+        
         if (cacheEntry != null) {
-            channelDefinition = cacheEntry.getChannelDefinitionEntity();
             ChannelModel channelModel = cacheEntry.getChannelModel();
             for (ChannelModelProcessor channelModelProcessor : engineConfig.getChannelModelProcessors()) {
                 if (channelModelProcessor.canProcess(channelModel)) {
-                    if (channelModel instanceof InboundChannelModel) {
-                        engineConfig.getInboundChannelModelCacheManager().unregisterChannelModel((InboundChannelModel) channelModel, channelDefinition);
-                    }
                     channelModelProcessor.unregisterChannelModel(channelModel, channelDefinition.getTenantId(), engineConfig.getEventRepositoryService());
                 }
             }
-
         }
         
-        channelDefinitionCache.remove(channelDefinitionId);
-
-        return channelDefinition;
+        channelDefinitionCache.remove(channelDefinition.getId());
     }
 
     public List<Deployer> getDeployers() {

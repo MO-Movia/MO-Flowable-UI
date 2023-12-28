@@ -15,7 +15,6 @@ package org.flowable.idm.engine.test.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +39,7 @@ public class EntitiesTest {
     public void verifyVersionInsertHasSpaceAfterNumber() throws Exception {
         Set<String> mappingFilePaths = getAllMappedEntityResources();
         for (String mappingFilePath : mappingFilePaths) {
-            List<String> lines = IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(mappingFilePath), StandardCharsets.UTF_8);
+            List<String> lines = IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(mappingFilePath));
 
             for (int i = 0; i < lines.size(); i++) {
                 String line = lines.get(i);

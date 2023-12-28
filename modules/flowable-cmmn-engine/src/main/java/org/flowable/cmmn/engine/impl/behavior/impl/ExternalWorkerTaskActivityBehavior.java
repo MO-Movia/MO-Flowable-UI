@@ -64,7 +64,7 @@ public class ExternalWorkerTaskActivityBehavior extends TaskActivityBehavior {
 
         String jobTopicExpression = beforeContext.getJobTopicExpression();
         if (StringUtils.isEmpty(jobTopicExpression)) {
-            throw new FlowableException("no topic expression configured for " + planItemInstanceEntity);
+            throw new FlowableException("no topic expression configured");
         }
 
         JobServiceConfiguration jobServiceConfiguration = cmmnEngineConfiguration.getJobServiceConfiguration();
@@ -102,7 +102,7 @@ public class ExternalWorkerTaskActivityBehavior extends TaskActivityBehavior {
         if (expressionValue != null && !expressionValue.toString().isEmpty()) {
             job.setJobHandlerConfiguration(expressionValue.toString());
         } else {
-            throw new FlowableException("Expression " + jobTopicExpression + " did not evaluate to a valid value (non empty String). Was: " + expressionValue + ". For " + planItemInstanceEntity);
+            throw new FlowableException("Expression " + jobTopicExpression + " did not evaluate to a valid value (non empty String). Was: " + expressionValue);
         }
 
         jobService.insertExternalWorkerJob(job);

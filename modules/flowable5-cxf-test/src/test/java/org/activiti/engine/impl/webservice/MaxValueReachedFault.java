@@ -12,7 +12,7 @@
  */
 package org.activiti.engine.impl.webservice;
 
-import jakarta.xml.ws.WebFault;
+import javax.xml.ws.WebFault;
 
 /**
  * An implementation of a fault returned by the counter WS

@@ -13,8 +13,8 @@
 package org.flowable.spring.boot.cmmn;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -26,14 +26,12 @@ import org.flowable.cmmn.spring.autodeployment.DefaultAutoDeploymentStrategy;
 import org.flowable.cmmn.spring.autodeployment.ResourceParentFolderAutoDeploymentStrategy;
 import org.flowable.cmmn.spring.autodeployment.SingleResourceAutoDeploymentStrategy;
 import org.flowable.cmmn.spring.configurator.SpringCmmnEngineConfigurator;
-import org.flowable.common.engine.api.async.AsyncTaskExecutor;
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.spring.AutoDeploymentStrategy;
 import org.flowable.common.spring.CommonAutoDeploymentProperties;
 import org.flowable.common.spring.async.SpringAsyncTaskExecutor;
 import org.flowable.http.common.api.client.FlowableHttpClient;
 import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
-import org.flowable.job.service.impl.asyncexecutor.AsyncJobExecutorConfiguration;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.spring.boot.AbstractSpringEngineAutoConfiguration;
 import org.flowable.spring.boot.BaseEngineConfigurationWithConfigurers;
@@ -41,7 +39,6 @@ import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.flowable.spring.boot.FlowableAutoDeploymentProperties;
 import org.flowable.spring.boot.FlowableHttpProperties;
 import org.flowable.spring.boot.FlowableJobConfiguration;
-import org.flowable.spring.boot.FlowableMailProperties;
 import org.flowable.spring.boot.FlowableProperties;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
@@ -55,29 +52,28 @@ import org.flowable.spring.job.service.SpringAsyncExecutor;
 import org.flowable.spring.job.service.SpringRejectedJobsHandler;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
+import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * {@link org.springframework.boot.autoconfigure.EnableAutoConfiguration} for the CMMN engine
  *
  * @author Filip Hrisafov
  */
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnCmmnEngine
 @EnableConfigurationProperties({
     FlowableProperties.class,
-    FlowableMailProperties.class,
     FlowableAutoDeploymentProperties.class,
     FlowableIdmProperties.class,
     FlowableEventRegistryProperties.class,
@@ -85,11 +81,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
     FlowableAppProperties.class,
     FlowableHttpProperties.class
 })
-@AutoConfiguration(after = {
+@AutoConfigureAfter(value = {
     AppEngineAutoConfiguration.class,
     ProcessEngineAutoConfiguration.class,
-    TaskExecutionAutoConfiguration.class
-}, before = {
+}, name = {
+    "org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration"
+})
+@AutoConfigureBefore({
     AppEngineServicesAutoConfiguration.class,
     ProcessEngineServicesAutoConfiguration.class
 })
@@ -101,27 +99,18 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
     protected final FlowableCmmnProperties cmmnProperties;
     protected final FlowableIdmProperties idmProperties;
     protected final FlowableEventRegistryProperties eventProperties;
-    protected final FlowableMailProperties mailProperties;
     protected final FlowableHttpProperties httpProperties;
     protected final FlowableAutoDeploymentProperties autoDeploymentProperties;
 
     public CmmnEngineAutoConfiguration(FlowableProperties flowableProperties, FlowableCmmnProperties cmmnProperties, FlowableIdmProperties idmProperties,
-                    FlowableEventRegistryProperties eventProperties, FlowableMailProperties mailProperties, FlowableHttpProperties httpProperties, FlowableAutoDeploymentProperties autoDeploymentProperties) {
+                    FlowableEventRegistryProperties eventProperties, FlowableHttpProperties httpProperties, FlowableAutoDeploymentProperties autoDeploymentProperties) {
         
         super(flowableProperties);
         this.cmmnProperties = cmmnProperties;
         this.idmProperties = idmProperties;
         this.eventProperties = eventProperties;
-        this.mailProperties = mailProperties;
         this.httpProperties = httpProperties;
         this.autoDeploymentProperties = autoDeploymentProperties;
-    }
-
-    @Bean
-    @Cmmn
-    @ConfigurationProperties(prefix = "flowable.cmmn.async.executor")
-    public AsyncJobExecutorConfiguration cmmnAsyncExecutorConfiguration() {
-        return new AsyncJobExecutorConfiguration();
     }
 
     /**
@@ -130,13 +119,13 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
      */
     @Bean
     @Cmmn
+    @ConfigurationProperties(prefix = "flowable.cmmn.async.executor")
     @ConditionalOnMissingBean(name = "cmmnAsyncExecutor")
     public SpringAsyncExecutor cmmnAsyncExecutor(
-        @Cmmn AsyncJobExecutorConfiguration executorConfiguration,
         ObjectProvider<SpringRejectedJobsHandler> rejectedJobsHandler,
         @Cmmn ObjectProvider<SpringRejectedJobsHandler> cmmnRejectedJobsHandler
     ) {
-        SpringAsyncExecutor asyncExecutor = new SpringAsyncExecutor(executorConfiguration);
+        SpringAsyncExecutor asyncExecutor = new SpringAsyncExecutor();
         asyncExecutor.setRejectedJobsHandler(getIfAvailable(cmmnRejectedJobsHandler, rejectedJobsHandler));
         return asyncExecutor;
     }
@@ -144,14 +133,12 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
     @Bean
     @ConditionalOnMissingBean
     public SpringCmmnEngineConfiguration cmmnEngineConfiguration(DataSource dataSource, PlatformTransactionManager platformTransactionManager,
-        ObjectProvider<ObjectMapper> objectMapperProvider,
         @Cmmn ObjectProvider<AsyncExecutor> asyncExecutorProvider,
-        ObjectProvider<org.springframework.core.task.AsyncTaskExecutor> taskExecutor,
-        @Cmmn ObjectProvider<org.springframework.core.task.AsyncTaskExecutor> cmmnTaskExecutor,
-        @Qualifier("applicationTaskExecutor") ObjectProvider<org.springframework.core.task.AsyncTaskExecutor> applicationTaskExecutorProvider,
-        @Qualifier("flowableAsyncTaskInvokerTaskExecutor") ObjectProvider<AsyncTaskExecutor> asyncTaskInvokerTaskExecutor,
+        ObjectProvider<AsyncListenableTaskExecutor> taskExecutor,
+        @Cmmn ObjectProvider<AsyncListenableTaskExecutor> cmmnTaskExecutor,
+        @Qualifier("applicationTaskExecutor") ObjectProvider<AsyncListenableTaskExecutor> applicationTaskExecutorProvider,
         ObjectProvider<FlowableHttpClient> flowableHttpClient,
-        ObjectProvider<AutoDeploymentStrategy<CmmnEngine>> cmmnAutoDeploymentStrategies)
+        ObjectProvider<List<AutoDeploymentStrategy<CmmnEngine>>> cmmnAutoDeploymentStrategies)
         throws IOException {
         
         SpringCmmnEngineConfiguration configuration = new SpringCmmnEngineConfiguration();
@@ -172,7 +159,7 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
             configuration.setAsyncExecutor(asyncExecutor);
         }
 
-        org.springframework.core.task.AsyncTaskExecutor asyncTaskExecutor = getIfAvailable(cmmnTaskExecutor, taskExecutor);
+        AsyncListenableTaskExecutor asyncTaskExecutor = getIfAvailable(cmmnTaskExecutor, taskExecutor);
         if (asyncTaskExecutor == null) {
             // Get the applicationTaskExecutor
             asyncTaskExecutor = applicationTaskExecutorProvider.getObject();
@@ -184,11 +171,9 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
             configuration.setAsyncHistoryTaskExecutor(flowableTaskExecutor);
         }
 
-        asyncTaskInvokerTaskExecutor.ifAvailable(configuration::setAsyncTaskInvokerTaskExecutor);
 
         configureSpringEngine(configuration, platformTransactionManager);
         configureEngine(configuration, dataSource);
-        objectMapperProvider.ifAvailable(configuration::setObjectMapper);
 
         configuration.setDeploymentName(defaultText(cmmnProperties.getDeploymentName(), configuration.getDeploymentName()));
 
@@ -196,17 +181,6 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
         configuration.setDisableEventRegistry(!eventProperties.isEnabled());
 
         configuration.setAsyncExecutorActivate(flowableProperties.isAsyncExecutorActivate());
-
-        configuration.setMailServerHost(mailProperties.getHost());
-        configuration.setMailServerPort(mailProperties.getPort());
-        configuration.setMailServerSSLPort(mailProperties.getSSLPort());
-        configuration.setMailServerUsername(mailProperties.getUsername());
-        configuration.setMailServerPassword(mailProperties.getPassword());
-        configuration.setMailServerDefaultFrom(mailProperties.getDefaultFrom());
-        configuration.setMailServerForceTo(mailProperties.getForceTo());
-        configuration.setMailServerUseSSL(mailProperties.isUseSsl());
-        configuration.setMailServerUseTLS(mailProperties.isUseTls());
-        configuration.setMailServerDefaultCharset(mailProperties.getDefaultCharset());
 
         configuration.getHttpClientConfig().setUseSystemProperties(httpProperties.isUseSystemProperties());
         configuration.getHttpClientConfig().setConnectionRequestTimeout(httpProperties.getConnectionRequestTimeout());
@@ -220,13 +194,14 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
         configuration.setHistoryLevel(flowableProperties.getHistoryLevel());
 
         configuration.setEnableSafeCmmnXml(cmmnProperties.isEnableSafeXml());
-        configuration.setEventRegistryStartCaseInstanceAsync(cmmnProperties.isEventRegistryStartCaseInstanceAsync());
-        configuration.setEventRegistryUniqueCaseInstanceCheckWithLock(cmmnProperties.isEventRegistryUniqueCaseInstanceCheckWithLock());
-        configuration.setEventRegistryUniqueCaseInstanceStartLockTime(cmmnProperties.getEventRegistryUniqueCaseInstanceStartLockTime());
 
         configuration.setFormFieldValidationEnabled(flowableProperties.isFormFieldValidationEnabled());
 
-        List<AutoDeploymentStrategy<CmmnEngine>> deploymentStrategies = cmmnAutoDeploymentStrategies.orderedStream().collect(Collectors.toList());
+        // We cannot use orderedStream since we want to support Boot 1.5 which is on pre 5.x Spring
+        List<AutoDeploymentStrategy<CmmnEngine>> deploymentStrategies = cmmnAutoDeploymentStrategies.getIfAvailable();
+        if (deploymentStrategies == null) {
+            deploymentStrategies = new ArrayList<>();
+        }
         CommonAutoDeploymentProperties deploymentProperties = this.autoDeploymentProperties.deploymentPropertiesForEngine(ScopeTypes.CMMN);
         // Always add the out of the box auto deployment strategies as last
         deploymentStrategies.add(new DefaultAutoDeploymentStrategy(deploymentProperties));
@@ -236,8 +211,7 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
 
         configuration.setEnableHistoryCleaning(flowableProperties.isEnableHistoryCleaning());
         configuration.setHistoryCleaningTimeCycleConfig(flowableProperties.getHistoryCleaningCycle());
-        configuration.setCleanInstancesEndedAfter(flowableProperties.getHistoryCleaningAfter());
-        configuration.setCleanInstancesBatchSize(flowableProperties.getHistoryCleaningBatchSize());
+        configuration.setCleanInstancesEndedAfterNumberOfDays(flowableProperties.getHistoryCleaningAfterDays());
 
         return configuration;
     }

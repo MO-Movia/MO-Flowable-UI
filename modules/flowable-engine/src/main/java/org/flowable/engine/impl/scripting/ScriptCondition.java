@@ -13,7 +13,6 @@
 package org.flowable.engine.impl.scripting;
 
 import org.flowable.common.engine.api.FlowableException;
-import org.flowable.common.engine.impl.scripting.ScriptEngineRequest;
 import org.flowable.common.engine.impl.scripting.ScriptingEngines;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.Condition;
@@ -36,16 +35,12 @@ public class ScriptCondition implements Condition {
     public boolean evaluate(String sequenceFlowId, DelegateExecution execution) {
         ScriptingEngines scriptingEngines = CommandContextUtil.getProcessEngineConfiguration().getScriptingEngines();
 
-        ScriptEngineRequest.Builder builder = ScriptEngineRequest.builder()
-                .script(expression)
-                .language(language)
-                .variableContainer(execution);
-        Object result = scriptingEngines.evaluate(builder.build()).getResult();
+        Object result = scriptingEngines.evaluate(expression, language, execution);
         if (result == null) {
-            throw new FlowableException("condition script returns null: " + expression + " for " + execution);
+            throw new FlowableException("condition script returns null: " + expression);
         }
         if (!(result instanceof Boolean)) {
-            throw new FlowableException("condition script returns non-Boolean: " + result + " (" + result.getClass().getName() + ") for " + execution);
+            throw new FlowableException("condition script returns non-Boolean: " + result + " (" + result.getClass().getName() + ")");
         }
         return (Boolean) result;
     }

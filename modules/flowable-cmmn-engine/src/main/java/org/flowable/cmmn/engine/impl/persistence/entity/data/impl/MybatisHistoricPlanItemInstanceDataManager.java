@@ -12,11 +12,9 @@
  */
 package org.flowable.cmmn.engine.impl.persistence.entity.data.impl;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
-import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.history.HistoricPlanItemInstanceQueryImpl;
 import org.flowable.cmmn.engine.impl.persistence.entity.HistoricPlanItemInstanceEntity;
@@ -44,7 +42,6 @@ public class MybatisHistoricPlanItemInstanceDataManager extends AbstractCmmnData
     @Override
     @SuppressWarnings("unchecked")
     public List<HistoricPlanItemInstance> findByCriteria(HistoricPlanItemInstanceQueryImpl query) {
-        setSafeInValueLists(query);
         return getDbSqlSession().selectList("selectHistoricPlanItemInstancesByQueryCriteria", query, getManagedEntityClass());
     }
 
@@ -57,18 +54,12 @@ public class MybatisHistoricPlanItemInstanceDataManager extends AbstractCmmnData
 
     @Override
     public long countByCriteria(HistoricPlanItemInstanceQueryImpl query) {
-        setSafeInValueLists(query);
         return (Long) getDbSqlSession().selectOne("selectHistoricPlanItemInstancesCountByQueryCriteria", query);
     }
 
     @Override
     public void deleteByCaseDefinitionId(String caseDefinitionId) {
         getDbSqlSession().delete("deleteHistoricPlanItemInstanceByCaseDefinitionId", caseDefinitionId, getManagedEntityClass());
-    }
-    
-    @Override
-    public void bulkDeleteHistoricPlanItemInstancesForCaseInstanceIds(Collection<String> caseInstanceIds) {
-        getDbSqlSession().delete("bulkDeleteHistoricPlanItemInstancesByCaseInstanceIds", createSafeInValuesList(caseInstanceIds), getManagedEntityClass());
     }
     
     @Override
@@ -86,14 +77,4 @@ public class MybatisHistoricPlanItemInstanceDataManager extends AbstractCmmnData
         return new HistoricPlanItemInstanceEntityImpl();
     }
 
-    @Override
-    public HistoricPlanItemInstanceEntity create(PlanItemInstance planItemInstance) {
-        return new HistoricPlanItemInstanceEntityImpl(planItemInstance);
-    }
-    
-    protected void setSafeInValueLists(HistoricPlanItemInstanceQueryImpl planItemInstanceQuery) {
-        if (planItemInstanceQuery.getInvolvedGroups() != null) {
-            planItemInstanceQuery.setSafeInvolvedGroups(createSafeInValuesList(planItemInstanceQuery.getInvolvedGroups()));
-        }
-    }
 }

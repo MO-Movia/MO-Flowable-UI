@@ -15,8 +15,8 @@ package org.activiti.spring.test.jpa;
 
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 /**
  * Service bean that handles loan requests.

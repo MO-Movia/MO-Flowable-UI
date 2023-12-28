@@ -30,7 +30,6 @@ public class EventSubscriptionBuilderImpl implements EventSubscriptionBuilder {
     protected String subScopeId;
     protected String scopeId;
     protected String scopeDefinitionId;
-    protected String scopeDefinitionKey;
     protected String scopeType;
     protected String tenantId;
     protected String configuration;
@@ -100,12 +99,6 @@ public class EventSubscriptionBuilderImpl implements EventSubscriptionBuilder {
     @Override
     public EventSubscriptionBuilder scopeDefinitionId(String scopeDefinitionId) {
         this.scopeDefinitionId = scopeDefinitionId;
-        return this;
-    }
-    
-    @Override
-    public EventSubscriptionBuilder scopeDefinitionKey(String scopeDefinitionKey) {
-        this.scopeDefinitionKey = scopeDefinitionKey;
         return this;
     }
 
@@ -180,11 +173,6 @@ public class EventSubscriptionBuilderImpl implements EventSubscriptionBuilder {
     @Override
     public String getScopeDefinitionId() {
         return scopeDefinitionId;
-    }
-    
-    @Override
-    public String getScopeDefinitionKey() {
-        return scopeDefinitionKey;
     }
 
     @Override

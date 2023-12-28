@@ -56,7 +56,6 @@ import org.flowable.bpmn.model.ThrowEvent;
 import org.flowable.bpmn.model.TimerEventDefinition;
 import org.flowable.bpmn.model.Transaction;
 import org.flowable.bpmn.model.UserTask;
-import org.flowable.bpmn.model.VariableListenerEventDefinition;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.common.engine.impl.scripting.ScriptingEngines;
@@ -72,7 +71,6 @@ import org.flowable.engine.impl.bpmn.behavior.BoundaryEventRegistryEventActivity
 import org.flowable.engine.impl.bpmn.behavior.BoundaryMessageEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.BoundarySignalEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.BoundaryTimerEventActivityBehavior;
-import org.flowable.engine.impl.bpmn.behavior.BoundaryVariableListenerEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.BusinessRuleTaskActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.CallActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.CancelEndEventActivityBehavior;
@@ -89,7 +87,6 @@ import org.flowable.engine.impl.bpmn.behavior.EventSubProcessEventRegistryStartE
 import org.flowable.engine.impl.bpmn.behavior.EventSubProcessMessageStartEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.EventSubProcessSignalStartEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.EventSubProcessTimerStartEventActivityBehavior;
-import org.flowable.engine.impl.bpmn.behavior.EventSubProcessVariableListenerlStartEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ExclusiveGatewayActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ExternalWorkerTaskActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.InclusiveGatewayActivityBehavior;
@@ -99,11 +96,11 @@ import org.flowable.engine.impl.bpmn.behavior.IntermediateCatchEventRegistryEven
 import org.flowable.engine.impl.bpmn.behavior.IntermediateCatchMessageEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.IntermediateCatchSignalEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.IntermediateCatchTimerEventActivityBehavior;
-import org.flowable.engine.impl.bpmn.behavior.IntermediateCatchVariableListenerEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.IntermediateThrowCompensationEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.IntermediateThrowEscalationEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.IntermediateThrowNoneEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.IntermediateThrowSignalEventActivityBehavior;
+import org.flowable.engine.impl.bpmn.behavior.MailActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ManualTaskActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.NoneEndEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.NoneStartEventActivityBehavior;
@@ -127,7 +124,6 @@ import org.flowable.engine.impl.bpmn.helper.ClassDelegate;
 import org.flowable.engine.impl.bpmn.helper.ClassDelegateFactory;
 import org.flowable.engine.impl.bpmn.helper.DefaultClassDelegateFactory;
 import org.flowable.engine.impl.bpmn.http.DefaultBpmnHttpActivityDelegate;
-import org.flowable.engine.impl.bpmn.mail.BpmnMailActivityDelegate;
 import org.flowable.engine.impl.bpmn.parser.FieldDeclaration;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.delegate.ActivityBehavior;
@@ -231,16 +227,19 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     }
 
     @Override
-    public ActivityBehavior createMailActivityBehavior(ServiceTask serviceTask) {
-        return classDelegateFactory.create(serviceTask.getId(), BpmnMailActivityDelegate.class.getName(),
-                createFieldDeclarations(serviceTask.getFieldExtensions()),
-                false, // Mail activity is never triggerable
-                getSkipExpressionFromServiceTask(serviceTask), serviceTask.getMapExceptions());
+    public MailActivityBehavior createMailActivityBehavior(ServiceTask serviceTask) {
+        return createMailActivityBehavior(serviceTask.getId(), serviceTask.getFieldExtensions());
     }
 
     @Override
-    public ActivityBehavior createMailActivityBehavior(SendTask sendTask) {
-        return classDelegateFactory.create(BpmnMailActivityDelegate.class.getName(), createFieldDeclarations(sendTask.getFieldExtensions()));
+    public MailActivityBehavior createMailActivityBehavior(SendTask sendTask) {
+        return createMailActivityBehavior(sendTask.getId(), sendTask.getFieldExtensions());
+    }
+
+    protected MailActivityBehavior createMailActivityBehavior(String taskId, List<FieldExtension> fields) {
+        List<FieldDeclaration> fieldDeclarations = createFieldDeclarations(fields);
+        return (MailActivityBehavior) ClassDelegate.defaultInstantiateDelegate(
+                MailActivityBehavior.class, fieldDeclarations);
     }
 
     @Override
@@ -251,6 +250,31 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     @Override
     public DmnActivityBehavior createDmnActivityBehavior(SendTask sendTask) {
         return new DmnActivityBehavior(sendTask);
+    }
+
+    // We do not want a hard dependency on Mule, hence we return
+    // ActivityBehavior and instantiate the delegate instance using a string instead of the Class itself.
+    @Override
+    public ActivityBehavior createMuleActivityBehavior(ServiceTask serviceTask) {
+        return createMuleActivityBehavior(serviceTask, serviceTask.getFieldExtensions());
+    }
+
+    @Override
+    public ActivityBehavior createMuleActivityBehavior(SendTask sendTask) {
+        return createMuleActivityBehavior(sendTask, sendTask.getFieldExtensions());
+    }
+
+    protected ActivityBehavior createMuleActivityBehavior(TaskWithFieldExtensions task, List<FieldExtension> fieldExtensions) {
+        try {
+
+            Class<?> theClass = Class.forName("org.flowable.mule.MuleSendActivityBehavior");
+            List<FieldDeclaration> fieldDeclarations = createFieldDeclarations(fieldExtensions);
+            return (ActivityBehavior) ClassDelegate.defaultInstantiateDelegate(
+                    theClass, fieldDeclarations);
+
+        } catch (ClassNotFoundException e) {
+            throw new FlowableException("Could not find org.flowable.mule.MuleSendActivityBehavior: ", e);
+        }
     }
 
     // We do not want a hard dependency on Camel, hence we return
@@ -363,7 +387,7 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
         if (StringUtils.isNotEmpty(businessRuleTask.getClassName())) {
             try {
                 Class<?> clazz = Class.forName(businessRuleTask.getClassName());
-                ruleActivity = (BusinessRuleTaskDelegate) clazz.getConstructor().newInstance();
+                ruleActivity = (BusinessRuleTaskDelegate) clazz.newInstance();
             } catch (Exception e) {
                 throw new FlowableException("Could not instantiate businessRuleTask (id:" + businessRuleTask.getId() + ") class: " +
                         businessRuleTask.getClassName(), e);
@@ -399,7 +423,7 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
         if (language == null) {
             language = ScriptingEngines.DEFAULT_SCRIPTING_LANGUAGE;
         }
-        return new ScriptTaskActivityBehavior(scriptTask.getId(), scriptTask.getScript(), language, scriptTask.getResultVariable(), scriptTask.getSkipExpression(), scriptTask.isAutoStoreVariables());
+        return new ScriptTaskActivityBehavior(scriptTask.getId(), scriptTask.getScript(), language, scriptTask.getResultVariable(), scriptTask.isAutoStoreVariables());
     }
     
     @Override
@@ -496,11 +520,6 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     public EventSubProcessEventRegistryStartEventActivityBehavior createEventSubProcessEventRegistryStartEventActivityBehavior(StartEvent startEvent, String eventDefinitionKey) {
         return new EventSubProcessEventRegistryStartEventActivityBehavior(eventDefinitionKey);
     }
-    
-    @Override
-    public EventSubProcessVariableListenerlStartEventActivityBehavior createEventSubProcessVariableListenerlStartEventActivityBehavior(StartEvent startEvent, VariableListenerEventDefinition variableListenerEventDefinition) {
-        return new EventSubProcessVariableListenerlStartEventActivityBehavior(variableListenerEventDefinition);
-    }
 
     @Override
     public AdhocSubProcessActivityBehavior createAdhocSubprocessActivityBehavior(SubProcess subProcess) {
@@ -563,13 +582,6 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     }
     
     @Override
-    public IntermediateCatchVariableListenerEventActivityBehavior createIntermediateCatchVariableListenerEventActivityBehavior(IntermediateCatchEvent intermediateCatchEvent, 
-            VariableListenerEventDefinition variableListenerEventDefinition) {
-        
-        return new IntermediateCatchVariableListenerEventActivityBehavior(variableListenerEventDefinition);
-    }
-    
-    @Override
     public IntermediateThrowNoneEventActivityBehavior createIntermediateThrowNoneEventActivityBehavior(ThrowEvent throwEvent) {
         return new IntermediateThrowNoneEventActivityBehavior();
     }
@@ -602,7 +614,7 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
 
     @Override
     public ErrorEndEventActivityBehavior createErrorEndEventActivityBehavior(EndEvent endEvent, ErrorEventDefinition errorEventDefinition) {
-        return new ErrorEndEventActivityBehavior(errorEventDefinition.getErrorCode(), endEvent.getOutParameters());
+        return new ErrorEndEventActivityBehavior(errorEventDefinition.getErrorCode());
     }
     
     @Override
@@ -682,10 +694,5 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     @Override
     public BoundaryEventRegistryEventActivityBehavior createBoundaryEventRegistryEventActivityBehavior(BoundaryEvent boundaryEvent, String eventDefinitionKey, boolean interrupting) {
         return new BoundaryEventRegistryEventActivityBehavior(eventDefinitionKey, interrupting);
-    }
-
-    @Override
-    public BoundaryVariableListenerEventActivityBehavior createBoundaryVariableListenerEventActivityBehavior(BoundaryEvent boundaryEvent, VariableListenerEventDefinition variableListenerEventDefinition, boolean interrupting) {
-        return new BoundaryVariableListenerEventActivityBehavior(variableListenerEventDefinition, interrupting);
     }
 }

@@ -59,12 +59,9 @@ public class HistoricProcessInstanceQueryRequest extends PaginateRequest {
     private List<QueryVariable> variables;
     private String callbackId;
     private String callbackType;
-    private Boolean withoutCallbackId;
     private String tenantId;
     private String tenantIdLike;
     private Boolean withoutTenantId;
-    private String rootScopeId;
-    private String parentScopeId;
 
     public String getProcessInstanceId() {
         return processInstanceId;
@@ -315,14 +312,6 @@ public class HistoricProcessInstanceQueryRequest extends PaginateRequest {
         this.callbackType = callbackType;
     }
 
-    public Boolean getWithoutCallbackId() {
-        return withoutCallbackId;
-    }
-
-    public void setWithoutCallbackId(Boolean withoutCallbackId) {
-        this.withoutCallbackId = withoutCallbackId;
-    }
-
     public String getTenantId() {
         return tenantId;
     }
@@ -347,19 +336,4 @@ public class HistoricProcessInstanceQueryRequest extends PaginateRequest {
         this.withoutTenantId = withoutTenantId;
     }
 
-    public String getRootScopeId() {
-        return rootScopeId;
-    }
-
-    public void setRootScopeId(String rootScopeId) {
-        this.rootScopeId = rootScopeId;
-    }
-
-    public String getParentScopeId() {
-        return parentScopeId;
-    }
-
-    public void setParentScopeId(String parentScopeId) {
-        this.parentScopeId = parentScopeId;
-    }
 }

@@ -134,7 +134,7 @@ public class ShellActivityBehavior extends AbstractBpmnActivityBehavior {
 
             }
         } catch (Exception e) {
-            throw new FlowableException("Could not execute shell command for " + execution, e);
+            throw new FlowableException("Could not execute shell command ", e);
         }
 
         leave(execution);

@@ -13,22 +13,18 @@
 package org.flowable.engine;
 
 import java.sql.Connection;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.flowable.batch.api.Batch;
 import org.flowable.batch.api.BatchBuilder;
 import org.flowable.batch.api.BatchPart;
-import org.flowable.batch.api.BatchPartBuilder;
-import org.flowable.batch.api.BatchPartQuery;
 import org.flowable.batch.api.BatchQuery;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.engine.api.management.TableMetaData;
 import org.flowable.common.engine.api.management.TablePage;
 import org.flowable.common.engine.api.management.TablePageQuery;
-import org.flowable.common.engine.api.tenant.ChangeTenantIdBuilder;
 import org.flowable.common.engine.impl.cmd.CustomSqlExecution;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandConfig;
@@ -201,28 +197,6 @@ public interface ManagementService {
      *              when the job cannot be moved to be a history job (e.g. because it's not history job)
      */
     HistoryJob moveDeadLetterJobToHistoryJob(String jobId, int retries);
-
-    /**
-     * Moves a job that is in the dead letter job table back to be a history job,
-     * and resetting the retries (as the retries was 0 when it was put into the dead letter job table).
-     *
-     * @param jobIds ids of the jobs to move, cannot be null.
-     * @param retries the number of retries (value greater than 0) which will be set on the jobs.
-     * @throws FlowableObjectNotFoundException when there is no job with the given id.
-     * @throws FlowableIllegalArgumentException when the job cannot be moved to be a history job (e.g. because it's not history job)
-     */
-    void bulkMoveDeadLetterJobs(Collection<String> jobIds, int retries);
-
-    /**
-     * Moves a job that is in the dead letter job table back to be a history job,
-     * and resetting the retries (as the retries was 0 when it was put into the dead letter job table).
-     *
-     * @param jobIds ids of the jobs to move, cannot be null.
-     * @param retries the number of retries (value greater than 0) which will be set on the jobs.
-     * @throws FlowableObjectNotFoundException when one job with of the given ids is not found.
-     * @throws FlowableIllegalArgumentException when the job cannot be moved to be a history job (e.g. because it's not history job)
-     */
-    void bulkMoveDeadLetterJobsToHistoryJobs(Collection<String> jobIds, int retries);
 
     /**
      * Moves a suspended job from the suspended letter job table back to be an executable job. The retries are untouched.
@@ -437,13 +411,6 @@ public interface ManagementService {
     
     BatchBuilder createBatchBuilder();
     
-    /**
-     * Returns a new BatchPartQuery implementation, that can be used to dynamically query the batch parts.
-     */
-    BatchPartQuery createBatchPartQuery();
-
-    BatchPartBuilder createBatchPartBuilder(Batch batch);
-
     void deleteBatch(String batchId);
 
     /** get the list of properties. */
@@ -529,29 +496,5 @@ public interface ManagementService {
      * Create an {@link ExternalWorkerCompletionBuilder} that can be used to transition the status of the external worker job.
      */
     ExternalWorkerCompletionBuilder createExternalWorkerCompletionBuilder(String externalJobId, String workerId);
-
-    /**
-     * Unaquire a locked external worker job.
-     */
-    void unacquireExternalWorkerJob(String jobId, String workerId);
-    
-    /**
-     * Unaquire all locked external worker jobs for worker.
-     */
-    void unacquireAllExternalWorkerJobsForWorker(String workerId);
-    
-    /**
-     * Unaquire all locked external worker jobs for worker and tenant.
-     */
-    void unacquireAllExternalWorkerJobsForWorker(String workerId, String tenantId);
-    
-    /**
-     * Create a {@link ChangeTenantIdBuilder} that can be used to change the tenant id of the process instances
-     * and all the related instances. See {@link BpmnChangeTenantIdEntityTypes} for related instances.
-     * <p>
-     * You must provide the source tenant id and the destination tenant id. All instances from the source tenant id in the BPMN scope
-     * will be changed to the target tenant id.
-     */
-    ChangeTenantIdBuilder createChangeTenantIdBuilder(String fromTenantId, String toTenantId);
 
 }

@@ -34,10 +34,10 @@ public class TriggerPlanItemInstanceOperation extends AbstractPlanItemInstanceOp
     @Override
     public void run() {
         if (PlanItemInstanceState.ACTIVE.equals(planItemInstanceEntity.getState())
-                || (planItemInstanceEntity.getPlanItem() != null 
+                ||  (planItemInstanceEntity.getPlanItem() != null 
                 && planItemInstanceEntity.getPlanItem().getPlanItemDefinition() instanceof EventListener
-                && PlanItemInstanceState.AVAILABLE.equals(planItemInstanceEntity.getState()))){
-            
+                && PlanItemInstanceState.AVAILABLE.equals(planItemInstanceEntity.getState()))
+            ){
             executeTrigger();
 
         } else {
@@ -54,7 +54,7 @@ public class TriggerPlanItemInstanceOperation extends AbstractPlanItemInstanceOp
         Object behaviorObject = planItemInstanceEntity.getPlanItem().getBehavior();
         if (!(behaviorObject instanceof CmmnTriggerableActivityBehavior)) {
             throw new FlowableException("Cannot trigger a plan item which activity behavior does not implement the " 
-                    + CmmnTriggerableActivityBehavior.class + " interface in " + planItemInstanceEntity);
+                    + CmmnTriggerableActivityBehavior.class + " interface");
         }
         CmmnTriggerableActivityBehavior behavior = (CmmnTriggerableActivityBehavior) planItemInstanceEntity.getPlanItem().getBehavior();
         if (behavior instanceof CoreCmmnTriggerableActivityBehavior) {

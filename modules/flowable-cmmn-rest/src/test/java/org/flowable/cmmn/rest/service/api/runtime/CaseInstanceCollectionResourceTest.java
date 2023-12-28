@@ -16,17 +16,13 @@ package org.flowable.cmmn.rest.service.api.runtime;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 
@@ -38,18 +34,13 @@ import org.apache.http.entity.StringEntity;
 import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.repository.CaseDefinition;
 import org.flowable.cmmn.api.runtime.CaseInstance;
-import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.test.CmmnDeployment;
 import org.flowable.cmmn.rest.service.BaseSpringRestTestCase;
 import org.flowable.cmmn.rest.service.api.CmmnRestUrls;
-import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
-import org.flowable.form.api.FormEngineConfigurationApi;
-import org.flowable.form.api.FormInfo;
-import org.flowable.form.api.FormRepositoryService;
-import org.flowable.form.api.FormService;
+import org.flowable.form.api.FormDefinition;
+import org.flowable.form.api.FormDeployment;
+import org.flowable.form.api.FormInstance;
 import org.flowable.task.api.Task;
-import org.mockito.Mock;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -66,125 +57,44 @@ import net.javacrumbs.jsonunit.core.Option;
  */
 public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
 
-    @Mock
-    protected FormEngineConfigurationApi formEngineConfiguration;
-
-    @Mock
-    protected FormRepositoryService formRepositoryService;
-
-    @Mock
-    protected FormService formEngineFormService;
-
     /**
      * Test getting a list of case instance, using all possible filters.
      */
     @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
     public void testGetCaseInstances() throws Exception {
-        identityService.setAuthenticatedUserId("kermit");
-        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder()
-                .caseDefinitionKey("oneHumanTaskCase")
-                .name("myCaseInstanceName")
-                .businessKey("myBusinessKey")
-                .businessStatus("myBusinessStatus")
-                .start();
-        identityService.setAuthenticatedUserId(null);
+        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").businessKey("myBusinessKey").start();
         String id = caseInstance.getId();
 
         // Test without any parameters
         String url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION);
         assertResultsPresentInDataResponse(url, id);
 
-        // Case instance id
+        // Process instance id
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?id=" + id;
         assertResultsPresentInDataResponse(url, id);
 
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?id=anotherId";
         assertResultsPresentInDataResponse(url);
-        
-        // Case instance name
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?name=myCaseInstanceName";
-        assertResultsPresentInDataResponse(url, id);
 
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?name=anotherName";
-        assertResultsPresentInDataResponse(url);
-        
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?nameLike=" + encode("%InstanceName");
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?nameLike=" + encode("another%");
-        assertResultsPresentInDataResponse(url);
-        
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?nameLikeIgnoreCase=" + encode("%INSTANCEName");
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?nameLikeIgnoreCase=" + encode("ANOTHER%");
-        assertResultsPresentInDataResponse(url);
-
-        // Case instance business key
+        // Process instance business key
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?businessKey=myBusinessKey";
         assertResultsPresentInDataResponse(url, id);
 
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?businessKey=anotherBusinessKey";
         assertResultsPresentInDataResponse(url);
-        
-        // Case instance business status
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?businessStatus=myBusinessStatus";
-        assertResultsPresentInDataResponse(url, id);
 
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?businessStatus=anotherBusinessStatus";
-        assertResultsPresentInDataResponse(url);
-        
-        // Case instance started by
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?startedBy=kermit";
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?startedBy=fozzie";
-        assertResultsPresentInDataResponse(url);
-        
-        Calendar todayCal = new GregorianCalendar();
-        Calendar futureCal = new GregorianCalendar(todayCal.get(Calendar.YEAR) + 2, todayCal.get(Calendar.MONTH), todayCal.get(Calendar.DAY_OF_MONTH));
-        Calendar historicCal = new GregorianCalendar(todayCal.get(Calendar.YEAR) - 2, todayCal.get(Calendar.MONTH), todayCal.get(Calendar.DAY_OF_MONTH));
-        
-        // Case instance started before
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?startedBefore=" + getISODateString(futureCal.getTime());
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?startedBefore=" + getISODateString(historicCal.getTime());
-        assertResultsPresentInDataResponse(url);
-        
-        // Case instance started after
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?startedAfter=" + getISODateString(historicCal.getTime());
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?startedAfter=" + getISODateString(futureCal.getTime());
-        assertResultsPresentInDataResponse(url);
-        
-        // Case instance state
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?state=active";
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?state=completed";
-        assertResultsPresentInDataResponse(url);
-
-        // Case definition key
+        // Process definition key
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?caseDefinitionKey=oneHumanTaskCase";
         assertResultsPresentInDataResponse(url, id);
 
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?caseDefinitionKey=caseTwo";
         assertResultsPresentInDataResponse(url);
 
-        // Case definition id
+        // Process definition id
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?caseDefinitionId=" + caseInstance.getCaseDefinitionId();
         assertResultsPresentInDataResponse(url, id);
 
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?caseDefinitionId=anotherId";
-        assertResultsPresentInDataResponse(url);
-        
-        // Case definition name
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?caseDefinitionName=" + encode(caseInstance.getCaseDefinitionName());
-        assertResultsPresentInDataResponse(url, id);
-
-        url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?caseDefinitionName=anotherName";
         assertResultsPresentInDataResponse(url);
     }
 
@@ -490,13 +400,13 @@ public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
         org.flowable.cmmn.api.repository.CmmnDeployment tenantDeployment = null;
 
         try {
-            // Deploy the same case, in another tenant
+            // Deploy the same process, in another tenant
             tenantDeployment = repositoryService.createDeployment().addClasspathResource("org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn")
                     .tenantId("tenant1").deploy();
 
             ObjectNode requestNode = objectMapper.createObjectNode();
 
-            // Start using case definition key, in tenant 1
+            // Start using process definition key, in tenant 1
             requestNode.put("caseDefinitionKey", "oneHumanTaskCase");
             requestNode.put("tenantId", "tenant1");
 
@@ -518,68 +428,16 @@ public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
         }
     }
 
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" }, tenantId = "tenant1")
-    public void testStartCaseUsingDefinitionId() {
-        CaseDefinition caseDefinition = repositoryService.createCaseDefinitionQuery().singleResult();
-
-        ObjectNode requestNode = objectMapper.createObjectNode();
-
-        // Start using case definition id
-        requestNode.put("caseDefinitionId", caseDefinition.getId());
-
-        HttpPost httpPost = new HttpPost(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION));
-        httpPost.setEntity(new StringEntity(requestNode.toString(), StandardCharsets.UTF_8));
-        CloseableHttpResponse response = executeRequest(httpPost, HttpStatus.SC_CREATED);
-        closeResponse(response);
-
-        // Only one case should have been started
-        CaseInstance caseInstance = runtimeService.createCaseInstanceQuery().singleResult();
-        assertThat(caseInstance).isNotNull();
-        assertThat(caseInstance.getCaseDefinitionKey()).isEqualTo("oneHumanTaskCase");
-        assertThat(caseInstance.getCaseDefinitionId()).isEqualTo(caseDefinition.getId());
-        assertThat(caseInstance.getTenantId()).isEqualTo("tenant1");
-    }
-
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" }, tenantId = "tenant1")
-    public void testStartCaseUsingDefinitionIdAndOverrideDefinitionTenantId() {
-        CaseDefinition caseDefinition = repositoryService.createCaseDefinitionQuery().singleResult();
-
-        ObjectNode requestNode = objectMapper.createObjectNode();
-
-        // Start using case definition id
-        requestNode.put("caseDefinitionId", caseDefinition.getId());
-        requestNode.put("overrideDefinitionTenantId", "tenant2");
-
-        HttpPost httpPost = new HttpPost(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION));
-        httpPost.setEntity(new StringEntity(requestNode.toString(), StandardCharsets.UTF_8));
-        CloseableHttpResponse response = executeRequest(httpPost, HttpStatus.SC_CREATED);
-        closeResponse(response);
-
-        // Only one case should have been started
-        CaseInstance caseInstance = runtimeService.createCaseInstanceQuery().singleResult();
-        assertThat(caseInstance).isNotNull();
-        assertThat(caseInstance.getCaseDefinitionKey()).isEqualTo("oneHumanTaskCase");
-        assertThat(caseInstance.getCaseDefinitionId()).isEqualTo(caseDefinition.getId());
-        assertThat(caseInstance.getTenantId()).isEqualTo("tenant2");
-    }
-
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/runtime/oneHumanTaskCaseWithStartForm.cmmn" })
+    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/runtime/oneHumanTaskCaseWithStartForm.cmmn",
+            "org/flowable/cmmn/rest/service/api/runtime/simple.form" })
     public void testStartCaseWithForm() throws Exception {
         CaseDefinition caseDefinition = repositoryService.createCaseDefinitionQuery().caseDefinitionKey("oneHumanTaskCase").singleResult();
+        try {
+            FormDefinition formDefinition = formRepositoryService.createFormDefinitionQuery().formDefinitionKey("form1").singleResult();
+            assertThat(formDefinition).isNotNull();
 
-        runUsingMocks(() -> {
-            Map engineConfigurations = cmmnEngineConfiguration.getEngineConfigurations();
-            engineConfigurations.put(EngineConfigurationConstants.KEY_FORM_ENGINE_CONFIG, formEngineConfiguration);
-
-            FormInfo formInfo = new FormInfo();
-            formInfo.setId("formDefId");
-            formInfo.setKey("formDefKey");
-            formInfo.setName("Form Definition Name");
-
-            when(formEngineConfiguration.getFormRepositoryService()).thenReturn(formRepositoryService);
-            when(formRepositoryService.getFormModelByKeyAndParentDeploymentId("form1", caseDefinition.getDeploymentId(), caseDefinition.getTenantId(),
-                    cmmnEngineConfiguration.isFallbackToDefaultTenant()))
-                    .thenReturn(formInfo);
+            FormInstance formInstance = formEngineFormService.createFormInstanceQuery().formDefinitionId(formDefinition.getId()).singleResult();
+            assertThat(formInstance).isNull();
 
             String url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_DEFINITION_START_FORM, caseDefinition.getId());
             CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + url), HttpStatus.SC_OK);
@@ -588,12 +446,11 @@ public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
             assertThatJson(responseNode)
                     .when(Option.IGNORING_EXTRA_FIELDS)
                     .isEqualTo("{"
-                            + " id: 'formDefId',"
-                            + " key: 'formDefKey',"
-                            + " name: 'Form Definition Name',"
-                            + " type: 'startForm',"
-                            + " definitionKey: 'oneHumanTaskCase'"
+                            + " id: '" + formDefinition.getId() + "',"
+                            + " key: '" + formDefinition.getKey() + "',"
+                            + " name: '" + formDefinition.getName() + "'"
                             + "}");
+            assertThat(responseNode.get("fields")).hasSize(2);
 
             ArrayNode formVariablesNode = objectMapper.createArrayNode();
 
@@ -614,13 +471,6 @@ public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
             requestNode.put("caseDefinitionKey", "oneHumanTaskCase");
             requestNode.set("startFormVariables", formVariablesNode);
 
-            when(formRepositoryService.getFormModelByKeyAndParentDeploymentId("form1", caseDefinition.getDeploymentId()))
-                    .thenReturn(formInfo);
-            when(formEngineConfiguration.getFormService()).thenReturn(formEngineFormService);
-            when(formEngineFormService.getVariablesFromFormSubmission(null, "planModel", null, caseDefinition.getId(), ScopeTypes.CMMN, formInfo, 
-                    Map.of("user", "simple string value", "number", 1234), null))
-                    .thenReturn(Map.of("user", "simple string value return", "number", 1234L));
-
             HttpPost httpPost = new HttpPost(SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION));
             httpPost.setEntity(new StringEntity(requestNode.toString()));
             response = executeRequest(httpPost, HttpStatus.SC_CREATED);
@@ -628,9 +478,30 @@ public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
             CaseInstance caseInstance = runtimeService.createCaseInstanceQuery().singleResult();
             assertThat(caseInstance).isNotNull();
 
-            assertThat(runtimeService.getVariable(caseInstance.getId(), "user")).isEqualTo("simple string value return");
-            assertThat(runtimeService.getVariable(caseInstance.getId(), "number")).isEqualTo(1234L);
-        });
+            assertThat(runtimeService.getVariable(caseInstance.getId(), "user")).isEqualTo("simple string value");
+            assertThat(runtimeService.getVariable(caseInstance.getId(), "number")).isEqualTo(1234);
+
+            formInstance = formEngineFormService.createFormInstanceQuery().formDefinitionId(formDefinition.getId()).singleResult();
+            assertThat(formInstance).isNotNull();
+            byte[] valuesBytes = formEngineFormService.getFormInstanceValues(formInstance.getId());
+            assertThat(valuesBytes).isNotNull();
+            JsonNode instanceNode = objectMapper.readTree(valuesBytes);
+            JsonNode valuesNode = instanceNode.get("values");
+            assertThatJson(valuesNode)
+                    .when(Option.IGNORING_EXTRA_FIELDS)
+                    .isEqualTo("{"
+                            + " user: 'simple string value',"
+                            + " number: '1234'"
+                            + "}");
+
+        } finally {
+            formEngineFormService.deleteFormInstancesByScopeDefinition(caseDefinition.getId());
+
+            List<FormDeployment> formDeployments = formRepositoryService.createDeploymentQuery().list();
+            for (FormDeployment formDeployment : formDeployments) {
+                formRepositoryService.deleteDeployment(formDeployment.getId(), true);
+            }
+        }
     }
 
     @CmmnDeployment(resources = {
@@ -739,194 +610,4 @@ public class CaseInstanceCollectionResourceTest extends BaseSpringRestTestCase {
         url = CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?activePlanItemDefinitionId=task1";
         assertResultsPresentInDataResponse(url);
     }
-
-    /**
-     * Test  bulk deletion of case instances.
-     */
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
-    public void testBulkDeleteCaseInstances() throws Exception {
-        CaseInstance caseInstance1 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance2 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance3 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-
-        String url = SERVER_URL_PREFIX + CmmnRestUrls.SEGMENT_RUNTIME_RESOURCES + "/" + CmmnRestUrls.SEGMENT_CASE_INSTANCE_RESOURCE + "/delete";
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("action", "delete");
-        body.putArray("instanceIds").add(caseInstance1.getId()).add(caseInstance2.getId());
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_NO_CONTENT));
-        // Check if case-instance is gone
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance1.getId()).count()).isZero();
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance2.getId()).count()).isZero();
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance3.getId())).isNotNull();
-    }
-
-    /**
-     * Test  bulk deletion of case instances.
-     */
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
-    public void testInvalidBulkDeleteCaseInstances() throws Exception {
-        CaseInstance caseInstance1 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance2 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance3 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-
-        String url = SERVER_URL_PREFIX + CmmnRestUrls.SEGMENT_RUNTIME_RESOURCES + "/" + CmmnRestUrls.SEGMENT_CASE_INSTANCE_RESOURCE + "/delete";
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("action", "delete");
-        body.putArray("instanceIds").add(caseInstance1.getId()).add(caseInstance2.getId()).add("notValidID");
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_NOT_FOUND));
-        // Check if case-instance is gone
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance1.getId()).count()).isEqualTo(1);
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance2.getId()).count()).isEqualTo(1);
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance3.getId()).count()).isEqualTo(1);
-
-        body = objectMapper.createObjectNode();
-        body.put("action", "delete");
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_BAD_REQUEST));
-
-    }
-
-    /**
-     * Test bulk termination of case instances.
-     */
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
-    public void testBulkTerminateCaseInstances() throws Exception {
-        CaseInstance caseInstance1 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance2 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance3 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-
-        String url = SERVER_URL_PREFIX + CmmnRestUrls.SEGMENT_RUNTIME_RESOURCES + "/" + CmmnRestUrls.SEGMENT_CASE_INSTANCE_RESOURCE + "/delete";
-
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("action", "terminate");
-        body.putArray("instanceIds").add(caseInstance1.getId()).add(caseInstance2.getId());
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_NO_CONTENT));
-        // Check if case-instance is gone
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance1.getId()).count()).isZero();
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance2.getId()).count()).isZero();
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance3.getId()).singleResult()).isNotNull();
-    }
-
-    /**
-     * Test bulk termination of case instances.
-     */
-    @CmmnDeployment(resources = { "org/flowable/cmmn/rest/service/api/repository/oneHumanTaskCase.cmmn" })
-    public void testInvalidBulkTerminateCaseInstances() throws Exception {
-        CaseInstance caseInstance1 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance2 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-        CaseInstance caseInstance3 = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("oneHumanTaskCase").start();
-
-        String url = SERVER_URL_PREFIX + CmmnRestUrls.SEGMENT_RUNTIME_RESOURCES + "/" + CmmnRestUrls.SEGMENT_CASE_INSTANCE_RESOURCE + "/delete";
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("action", "terminate");
-        body.putArray("instanceIds").add(caseInstance1.getId()).add(caseInstance2.getId()).add("notValidID");
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_NOT_FOUND));
-        // Check if case-instance is gone
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance1.getId()).count()).isEqualTo(1);
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance2.getId()).count()).isEqualTo(1);
-        assertThat(runtimeService.createCaseInstanceQuery().caseInstanceId(caseInstance3.getId()).count()).isEqualTo(1);
-
-        body = objectMapper.createObjectNode();
-        body.put("action", "terminate");
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_BAD_REQUEST));
-
-        body = objectMapper.createObjectNode();
-        body.put("action", "invalidAction");
-        body.putArray("instanceIds").add(caseInstance1.getId()).add(caseInstance2.getId());
-        httpPost = new HttpPost(url);
-        httpPost.setEntity(new StringEntity(body.toString()));
-        closeResponse(executeRequest(httpPost, HttpStatus.SC_BAD_REQUEST));
-    }
-
-
-    @CmmnDeployment(resources = {
-            "org/flowable/cmmn/rest/service/api/runtime/simpleCaseWithCaseTasks.cmmn",
-            "org/flowable/cmmn/rest/service/api/runtime/simpleInnerCaseWithCaseTasks.cmmn",
-            "org/flowable/cmmn/rest/service/api/runtime/simpleInnerCaseWithHumanTasksAndCaseTask.cmmn",
-            "org/flowable/cmmn/rest/service/api/runtime/oneTaskCase.cmmn"
-    })
-    public void testQueryByRootScopeId() throws IOException {
-        runtimeService.createCaseInstanceBuilder().caseDefinitionKey("simpleTestCaseWithCaseTasks").start();
-        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("simpleTestCaseWithCaseTasks").start();
-
-        PlanItemInstance oneTaskCasePlanItemInstance = runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId())
-                .planItemDefinitionId("caseTaskOneTaskCase").singleResult();
-
-        PlanItemInstance caseTaskSimpleCaseWithCaseTasksPlanItemInstance = runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId())
-                .planItemDefinitionId("caseTaskSimpleCaseWithCaseTasks").singleResult();
-
-        PlanItemInstance caseTaskWithHumanTasksPlanItemInstance = runtimeService.createPlanItemInstanceQuery()
-                .caseInstanceId(caseTaskSimpleCaseWithCaseTasksPlanItemInstance.getReferenceId())
-                .planItemDefinitionId("caseTaskCaseWithHumanTasks").singleResult();
-
-        PlanItemInstance oneTaskCase2PlanItemInstance = runtimeService.createPlanItemInstanceQuery()
-                .caseInstanceId(caseTaskWithHumanTasksPlanItemInstance.getReferenceId())
-                .planItemDefinitionId("caseTaskOneTaskCase").singleResult();
-
-        String url =
-                SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?rootScopeId=" + caseInstance.getId();
-        CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
-
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + "  data: ["
-                        + "    { id: '" + oneTaskCasePlanItemInstance.getReferenceId() + "' },"
-                        + "    { id: '" + caseTaskWithHumanTasksPlanItemInstance.getReferenceId() + "' },"
-                        + "    { id: '" + caseTaskSimpleCaseWithCaseTasksPlanItemInstance.getReferenceId() + "' },"
-                        + "    { id: '" + oneTaskCase2PlanItemInstance.getReferenceId() + "' }"
-                        + "  ]"
-                        + "}");
-    }
-
-    @CmmnDeployment(resources = {
-            "org/flowable/cmmn/rest/service/api/runtime/simpleCaseWithCaseTasks.cmmn",
-            "org/flowable/cmmn/rest/service/api/runtime/simpleInnerCaseWithCaseTasks.cmmn",
-            "org/flowable/cmmn/rest/service/api/runtime/simpleInnerCaseWithHumanTasksAndCaseTask.cmmn",
-            "org/flowable/cmmn/rest/service/api/runtime/oneTaskCase.cmmn"
-    })
-    public void testQueryByParentScopeId() throws IOException {
-        runtimeService.createCaseInstanceBuilder().caseDefinitionKey("simpleTestCaseWithCaseTasks").start();
-        CaseInstance caseInstance = runtimeService.createCaseInstanceBuilder().caseDefinitionKey("simpleTestCaseWithCaseTasks").start();
-
-        PlanItemInstance caseTaskSimpleCaseWithCaseTasksPlanItemInstance = runtimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId())
-                .planItemDefinitionId("caseTaskSimpleCaseWithCaseTasks").singleResult();
-
-        PlanItemInstance caseTaskWithHumanTasksPlanItemInstance = runtimeService.createPlanItemInstanceQuery()
-                .caseInstanceId(caseTaskSimpleCaseWithCaseTasksPlanItemInstance.getReferenceId())
-                .planItemDefinitionId("caseTaskCaseWithHumanTasks").singleResult();
-
-        PlanItemInstance oneTaskCase2PlanItemInstance = runtimeService.createPlanItemInstanceQuery()
-                .caseInstanceId(caseTaskWithHumanTasksPlanItemInstance.getReferenceId())
-                .planItemDefinitionId("caseTaskOneTaskCase").singleResult();
-
-        String url = SERVER_URL_PREFIX + CmmnRestUrls.createRelativeResourceUrl(CmmnRestUrls.URL_CASE_INSTANCE_COLLECTION) + "?parentScopeId="
-                + caseTaskWithHumanTasksPlanItemInstance.getReferenceId();
-        CloseableHttpResponse response = executeRequest(new HttpGet(url), HttpStatus.SC_OK);
-
-        JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
-        closeResponse(response);
-        assertThatJson(responseNode)
-                .when(Option.IGNORING_EXTRA_FIELDS, Option.IGNORING_ARRAY_ORDER)
-                .isEqualTo("{"
-                        + "  data: ["
-                        + "    { id: '" + oneTaskCase2PlanItemInstance.getReferenceId() + "' }"
-                        + "  ]"
-                        + "}");
-
-    }
-
 }

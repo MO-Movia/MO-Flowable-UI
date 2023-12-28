@@ -46,6 +46,4 @@ public interface JobEntityManager extends EntityManager<JobEntity>, JobInfoEntit
      */
     long findJobCountByQueryCriteria(JobQueryImpl jobQuery);
     
-
-    void deleteJobsByExecutionId(String executionId);
 }

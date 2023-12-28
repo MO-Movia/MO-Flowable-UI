@@ -37,12 +37,8 @@ public interface FlowElementsContainer {
     Artifact getArtifact(String id);
 
     Collection<Artifact> getArtifacts();
-    
-    Map<String, Artifact> getArtifactMap();
 
     void addArtifact(Artifact artifact);
-    
-    void addArtifactToMap(Artifact artifact);
 
     void removeArtifact(String artifactId);
 

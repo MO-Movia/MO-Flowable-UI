@@ -31,9 +31,8 @@ public class VariableParser extends BaseChildElementParser {
 
     @Override
     public void parseChildElement(XMLStreamReader xtr, DmnElement parentElement, Decision decision) throws Exception {
-        if (!(parentElement instanceof InputData)) {
+        if (!(parentElement instanceof InputData))
             return;
-        }
 
         InputData inputData = (InputData) parentElement;
         InformationItem variable = new InformationItem();

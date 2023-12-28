@@ -25,11 +25,7 @@ import org.flowable.cmmn.model.PlanItemDefinition;
 import org.flowable.cmmn.model.PlanItemTransition;
 
 /**
- * Whenever a plan item or event listener changes its state as part of a CMMN engine operation, its current state and transition is checked to be valid.
- * This static class supports methods for this check as well as initializes all possible states and their transitions.
- *
  * @author Joram Barrez
- * @author Micha Kiener
  */
 public class StateTransition {
     
@@ -38,11 +34,7 @@ public class StateTransition {
     // See 8.4.2 of CMMN 1.1 spec
     
     static {
-        // a newly created plan item instance can either be used for creation (first time) or reactivation (case reactivation)
-        addPlanItemTransition(null,
-            PlanItemTransition.CREATE,
-            PlanItemTransition.REACTIVATE);
-
+        addPlanItemTransition(null, PlanItemTransition.CREATE);
         addPlanItemTransition(PlanItemInstanceState.WAITING_FOR_REPETITION,
             PlanItemTransition.CREATE,
             PlanItemTransition.EXIT);
@@ -70,17 +62,10 @@ public class StateTransition {
                 PlanItemTransition.SUSPEND, 
                 PlanItemTransition.TERMINATE, 
                 PlanItemTransition.PARENT_SUSPEND, 
-                PlanItemTransition.EXIT,
-                PlanItemTransition.ASYNC_LEAVE_ACTIVE);
+                PlanItemTransition.EXIT);
         
         addPlanItemTransition(PlanItemInstanceState.ASYNC_ACTIVE,
                 PlanItemTransition.ASYNC_ACTIVATE);
-
-        addPlanItemTransition(PlanItemInstanceState.ASYNC_ACTIVE_LEAVE,
-                PlanItemTransition.FAULT,
-                PlanItemTransition.COMPLETE,
-                PlanItemTransition.TERMINATE,
-                PlanItemTransition.EXIT);
         
         addPlanItemTransition(PlanItemInstanceState.FAILED,
                 PlanItemTransition.REACTIVATE, 
@@ -90,9 +75,9 @@ public class StateTransition {
                 PlanItemTransition.RESUME, 
                 PlanItemTransition.PARENT_RESUME, 
                 PlanItemTransition.EXIT);
-
+        
         addPlanItemTransition(PlanItemInstanceState.COMPLETED);
-
+        
         addPlanItemTransition(PlanItemInstanceState.TERMINATED);
     }
 
@@ -100,10 +85,7 @@ public class StateTransition {
 
     static {
 
-        // a newly created event listener might be newly created (first time) or reactivated as part of the case reactivation
-        addEventListenerTransition(null,
-            PlanItemTransition.CREATE,
-            PlanItemTransition.REACTIVATE);
+        addEventListenerTransition(null, PlanItemTransition.CREATE);
 
         addEventListenerTransition(PlanItemInstanceState.UNAVAILABLE,
             PlanItemTransition.INITIATE,

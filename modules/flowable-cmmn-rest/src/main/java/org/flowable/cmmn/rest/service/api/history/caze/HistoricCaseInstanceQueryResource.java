@@ -15,6 +15,8 @@ package org.flowable.cmmn.rest.service.api.history.caze;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.flowable.common.rest.api.DataResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,7 +43,7 @@ public class HistoricCaseInstanceQueryResource extends HistoricCaseInstanceBaseR
             @ApiResponse(code = 200, message = "Indicates request was successful and the case instances are returned"),
             @ApiResponse(code = 400, message = "Indicates an parameter was passed in the wrong format. The status-message contains additional information.") })
     @PostMapping(value = "/cmmn-query/historic-case-instances", produces = "application/json")
-    public DataResponse<HistoricCaseInstanceResponse> queryCasesInstances(@RequestBody HistoricCaseInstanceQueryRequest queryRequest, @ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams) {
+    public DataResponse<HistoricCaseInstanceResponse> queryCasesInstances(@RequestBody HistoricCaseInstanceQueryRequest queryRequest, @ApiParam(hidden = true) @RequestParam Map<String, String> allRequestParams, HttpServletRequest request) {
         return getQueryResponse(queryRequest, allRequestParams);
     }
 }

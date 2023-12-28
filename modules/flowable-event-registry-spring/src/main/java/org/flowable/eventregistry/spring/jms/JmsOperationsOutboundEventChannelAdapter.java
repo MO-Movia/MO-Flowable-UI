@@ -12,10 +12,6 @@
  */
 package org.flowable.eventregistry.spring.jms;
 
-import java.util.Map;
-
-import jakarta.jms.TextMessage;
-
 import org.flowable.eventregistry.api.OutboundEventChannelAdapter;
 import org.springframework.jms.core.JmsOperations;
 
@@ -29,24 +25,18 @@ public class JmsOperationsOutboundEventChannelAdapter implements OutboundEventCh
     protected JmsMessageCreator<String> messageCreator;
 
     public JmsOperationsOutboundEventChannelAdapter(JmsOperations jmsOperations, String destination) {
-        this(jmsOperations, destination, (event, headerMap, session) -> {
-            TextMessage textMessage = session.createTextMessage(event);
-            for (String headerKey : headerMap.keySet()) {
-                textMessage.setObjectProperty(headerKey, headerMap.get(headerKey));
-            }
-            return textMessage;
-        });
+        this(jmsOperations, destination, (event, session) -> session.createTextMessage(event));
     }
 
     public JmsOperationsOutboundEventChannelAdapter(JmsOperations jmsOperations, String destination, JmsMessageCreator<String> messageCreator) {
         this.jmsOperations = jmsOperations;
         this.destination = destination;
-        this.messageCreator = messageCreator;
+        this.messageCreator = (event, session) -> session.createTextMessage(event);
     }
 
     @Override
-    public void sendEvent(String rawEvent, Map<String, Object> headerMap) {
-        jmsOperations.send(destination, session -> getMessageCreator().toMessage(rawEvent, headerMap, session));
+    public void sendEvent(String rawEvent) {
+        jmsOperations.send(destination, session -> getMessageCreator().toMessage(rawEvent, session));
     }
 
     public JmsOperations getJmsOperations() {

@@ -17,8 +17,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import jakarta.enterprise.util.Nonbinding;
-import jakarta.interceptor.InterceptorBinding;
+import javax.enterprise.util.Nonbinding;
+import javax.interceptor.InterceptorBinding;
 
 import org.flowable.cdi.BusinessProcess;
 

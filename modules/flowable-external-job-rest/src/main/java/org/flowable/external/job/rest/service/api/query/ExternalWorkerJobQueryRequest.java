@@ -25,11 +25,9 @@ public class ExternalWorkerJobQueryRequest extends PaginateRequest {
 
     protected String id;
     protected String processInstanceId;
-    protected boolean withoutProcessInstanceId;
     protected String executionId;
     protected String processDefinitionId;
     protected String scopeId;
-    protected boolean withoutScopeId;
     protected String subScopeId;
     protected String scopeDefinitionId;
     protected String scopeType;
@@ -42,7 +40,7 @@ public class ExternalWorkerJobQueryRequest extends PaginateRequest {
     protected boolean withoutTenantId;
     protected boolean locked;
     protected boolean unlocked;
-    protected boolean withoutScopeType;
+
 
     public String getId() {
         return id;
@@ -60,15 +58,6 @@ public class ExternalWorkerJobQueryRequest extends PaginateRequest {
     @ApiParam("Only return jobs with the processInstanceId")
     public void setProcessInstanceId(String processInstanceId) {
         this.processInstanceId = processInstanceId;
-    }
-
-    public boolean isWithoutProcessInstanceId() {
-        return withoutProcessInstanceId;
-    }
-
-    @ApiParam("Only return jobs without a process instance id")
-    public void setWithoutProcessInstanceId(boolean withoutProcessInstanceId) {
-        this.withoutProcessInstanceId = withoutProcessInstanceId;
     }
 
     public String getExecutionId() {
@@ -96,15 +85,6 @@ public class ExternalWorkerJobQueryRequest extends PaginateRequest {
     @ApiParam("Only return jobs with the given scopeId")
     public void setScopeId(String scopeId) {
         this.scopeId = scopeId;
-    }
-    
-    public boolean isWithoutScopeId() {
-        return withoutScopeId;
-    }
-
-    @ApiParam("Only return jobs without a scope id")
-    public void setWithoutScopeId(boolean withoutScopeId) {
-        this.withoutScopeId = withoutScopeId;
     }
 
     public String getSubScopeId() {
@@ -214,14 +194,4 @@ public class ExternalWorkerJobQueryRequest extends PaginateRequest {
     public void setUnlocked(boolean unlocked) {
         this.unlocked = unlocked;
     }
-
-    public boolean isWithoutScopeType() {
-        return withoutScopeType;
-    }
-
-    @ApiParam("Only return jobs without a scope type")
-    public void setWithoutScopeType(boolean withoutScopeType) {
-        this.withoutScopeType = withoutScopeType;
-    }
-
 }

@@ -42,7 +42,6 @@ public class PlanItemInstanceQueryRequest extends PaginateRequest {
     private String startUserId;
     private String referenceId;
     private String referenceType;
-    private Boolean includeEnded;
     private List<QueryVariable> variables;
     private List<QueryVariable> caseInstanceVariables;
     private String tenantId;
@@ -184,14 +183,6 @@ public class PlanItemInstanceQueryRequest extends PaginateRequest {
 
     public void setReferenceType(String referenceType) {
         this.referenceType = referenceType;
-    }
-
-    public Boolean getIncludeEnded() {
-        return includeEnded;
-    }
-
-    public void setIncludeEnded(Boolean includeEnded) {
-        this.includeEnded = includeEnded;
     }
 
     public String getTenantId() {

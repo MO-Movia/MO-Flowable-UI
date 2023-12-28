@@ -29,37 +29,40 @@
       "bpmn/ch07b-BPMN-Constructs": {
         "title": "BPMN 2.0 Constructs"
       },
-      "bpmn/ch08-ProcessInstanceMigration": {
+      "bpmn/ch08-Forms": {
+        "title": "Forms"
+      },
+      "bpmn/ch09-ProcessInstanceMigration": {
         "title": "Process Instance Migration"
       },
-      "bpmn/ch09-JPA": {
+      "bpmn/ch10-JPA": {
         "title": "JPA"
       },
-      "bpmn/ch10-History": {
+      "bpmn/ch11-History": {
         "title": "History"
       },
-      "bpmn/ch11-IDM": {
+      "bpmn/ch12-IDM": {
         "title": "Identity management"
       },
-      "bpmn/ch12-Design": {
-        "title": "Flowable Design"
+      "bpmn/ch13-Designer": {
+        "title": "Eclipse Designer"
       },
-      "bpmn/ch13-Applications": {
+      "bpmn/ch14-Applications": {
         "title": "Flowable applications"
       },
-      "bpmn/ch14-REST": {
+      "bpmn/ch15-REST": {
         "title": "REST API"
       },
       "bpmn/ch16-Cdi": {
         "title": "CDI integration"
       },
-      "bpmn/ch16-Ldap": {
+      "bpmn/ch17-Ldap": {
         "title": "LDAP integration"
       },
       "bpmn/ch18-Advanced": {
         "title": "Advanced"
       },
-      "bpmn/ch18-tooling": {
+      "bpmn/ch19-tooling": {
         "title": "Tooling"
       },
       "cmmn/ch02-Configuration": {
@@ -122,8 +125,29 @@
       "eventregistry/ch07-REST": {
         "title": "REST API"
       },
+      "form/ch02-Configuration": {
+        "title": "Configuration"
+      },
+      "form/ch03-API": {
+        "title": "The Flowable Form API"
+      },
+      "form/ch04-Spring": {
+        "title": "Spring integration"
+      },
+      "form/ch05-Deployment": {
+        "title": "Deployment"
+      },
+      "form/ch06-Form-Introduction": {
+        "title": "Form Introduction"
+      },
+      "form/ch07-REST": {
+        "title": "REST API"
+      },
       "header-rest": {
         "title": "General Flowable REST principles"
+      },
+      "migration": {
+        "title": "Flowable Migration Guide : Flowable or Activiti v5 to Flowable V6"
       },
       "oss-introduction": {
         "title": "Introducing Flowable Open Source",
@@ -143,6 +167,7 @@
       "DMN User Guide": "DMN User Guide",
       "Forms User Guide": "Forms User Guide",
       "Applications Guide": "Applications Guide",
+      "Migration from v5": "Migration from v5",
       "Disclaimer": "Disclaimer"
     }
   },

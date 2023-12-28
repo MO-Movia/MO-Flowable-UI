@@ -19,12 +19,8 @@ import java.util.function.Predicate;
 
 import org.flowable.cmmn.api.migration.ActivatePlanItemDefinitionMapping;
 import org.flowable.cmmn.api.migration.CaseInstanceMigrationDocument;
-import org.flowable.cmmn.api.migration.ChangePlanItemIdMapping;
-import org.flowable.cmmn.api.migration.ChangePlanItemIdWithDefinitionIdMapping;
 import org.flowable.cmmn.api.migration.MoveToAvailablePlanItemDefinitionMapping;
-import org.flowable.cmmn.api.migration.RemoveWaitingForRepetitionPlanItemDefinitionMapping;
 import org.flowable.cmmn.api.migration.TerminatePlanItemDefinitionMapping;
-import org.flowable.cmmn.api.migration.WaitingForRepetitionPlanItemDefinitionMapping;
 import org.flowable.common.engine.api.FlowableException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -47,6 +43,7 @@ public class CaseInstanceMigrationDocumentConverter implements CaseInstanceMigra
     protected static ObjectMapper objectMapper = new ObjectMapper();
 
     public static JsonNode convertToJson(CaseInstanceMigrationDocument caseInstanceMigrationDocument) {
+
         ObjectNode documentNode = objectMapper.createObjectNode();
 
         if (caseInstanceMigrationDocument.getMigrateToCaseDefinitionId() != null) {
@@ -77,37 +74,9 @@ public class CaseInstanceMigrationDocumentConverter implements CaseInstanceMigra
         
         ArrayNode moveToAvailableMappingNodes = convertToJsonMoveToAvailablePlanItemDefinitionMappings(caseInstanceMigrationDocument.getMoveToAvailablePlanItemDefinitionMappings());
         if (moveToAvailableMappingNodes != null && !moveToAvailableMappingNodes.isNull()) {
-            documentNode.set(MOVE_TO_AVAILABLE_PLAN_ITEM_DEFINITIONS_JSON_SECTION, moveToAvailableMappingNodes);
-        }
-        
-        ArrayNode waitingForRepetitionMappingNodes = convertToJsonWaitingForRepetitionPlanItemDefinitionMappings(caseInstanceMigrationDocument.getWaitingForRepetitionPlanItemDefinitionMappings());
-        if (waitingForRepetitionMappingNodes != null && !waitingForRepetitionMappingNodes.isNull()) {
-            documentNode.set(WAITING_FOR_REPETITION_PLAN_ITEM_DEFINITIONS_JSON_SECTION, waitingForRepetitionMappingNodes);
-        }
-        
-        ArrayNode removeWaitingForRepetitionMappingNodes = convertToJsonRemoveWaitingForRepetitionPlanItemDefinitionMappings(caseInstanceMigrationDocument.getRemoveWaitingForRepetitionPlanItemDefinitionMappings());
-        if (removeWaitingForRepetitionMappingNodes != null && !removeWaitingForRepetitionMappingNodes.isNull()) {
-            documentNode.set(REMOVE_WAITING_FOR_REPETITION_PLAN_ITEM_DEFINITIONS_JSON_SECTION, removeWaitingForRepetitionMappingNodes);
-        }
-        
-        ArrayNode changePlanItemIdMappingNodes = convertToJsonChangePlanItemIdMappings(caseInstanceMigrationDocument.getChangePlanItemIdMappings());
-        if (changePlanItemIdMappingNodes != null && !changePlanItemIdMappingNodes.isNull()) {
-            documentNode.set(CHANGE_PLAN_ITEM_IDS_JSON_SECTION, changePlanItemIdMappingNodes);
-        }
-        
-        ArrayNode changePlanItemIdWithDefinitionIdMappingNodes = convertToJsonChangePlanItemIdWithDefinitionIdMappings(caseInstanceMigrationDocument.getChangePlanItemIdWithDefinitionIdMappings());
-        if (changePlanItemIdWithDefinitionIdMappingNodes != null && !changePlanItemIdWithDefinitionIdMappingNodes.isNull()) {
-            documentNode.set(CHANGE_PLAN_ITEM_IDS_WITH_DEFINITION_ID_JSON_SECTION, changePlanItemIdWithDefinitionIdMappingNodes);
+            documentNode.set(TERMINATE_PLAN_ITEM_DEFINITIONS_JSON_SECTION, moveToAvailableMappingNodes);
         }
 
-        if (caseInstanceMigrationDocument.getPreUpgradeExpression() != null) {
-            documentNode.put(PRE_UPGRADE_EXPRESSION_KEY_JSON_PROPERTY, caseInstanceMigrationDocument.getPreUpgradeExpression());
-        }
-
-        if (caseInstanceMigrationDocument.getPostUpgradeExpression() != null) {
-            documentNode.put(POST_UPGRADE_EXPRESSION_KEY_JSON_PROPERTY, caseInstanceMigrationDocument.getPostUpgradeExpression());
-        }
-        
         JsonNode caseInstanceVariablesNode = convertToJsonCaseInstanceVariables(caseInstanceMigrationDocument, objectMapper);
         if (caseInstanceVariablesNode != null && !caseInstanceVariablesNode.isNull()) {
             documentNode.set(CASE_INSTANCE_VARIABLES_JSON_SECTION, caseInstanceVariablesNode);
@@ -162,56 +131,6 @@ public class CaseInstanceMigrationDocumentConverter implements CaseInstanceMigra
 
         return mappingsArray;
     }
-    
-    protected static ArrayNode convertToJsonWaitingForRepetitionPlanItemDefinitionMappings(List<WaitingForRepetitionPlanItemDefinitionMapping> planItemDefinitionMappings) {
-        ArrayNode mappingsArray = objectMapper.createArrayNode();
-
-        for (WaitingForRepetitionPlanItemDefinitionMapping mapping : planItemDefinitionMappings) {
-            ObjectNode mappingNode = objectMapper.createObjectNode();
-            mappingNode.put(PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mapping.getPlanItemDefinitionId());
-            mappingsArray.add(mappingNode);
-        }
-
-        return mappingsArray;
-    }
-    
-    protected static ArrayNode convertToJsonRemoveWaitingForRepetitionPlanItemDefinitionMappings(List<RemoveWaitingForRepetitionPlanItemDefinitionMapping> planItemDefinitionMappings) {
-        ArrayNode mappingsArray = objectMapper.createArrayNode();
-
-        for (RemoveWaitingForRepetitionPlanItemDefinitionMapping mapping : planItemDefinitionMappings) {
-            ObjectNode mappingNode = objectMapper.createObjectNode();
-            mappingNode.put(PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mapping.getPlanItemDefinitionId());
-            mappingsArray.add(mappingNode);
-        }
-
-        return mappingsArray;
-    }
-    
-    protected static ArrayNode convertToJsonChangePlanItemIdMappings(List<ChangePlanItemIdMapping> planItemIdMappings) {
-        ArrayNode mappingsArray = objectMapper.createArrayNode();
-
-        for (ChangePlanItemIdMapping mapping : planItemIdMappings) {
-            ObjectNode mappingNode = objectMapper.createObjectNode();
-            mappingNode.put(EXISTING_PLAN_ITEM_ID_JSON_PROPERTY, mapping.getExistingPlanItemId());
-            mappingNode.put(NEW_PLAN_ITEM_ID_JSON_PROPERTY, mapping.getNewPlanItemId());
-            mappingsArray.add(mappingNode);
-        }
-
-        return mappingsArray;
-    }
-    
-    protected static ArrayNode convertToJsonChangePlanItemIdWithDefinitionIdMappings(List<ChangePlanItemIdWithDefinitionIdMapping> definitionIdMappings) {
-        ArrayNode mappingsArray = objectMapper.createArrayNode();
-
-        for (ChangePlanItemIdWithDefinitionIdMapping mapping : definitionIdMappings) {
-            ObjectNode mappingNode = objectMapper.createObjectNode();
-            mappingNode.put(EXISTING_PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mapping.getExistingPlanItemDefinitionId());
-            mappingNode.put(NEW_PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mapping.getNewPlanItemDefinitionId());
-            mappingsArray.add(mappingNode);
-        }
-
-        return mappingsArray;
-    }
 
     public static CaseInstanceMigrationDocument convertFromJson(String jsonCaseInstanceMigrationDocument) {
 
@@ -256,57 +175,12 @@ public class CaseInstanceMigrationDocumentConverter implements CaseInstanceMigra
                     documentBuilder.addMoveToAvailablePlanItemDefinitionMapping(moveToAvailableDefinitionMapping);
                 }
             }
-            
-            JsonNode waitingForRepetitionMappingNodes = rootNode.get(WAITING_FOR_REPETITION_PLAN_ITEM_DEFINITIONS_JSON_SECTION);
-            if (waitingForRepetitionMappingNodes != null) {
-                for (JsonNode mappingNode : waitingForRepetitionMappingNodes) {
-                    String planItemDefinitionId = getJsonProperty(PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mappingNode);
-                    WaitingForRepetitionPlanItemDefinitionMapping waitingForRepetitionDefinitionMapping = new WaitingForRepetitionPlanItemDefinitionMapping(planItemDefinitionId);
-                    documentBuilder.addWaitingForRepetitionPlanItemDefinitionMapping(waitingForRepetitionDefinitionMapping);
-                }
-            }
-            
-            JsonNode removeWaitingForRepetitionMappingNodes = rootNode.get(REMOVE_WAITING_FOR_REPETITION_PLAN_ITEM_DEFINITIONS_JSON_SECTION);
-            if (removeWaitingForRepetitionMappingNodes != null) {
-                for (JsonNode mappingNode : removeWaitingForRepetitionMappingNodes) {
-                    String planItemDefinitionId = getJsonProperty(PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mappingNode);
-                    RemoveWaitingForRepetitionPlanItemDefinitionMapping removeWaitingForRepetitionDefinitionMapping = new RemoveWaitingForRepetitionPlanItemDefinitionMapping(planItemDefinitionId);
-                    documentBuilder.addRemoveWaitingForRepetitionPlanItemDefinitionMapping(removeWaitingForRepetitionDefinitionMapping);
-                }
-            }
-            
-            JsonNode changePlanItemIdMappingNodes = rootNode.get(CHANGE_PLAN_ITEM_IDS_JSON_SECTION);
-            if (changePlanItemIdMappingNodes != null) {
-                for (JsonNode mappingNode : changePlanItemIdMappingNodes) {
-                    String existingPlanItemId = getJsonProperty(EXISTING_PLAN_ITEM_ID_JSON_PROPERTY, mappingNode);
-                    String newPlanItemId = getJsonProperty(NEW_PLAN_ITEM_ID_JSON_PROPERTY, mappingNode);
-                    ChangePlanItemIdMapping changePlanItemIdMapping = new ChangePlanItemIdMapping(existingPlanItemId, newPlanItemId);
-                    documentBuilder.addChangePlanItemIdMapping(changePlanItemIdMapping);
-                }
-            }
-            
-            JsonNode changePlanItemIdWithDefinitionIdMappingNodes = rootNode.get(CHANGE_PLAN_ITEM_IDS_WITH_DEFINITION_ID_JSON_SECTION);
-            if (changePlanItemIdWithDefinitionIdMappingNodes != null) {
-                for (JsonNode mappingNode : changePlanItemIdWithDefinitionIdMappingNodes) {
-                    String existingPlanItemDefinitionId = getJsonProperty(EXISTING_PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mappingNode);
-                    String newPlanItemDefinitionId = getJsonProperty(NEW_PLAN_ITEM_DEFINITION_ID_JSON_PROPERTY, mappingNode);
-                    ChangePlanItemIdWithDefinitionIdMapping changePlanItemIdWithDefinitionIdMapping = new ChangePlanItemIdWithDefinitionIdMapping(existingPlanItemDefinitionId, newPlanItemDefinitionId);
-                    documentBuilder.addChangePlanItemIdWithDefinitionIdMapping(changePlanItemIdWithDefinitionIdMapping);
-                }
-            }
 
             JsonNode caseInstanceVariablesNode = rootNode.get(CASE_INSTANCE_VARIABLES_JSON_SECTION);
             if (caseInstanceVariablesNode != null) {
                 Map<String, Object> caseInstanceVariables = convertFromJsonNodeToObject(caseInstanceVariablesNode, objectMapper);
                 documentBuilder.addCaseInstanceVariables(caseInstanceVariables);
             }
-
-            String preUpgradeExpression = getJsonProperty(PRE_UPGRADE_EXPRESSION_KEY_JSON_PROPERTY, rootNode);
-            documentBuilder.preUpgradeExpression(preUpgradeExpression);
-
-            String postUpgradeExpression = getJsonProperty(POST_UPGRADE_EXPRESSION_KEY_JSON_PROPERTY, rootNode);
-            documentBuilder.postUpgradeExpression(postUpgradeExpression);
-
             return documentBuilder.build();
 
         } catch (IOException e) {

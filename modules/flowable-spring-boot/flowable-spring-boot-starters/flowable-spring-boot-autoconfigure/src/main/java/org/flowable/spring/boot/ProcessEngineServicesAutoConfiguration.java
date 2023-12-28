@@ -30,7 +30,7 @@ import org.flowable.spring.boot.app.AppEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.condition.ConditionalOnProcessEngine;
 import org.flowable.spring.boot.process.FlowableProcessProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -44,12 +44,13 @@ import org.springframework.context.annotation.Configuration;
  * @author Filip Hrisafov
  * @author Javier Casal
  */
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnProcessEngine
 @EnableConfigurationProperties({
     FlowableProperties.class,
     FlowableProcessProperties.class,
 })
-@AutoConfiguration(after = {
+@AutoConfigureAfter({
     ProcessEngineAutoConfiguration.class,
     AppEngineServicesAutoConfiguration.class
 })

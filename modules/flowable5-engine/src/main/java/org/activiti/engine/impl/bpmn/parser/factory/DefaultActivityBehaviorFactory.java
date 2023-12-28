@@ -15,6 +15,7 @@ package org.activiti.engine.impl.bpmn.parser.factory;
 import java.util.List;
 
 import org.activiti.engine.ActivitiException;
+import org.activiti.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.BoundaryEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.BusinessRuleTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.CallActivityBehavior;
@@ -24,12 +25,12 @@ import org.activiti.engine.impl.bpmn.behavior.ErrorEndEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.EventBasedGatewayActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.EventSubProcessStartEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.ExclusiveGatewayActivityBehavior;
-import org.activiti.engine.impl.bpmn.behavior.ExternalWorkerTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.InclusiveGatewayActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateCatchEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowCompensationEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowNoneEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowSignalEventActivityBehavior;
+import org.activiti.engine.impl.bpmn.behavior.MailActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.ManualTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.NoneEndEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.NoneStartEventActivityBehavior;
@@ -48,7 +49,6 @@ import org.activiti.engine.impl.bpmn.behavior.TransactionActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.WebServiceActivityBehavior;
 import org.activiti.engine.impl.bpmn.helper.ClassDelegate;
-import org.activiti.engine.impl.bpmn.mail.BpmnMailActivityDelegate;
 import org.activiti.engine.impl.bpmn.parser.CompensateEventDefinition;
 import org.activiti.engine.impl.bpmn.parser.EventSubscriptionDeclaration;
 import org.activiti.engine.impl.bpmn.parser.FieldDeclaration;
@@ -66,7 +66,6 @@ import org.flowable.bpmn.model.EndEvent;
 import org.flowable.bpmn.model.ErrorEventDefinition;
 import org.flowable.bpmn.model.EventGateway;
 import org.flowable.bpmn.model.ExclusiveGateway;
-import org.flowable.bpmn.model.ExternalWorkerServiceTask;
 import org.flowable.bpmn.model.FieldExtension;
 import org.flowable.bpmn.model.IOParameter;
 import org.flowable.bpmn.model.InclusiveGateway;
@@ -173,18 +172,6 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
         return new ServiceTaskExpressionActivityBehavior(serviceTask.getId(), expression, skipExpression,
                 serviceTask.getResultVariableName(), serviceTask.getMapExceptions());
     }
-    
-    @Override
-    public ExternalWorkerTaskActivityBehavior createExternalWorkerTaskActivityBehavior(ExternalWorkerServiceTask externalWorkerServiceTask) {
-        Expression topicExpression = expressionManager.createExpression(externalWorkerServiceTask.getTopic());
-        Expression skipExpression;
-        if (StringUtils.isNotEmpty(externalWorkerServiceTask.getSkipExpression())) {
-            skipExpression = expressionManager.createExpression(externalWorkerServiceTask.getSkipExpression());
-        } else {
-            skipExpression = null;
-        }
-        return new ExternalWorkerTaskActivityBehavior(externalWorkerServiceTask, topicExpression, skipExpression);
-    }
 
     @Override
     public WebServiceActivityBehavior createWebServiceActivityBehavior(ServiceTask serviceTask, BpmnModel bpmnModel) {
@@ -197,18 +184,42 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     }
 
     @Override
-    public ActivityBehavior createMailActivityBehavior(ServiceTask serviceTask) {
+    public MailActivityBehavior createMailActivityBehavior(ServiceTask serviceTask) {
         return createMailActivityBehavior(serviceTask.getId(), serviceTask.getFieldExtensions());
     }
 
     @Override
-    public ActivityBehavior createMailActivityBehavior(SendTask sendTask) {
+    public MailActivityBehavior createMailActivityBehavior(SendTask sendTask) {
         return createMailActivityBehavior(sendTask.getId(), sendTask.getFieldExtensions());
     }
 
-    protected ActivityBehavior createMailActivityBehavior(String taskId, List<FieldExtension> fields) {
+    protected MailActivityBehavior createMailActivityBehavior(String taskId, List<FieldExtension> fields) {
         List<FieldDeclaration> fieldDeclarations = createFieldDeclarations(fields);
-        return new ClassDelegate(BpmnMailActivityDelegate.class, fieldDeclarations);
+        return (MailActivityBehavior) ClassDelegate.defaultInstantiateDelegate(MailActivityBehavior.class, fieldDeclarations);
+    }
+
+    // We do not want a hard dependency on Mule, hence we return ActivityBehavior and instantiate
+    // the delegate instance using a string instead of the Class itself.
+    @Override
+    public ActivityBehavior createMuleActivityBehavior(ServiceTask serviceTask, BpmnModel bpmnModel) {
+        return createMuleActivityBehavior(serviceTask, serviceTask.getFieldExtensions(), bpmnModel);
+    }
+
+    @Override
+    public ActivityBehavior createMuleActivityBehavior(SendTask sendTask, BpmnModel bpmnModel) {
+        return createMuleActivityBehavior(sendTask, sendTask.getFieldExtensions(), bpmnModel);
+    }
+
+    protected ActivityBehavior createMuleActivityBehavior(TaskWithFieldExtensions task, List<FieldExtension> fieldExtensions, BpmnModel bpmnModel) {
+        try {
+
+            Class<?> theClass = Class.forName("org.flowable.mule.MuleSendActivityBehavior");
+            List<FieldDeclaration> fieldDeclarations = createFieldDeclarations(fieldExtensions);
+            return (ActivityBehavior) ClassDelegate.defaultInstantiateDelegate(theClass, fieldDeclarations);
+
+        } catch (ClassNotFoundException e) {
+            throw new ActivitiException("Could not find org.flowable.mule.MuleSendActivityBehavior: ", e);
+        }
     }
 
     // We do not want a hard dependency on Camel, hence we return ActivityBehavior and instantiate
@@ -335,12 +346,12 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
     // Multi Instance
 
     @Override
-    public SequentialMultiInstanceBehavior createSequentialMultiInstanceBehavior(ActivityImpl activity, ActivityBehavior innerActivityBehavior) {
+    public SequentialMultiInstanceBehavior createSequentialMultiInstanceBehavior(ActivityImpl activity, AbstractBpmnActivityBehavior innerActivityBehavior) {
         return new SequentialMultiInstanceBehavior(activity, innerActivityBehavior);
     }
 
     @Override
-    public ParallelMultiInstanceBehavior createParallelMultiInstanceBehavior(ActivityImpl activity, ActivityBehavior innerActivityBehavior) {
+    public ParallelMultiInstanceBehavior createParallelMultiInstanceBehavior(ActivityImpl activity, AbstractBpmnActivityBehavior innerActivityBehavior) {
         return new ParallelMultiInstanceBehavior(activity, innerActivityBehavior);
     }
 
@@ -366,8 +377,6 @@ public class DefaultActivityBehaviorFactory extends AbstractBehaviorFactory impl
 
         callActivityBehaviour.setInheritVariables(callActivity.isInheritVariables());
         callActivityBehaviour.setSameDeployment(callActivity.isSameDeployment());
-        callActivityBehaviour.setBusinessKey(callActivity.getBusinessKey());
-        callActivityBehaviour.setInheritBusinessKey(callActivity.isInheritBusinessKey());
 
         for (IOParameter ioParameter : callActivity.getInParameters()) {
             if (StringUtils.isNotEmpty(ioParameter.getSourceExpression())) {

@@ -17,11 +17,9 @@ import java.util.List;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableOptimisticLockingException;
-import org.flowable.common.engine.api.tenant.TenantContext;
 import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.common.engine.impl.tenant.CurrentTenant;
 import org.flowable.job.api.HistoryJob;
 import org.flowable.job.api.Job;
 import org.flowable.job.api.JobInfo;
@@ -44,16 +42,29 @@ public class ExecuteAsyncRunnable implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExecuteAsyncRunnable.class);
 
-    protected final JobInfo job;
+    protected String jobId;
+    protected JobInfo job;
     protected JobServiceConfiguration jobServiceConfiguration;
     protected JobInfoEntityManager<? extends JobInfoEntity> jobEntityManager;
     protected List<AsyncRunnableExecutionExceptionHandler> asyncRunnableExecutionExceptionHandlers;
 
+    public ExecuteAsyncRunnable(String jobId, JobServiceConfiguration jobServiceConfiguration,
+            JobInfoEntityManager<? extends JobInfoEntity> jobEntityManager,
+            AsyncRunnableExecutionExceptionHandler asyncRunnableExecutionExceptionHandler) {
+        
+        initialize(jobId, null, jobServiceConfiguration, jobEntityManager, asyncRunnableExecutionExceptionHandler);
+    }
+
     public ExecuteAsyncRunnable(JobInfo job, JobServiceConfiguration jobServiceConfiguration,
                                 JobInfoEntityManager<? extends JobInfoEntity> jobEntityManager,
                                 AsyncRunnableExecutionExceptionHandler asyncRunnableExecutionExceptionHandler) {
+        
+        initialize(job.getId(), job, jobServiceConfiguration, jobEntityManager, asyncRunnableExecutionExceptionHandler);
+    }
 
+    private void initialize(String jobId, JobInfo job, JobServiceConfiguration jobServiceConfiguration, JobInfoEntityManager<? extends JobInfoEntity> jobEntityManager, AsyncRunnableExecutionExceptionHandler asyncRunnableExecutionExceptionHandler) {
         this.job = job;
+        this.jobId = jobId;
         this.jobServiceConfiguration = jobServiceConfiguration;
         this.jobEntityManager = jobEntityManager;
         this.asyncRunnableExecutionExceptionHandlers = initializeExceptionHandlers(jobServiceConfiguration, asyncRunnableExecutionExceptionHandler);
@@ -74,16 +85,15 @@ public class ExecuteAsyncRunnable implements Runnable {
 
     @Override
     public void run() {
-        TenantContext tenantContext = CurrentTenant.getTenantContext();
-        try {
-            tenantContext.setTenantId(job.getTenantId());
-            runInternally();
-        } finally {
-            tenantContext.clearTenantId();
-        }
-    }
 
-    protected void runInternally() {
+        if (job == null) {
+            job = jobServiceConfiguration.getCommandExecutor().execute(new Command<JobInfoEntity>() {
+                @Override
+                public JobInfoEntity execute(CommandContext commandContext) {
+                    return jobEntityManager.findById(jobId);
+                }
+            });
+        }
 
         if (job instanceof Job) {
             Job jobObject = (Job) job;
@@ -115,7 +125,7 @@ public class ExecuteAsyncRunnable implements Runnable {
     protected void executeJob(final boolean unlock) {
         try {
             jobServiceConfiguration.getCommandExecutor().execute(
-                new ExecuteAsyncRunnableJobCmd(job.getId(), jobEntityManager, jobServiceConfiguration, unlock));
+                new ExecuteAsyncRunnableJobCmd(jobId, jobEntityManager, jobServiceConfiguration, unlock));
 
         } catch (final FlowableOptimisticLockingException e) {
 
@@ -208,7 +218,7 @@ public class ExecuteAsyncRunnable implements Runnable {
         }
         
         LOGGER.error("Unable to handle exception {} for job {}.", exception, job);
-        throw new FlowableException("Unable to handle exception " + exception.getMessage() + " for " + job + ".", exception);
+        throw new FlowableException("Unable to handle exception " + exception.getMessage() + " for job " + job.getId() + ".", exception);
     }
 
 }

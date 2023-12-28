@@ -16,10 +16,8 @@ package org.flowable.cmmn.engine.impl.persistence.entity;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.flowable.cmmn.api.CallbackTypes;
-import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstanceQuery;
 import org.flowable.cmmn.api.runtime.PlanItemInstanceState;
@@ -70,11 +68,6 @@ public class CaseInstanceEntityManagerImpl
     }
 
     @Override
-    public CaseInstanceEntity create(HistoricCaseInstance historicCaseInstance, Map<String, VariableInstanceEntity> variables) {
-        return dataManager.create(historicCaseInstance, variables);
-    }
-
-    @Override
     public List<CaseInstanceEntity> findCaseInstancesByCaseDefinitionId(String caseDefinitionId) {
         return dataManager.findCaseInstancesByCaseDefinitionId(caseDefinitionId);
     }
@@ -103,7 +96,7 @@ public class CaseInstanceEntityManagerImpl
         List<VariableInstanceEntity> variableInstances = getVariableInstanceEntityManager()
                 .createInternalVariableInstanceQuery()
                 .scopeId(caseInstanceEntity.getId())
-                .scopeTypes(engineConfiguration.getDependentScopeTypes())
+                .scopeTypes(ScopeTypes.CMMN_DEPENDENT)
                 .list();
         boolean deleteVariableInstances = !variableInstances.isEmpty();
 
@@ -114,7 +107,7 @@ public class CaseInstanceEntityManagerImpl
         }
 
         if (deleteVariableInstances) {
-            getVariableInstanceEntityManager().deleteByScopeIdAndScopeTypes(caseInstanceId, engineConfiguration.getDependentScopeTypes());
+            getVariableInstanceEntityManager().deleteByScopeIdAndScopeTypes(caseInstanceId, ScopeTypes.CMMN_DEPENDENT);
         }
 
         // Identity links
@@ -257,14 +250,6 @@ public class CaseInstanceEntityManagerImpl
         if (businessKey != null) {
             caseInstanceEntity.setBusinessKey(businessKey);
             engineConfiguration.getCmmnHistoryManager().recordUpdateBusinessKey(caseInstanceEntity, businessKey);
-        }
-    }
-    
-    @Override
-    public void updateCaseInstanceBusinessStatus(CaseInstanceEntity caseInstanceEntity, String businessStatus) {
-        if (businessStatus != null) {
-            caseInstanceEntity.setBusinessStatus(businessStatus);
-            engineConfiguration.getCmmnHistoryManager().recordUpdateBusinessStatus(caseInstanceEntity, businessStatus);
         }
     }
 

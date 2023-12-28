@@ -89,12 +89,6 @@ public class CmmnHistoricVariableInstanceQueryImpl implements HistoricVariableIn
     }
 
     @Override
-    public HistoricVariableInstanceQuery excludeLocalVariables() {
-        wrappedHistoricVariableInstanceQuery.excludeLocalVariables();
-        return this;
-    }
-
-    @Override
     public HistoricVariableInstanceQuery excludeVariableInitialization() {
         wrappedHistoricVariableInstanceQuery.excludeVariableInitialization();
         return this;

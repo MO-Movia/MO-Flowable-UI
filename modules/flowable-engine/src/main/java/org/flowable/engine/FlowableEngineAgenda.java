@@ -12,9 +12,6 @@
  */
 package org.flowable.engine;
 
-import java.util.Collection;
-
-import org.flowable.common.engine.impl.agenda.Agenda;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.interceptor.MigrationContext;
 
@@ -37,8 +34,6 @@ public interface FlowableEngineAgenda extends Agenda {
 
     void planTakeOutgoingSequenceFlowsOperation(ExecutionEntity execution, boolean evaluateConditions);
 
-    void planTakeOutgoingSequenceFlowsSynchronousOperation(ExecutionEntity execution, boolean evaluateConditions);
-
     void planEndExecutionOperation(ExecutionEntity execution);
     
     void planEndExecutionOperationSynchronous(ExecutionEntity execution);
@@ -48,10 +43,8 @@ public interface FlowableEngineAgenda extends Agenda {
     void planAsyncTriggerExecutionOperation(ExecutionEntity execution);
     
     void planEvaluateConditionalEventsOperation(ExecutionEntity execution);
-    
-    void planEvaluateVariableListenerEventsOperation(String processDefinitionId, String processInstanceId);
 
     void planDestroyScopeOperation(ExecutionEntity execution);
 
-    void planExecuteInactiveBehaviorsOperation(Collection<ExecutionEntity> executions);
+    void planExecuteInactiveBehaviorsOperation();
 }

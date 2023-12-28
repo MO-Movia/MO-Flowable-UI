@@ -52,8 +52,4 @@ public interface VariableType {
      */
     Object getValue(ValueFields valueFields);
 
-    default boolean isReadOnly() {
-        return false;
-    }
-
 }

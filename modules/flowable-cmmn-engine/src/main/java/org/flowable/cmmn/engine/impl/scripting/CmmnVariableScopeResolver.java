@@ -18,8 +18,8 @@ import java.util.Set;
 
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
-import org.flowable.common.engine.api.variable.VariableContainer;
 import org.flowable.common.engine.impl.scripting.Resolver;
+import org.flowable.variable.api.delegate.VariableScope;
 
 /**
  *
@@ -59,19 +59,19 @@ public class CmmnVariableScopeResolver implements Resolver {
     ));
 
     protected CmmnEngineConfiguration engineConfiguration;
-    protected VariableContainer variableContainer;
+    protected VariableScope variableScope;
 
-    public CmmnVariableScopeResolver(CmmnEngineConfiguration engineConfiguration, VariableContainer variableContainer) {
-        if (variableContainer == null) {
-            throw new FlowableIllegalArgumentException("variableContainer cannot be null");
+    public CmmnVariableScopeResolver(CmmnEngineConfiguration engineConfiguration, VariableScope variableScope) {
+        if (variableScope == null) {
+            throw new FlowableIllegalArgumentException("variableScope cannot be null");
         }
-        this.variableContainer = variableContainer;
+        this.variableScope = variableScope;
         this.engineConfiguration = engineConfiguration;
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return variableContainer.hasVariable((String) key) || KEYS.contains(key);
+        return variableScope.hasVariable((String) key) || KEYS.contains(key);
     }
 
     @Override
@@ -92,10 +92,10 @@ public class CmmnVariableScopeResolver implements Resolver {
             return engineConfiguration.getCmmnTaskService();
 
         } else if (CASE_INSTANCE_KEY.equals(key) || PLAN_ITEM_INSTANCE_KEY.equals(key) || TASK_KEY.equals(key)) { // task/planItemInstance/caseInstance
-            return variableContainer;
+            return variableScope;
 
         } else {
-            return variableContainer.getVariable((String) key);
+            return variableScope.getVariable((String) key);
 
         }
     }

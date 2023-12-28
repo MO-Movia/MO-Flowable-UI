@@ -41,7 +41,6 @@ public class FlowableLdapPropertiesTest {
         properties.setUserBaseDn("org.flowable.user");
         properties.setGroupBaseDn("org.flowable.group");
         properties.setSearchTimeLimit(1000);
-        properties.setConnectionPooling(false);
 
         FlowableLdapProperties.Query query = properties.getQuery();
         query.setUserById("(&(objectClass=inetOrgPerson)(uid={0}))");

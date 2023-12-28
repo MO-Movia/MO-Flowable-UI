@@ -37,25 +37,18 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
     protected JobServiceConfiguration jobServiceConfiguration;
     
     protected String id;
-    protected Collection<String> jobIds;
     protected String processInstanceId;
-    protected boolean withoutProcessInstanceId;
     protected String executionId;
     protected String handlerType;
-    protected Collection<String> handlerTypes;
     protected String processDefinitionId;
-    protected String processDefinitionKey;
     protected String category;
     protected String categoryLike;
     protected String elementId;
     protected String elementName;
     protected String scopeId;
-    protected boolean withoutScopeId;
     protected String subScopeId;
     protected String scopeType;
-    protected boolean withoutScopeType;
     protected String scopeDefinitionId;
-    protected String caseDefinitionKey;
     protected String correlationId;
     protected Date duedateHigherThan;
     protected Date duedateLowerThan;
@@ -96,26 +89,11 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
     }
 
     @Override
-    public ExternalWorkerJobQuery jobIds(Collection<String> jobIds) {
-        if (jobIds == null) {
-            throw new FlowableIllegalArgumentException("Provided job id list is null");
-        }
-        this.jobIds = jobIds;
-        return this;
-    }
-
-    @Override
     public ExternalWorkerJobQuery processInstanceId(String processInstanceId) {
         if (processInstanceId == null) {
             throw new FlowableIllegalArgumentException("Provided process instance id is null");
         }
         this.processInstanceId = processInstanceId;
-        return this;
-    }
-    
-    @Override
-    public ExternalWorkerJobQuery withoutProcessInstanceId() {
-        this.withoutProcessInstanceId = true;
         return this;
     }
 
@@ -125,15 +103,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
             throw new FlowableIllegalArgumentException("Provided process definition id is null");
         }
         this.processDefinitionId = processDefinitionId;
-        return this;
-    }
-
-    @Override
-    public ExternalWorkerJobQuery processDefinitionKey(String processDefinitionKey) {
-        if (processDefinitionKey == null) {
-            throw new FlowableIllegalArgumentException("Provided process definition key is null");
-        }
-        this.processDefinitionKey = processDefinitionKey;
         return this;
     }
 
@@ -181,12 +150,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
         this.scopeId = scopeId;
         return this;
     }
-    
-    @Override
-    public ExternalWorkerJobQuery withoutScopeId() {
-        this.withoutScopeId = true;
-        return this;
-    }
 
     @Override
     public ExternalWorkerJobQuery subScopeId(String subScopeId) {
@@ -203,12 +166,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
             throw new FlowableIllegalArgumentException("Provided scope type is null");
         }
         this.scopeType = scopeType;
-        return this;
-    }
-
-    @Override
-    public ExternalWorkerJobQueryImpl withoutScopeType() {
-        this.withoutScopeType = true;
         return this;
     }
 
@@ -238,15 +195,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
         }
         scopeDefinitionId(caseDefinitionId);
         scopeType(ScopeTypes.CMMN);
-        return this;
-    }
-
-    @Override
-    public ExternalWorkerJobQuery caseDefinitionKey(String caseDefinitionKey) {
-        if (caseDefinitionKey == null) {
-            throw new FlowableIllegalArgumentException("Provided case definition key is null");
-        }
-        this.caseDefinitionKey = caseDefinitionKey;
         return this;
     }
 
@@ -284,15 +232,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
             throw new FlowableIllegalArgumentException("Provided handlerType is null");
         }
         this.handlerType = handlerType;
-        return this;
-    }
-
-    @Override
-    public ExternalWorkerJobQuery handlerTypes(Collection<String> handlerTypes) {
-        if (handlerTypes == null) {
-            throw new FlowableIllegalArgumentException("Provided handlerTypes are null");
-        }
-        this.handlerTypes = handlerTypes;
         return this;
     }
 
@@ -437,10 +376,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
     public String getProcessInstanceId() {
         return processInstanceId;
     }
-    
-    public boolean isWithoutProcessInstanceId() {
-        return withoutProcessInstanceId;
-    }
 
     public String getExecutionId() {
         return executionId;
@@ -490,10 +425,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
         return processDefinitionId;
     }
 
-    public String getProcessDefinitionKey() {
-        return processDefinitionKey;
-    }
-
     public String getCategory() {
         return category;
     }
@@ -513,10 +444,6 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
     public String getScopeId() {
         return scopeId;
     }
-    
-    public boolean isWithoutScopeId() {
-        return withoutScopeId;
-    }
 
     public String getSubScopeId() {
         return subScopeId;
@@ -526,16 +453,8 @@ public class ExternalWorkerJobQueryImpl extends AbstractQuery<ExternalWorkerJobQ
         return scopeType;
     }
 
-    public boolean isWithoutScopeType() {
-        return withoutScopeType;
-    }
-
     public String getScopeDefinitionId() {
         return scopeDefinitionId;
-    }
-
-    public String getCaseDefinitionKey() {
-        return caseDefinitionKey;
     }
 
     public String getCorrelationId() {

@@ -25,7 +25,8 @@ import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.DeploymentQuery;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.repository.ProcessDefinitionQuery;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractXmlApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
@@ -41,7 +42,7 @@ public class SpringAutoDeployTest extends PvmTestCase {
     protected static final String CTX_DEPLOYMENT_MODE_SINGLE_RESOURCE = "org/activiti/spring/test/autodeployment/SpringAutoDeployTest-deploymentmode-single-resource-context.xml";
     protected static final String CTX_DEPLOYMENT_MODE_RESOURCE_PARENT_FOLDER = "org/activiti/spring/test/autodeployment/SpringAutoDeployTest-deploymentmode-resource-parent-folder-context.xml";
 
-    protected ConfigurableApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
     protected RepositoryService repositoryService;
 
     protected void createAppContext(String path) {
@@ -92,7 +93,7 @@ public class SpringAutoDeployTest extends PvmTestCase {
     public void testResourceRedeploymentAfterProcessDefinitionChange() throws Exception {
         createAppContext(CTX_PATH);
         assertEquals(1, repositoryService.createDeploymentQuery().count());
-        applicationContext.close();
+        ((AbstractXmlApplicationContext) applicationContext).destroy();
 
         String filePath = "org/activiti/spring/test/autodeployment/autodeploy.a.bpmn20.xml";
         String originalBpmnFileContent = IoUtil.readFileAsString(filePath);

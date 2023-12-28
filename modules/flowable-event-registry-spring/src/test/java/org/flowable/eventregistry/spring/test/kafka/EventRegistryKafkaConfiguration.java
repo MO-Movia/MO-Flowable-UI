@@ -14,7 +14,6 @@ package org.flowable.eventregistry.spring.test.kafka;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -22,9 +21,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.flowable.eventregistry.spring.SpringEventRegistryEngineConfiguration;
 import org.flowable.eventregistry.spring.kafka.KafkaChannelDefinitionProcessor;
-import org.flowable.eventregistry.spring.kafka.payload.KafkaConsumerRecordInformationPayloadExtractor;
 import org.flowable.eventregistry.spring.test.config.EventRegistryEngineTestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,17 +32,12 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaAdmin;
-import org.springframework.kafka.core.KafkaAdminOperations;
 import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.LoggingProducerListener;
 import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Filip Hrisafov
@@ -64,11 +56,6 @@ public class EventRegistryKafkaConfiguration {
         containerProperties.setMissingTopicsFatal(true);
         return factory;
     }
-    
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
 
     @Bean
     public ConsumerFactory<?, ?> kafkaConsumerFactory(KafkaContainer kafkaContainer) {
@@ -76,8 +63,8 @@ public class EventRegistryKafkaConfiguration {
         consumerProperties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerProperties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10_000);
-        consumerProperties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3_000);
+        consumerProperties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 500);
+        consumerProperties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 400);
 
         return new DefaultKafkaConsumerFactory<>(consumerProperties);
     }
@@ -101,21 +88,11 @@ public class EventRegistryKafkaConfiguration {
     }
 
     @Bean
-    public KafkaChannelDefinitionProcessor kafkaChannelDefinitionProcessor(KafkaListenerEndpointRegistry endpointRegistry, 
-            KafkaOperations<Object, Object> kafkaOperations, ObjectMapper objectMapper, KafkaAdminOperations kafkaAdminOperations) {
-        
-        KafkaChannelDefinitionProcessor kafkaChannelDefinitionProcessor = new KafkaChannelDefinitionProcessor(objectMapper);
+    public KafkaChannelDefinitionProcessor kafkaChannelDefinitionProcessor(KafkaListenerEndpointRegistry endpointRegistry, KafkaOperations<Object, Object> kafkaOperations) {
+        KafkaChannelDefinitionProcessor kafkaChannelDefinitionProcessor = new KafkaChannelDefinitionProcessor();
         kafkaChannelDefinitionProcessor.setEndpointRegistry(endpointRegistry);
         kafkaChannelDefinitionProcessor.setKafkaOperations(kafkaOperations);
-        kafkaChannelDefinitionProcessor.setKafkaAdminOperations(kafkaAdminOperations);
         return kafkaChannelDefinitionProcessor;
-    }
-
-    @Bean
-    public Consumer<SpringEventRegistryEngineConfiguration> kafkaEventRegisterEngineConfigurer() {
-        return engineConfiguration -> {
-            engineConfiguration.registerInboundEventPayloadExtractor("kafka", new KafkaConsumerRecordInformationPayloadExtractor<>());
-        };
     }
 
     @Bean
@@ -126,30 +103,13 @@ public class EventRegistryKafkaConfiguration {
         return AdminClient.create(adminProperties);
     }
 
-    @Bean
-    public KafkaAdmin kafkaAdmin(KafkaContainer kafkaContainer) {
-        Map<String, Object> adminProperties = new HashMap<>();
-        adminProperties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-        return new KafkaAdmin(adminProperties);
-    }
-
     @Bean(destroyMethod = "stop")
     public KafkaContainer kafkaContainer() {
-        KafkaContainer container = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka").withTag("5.4.3"));
+        KafkaContainer container = new KafkaContainer();
         container.withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true");
         container.withEnv("KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS ", "500");
         container.start();
         return container;
-    }
-
-    @Bean
-    public TestKafkaPartitionProvider kafkaPartitionProvider() {
-        return new TestKafkaPartitionProvider();
-    }
-
-    @Bean
-    public TestKafkaMessageKeyProvider kafkaMessageKeyProvider() {
-        return new TestKafkaMessageKeyProvider();
     }
 
 }

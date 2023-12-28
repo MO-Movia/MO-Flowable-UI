@@ -19,13 +19,11 @@ import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.AbstractCollectionAssert;
-import org.assertj.core.api.ObjectAssert;
+import org.assertj.core.api.IterableAssert;
 import org.flowable.app.engine.AppEngine;
 import org.flowable.app.engine.AppEngineConfiguration;
 import org.flowable.app.spring.SpringAppEngineConfiguration;
@@ -56,11 +54,10 @@ import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguratio
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration;
-import org.springframework.boot.autoconfigure.jms.artemis.ArtemisAutoConfiguration;
+import org.springframework.boot.autoconfigure.jms.activemq.ActiveMQAutoConfiguration;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.ApplicationContext;
@@ -77,8 +74,7 @@ public class EventRegistryAutoConfigurationTest {
             DataSourceAutoConfiguration.class,
             DataSourceTransactionManagerAutoConfiguration.class,
             EventRegistryServicesAutoConfiguration.class,
-            EventRegistryAutoConfiguration.class,
-            JacksonAutoConfiguration.class
+            EventRegistryAutoConfiguration.class
         ))
         .withUserConfiguration(CustomUserEngineConfigurerConfiguration.class);
 
@@ -95,8 +91,8 @@ public class EventRegistryAutoConfigurationTest {
             assertThat(eventRegistryEngine).as("Event registry engine").isNotNull();
             assertAllServicesPresent(context, eventRegistryEngine);
 
-            AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                channelModelProcessorAssert = assertThat(eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
+            IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
 
             channelModelProcessorAssert
                 .hasSize(4);
@@ -149,8 +145,8 @@ public class EventRegistryAutoConfigurationTest {
 
             assertThat(eventRegistryEngine.getEventRegistryEngineConfiguration()).as("Event registry Configuration")
                 .isEqualTo(eventRegistryEngineConfiguration);
-            AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                channelModelProcessorAssert = assertThat(eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
+            IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
 
             channelModelProcessorAssert
                 .hasSize(4);
@@ -209,8 +205,8 @@ public class EventRegistryAutoConfigurationTest {
 
             assertThat(eventRegistryEngine.getEventRegistryEngineConfiguration()).as("Event registry Configuration")
                 .isEqualTo(eventRegistryEngineConfiguration);
-            AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                channelModelProcessorAssert = assertThat(eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
+            IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
 
             channelModelProcessorAssert
                 .hasSize(4);
@@ -253,7 +249,7 @@ public class EventRegistryAutoConfigurationTest {
     public void eventRegistryWithJms() {
         contextRunner
             .withConfiguration(AutoConfigurations.of(
-                ArtemisAutoConfiguration.class,
+                ActiveMQAutoConfiguration.class,
                 JmsAutoConfiguration.class
             ))
             .run(context -> {
@@ -265,8 +261,8 @@ public class EventRegistryAutoConfigurationTest {
 
                 EventRegistryEngineConfiguration eventRegistryEngineConfiguration = eventRegistryEngine.getEventRegistryEngineConfiguration();
 
-                AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                    channelModelProcessorAssert = assertThat(eventRegistryEngineConfiguration.getChannelModelProcessors());
+                IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                    eventRegistryEngineConfiguration.getChannelModelProcessors());
 
                 channelModelProcessorAssert
                     .hasSize(5);
@@ -306,8 +302,8 @@ public class EventRegistryAutoConfigurationTest {
                 assertThat(eventRegistryEngine).as("Event registry engine").isNotNull();
 
                 EventRegistryEngineConfiguration eventRegistryEngineConfiguration = eventRegistryEngine.getEventRegistryEngineConfiguration();
-                AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                    channelModelProcessorAssert = assertThat(eventRegistryEngineConfiguration.getChannelModelProcessors())
+                IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                    eventRegistryEngineConfiguration.getChannelModelProcessors())
                     .hasSize(5);
 
                 channelModelProcessorAssert
@@ -343,8 +339,8 @@ public class EventRegistryAutoConfigurationTest {
                 EventRegistryEngine eventRegistryEngine = context.getBean(EventRegistryEngine.class);
                 assertThat(eventRegistryEngine).as("Event registry engine").isNotNull();
 
-                AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                    channelModelProcessorAssert = assertThat(eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
+                IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                    eventRegistryEngine.getEventRegistryEngineConfiguration().getChannelModelProcessors());
 
                 channelModelProcessorAssert
                     .hasSize(5);
@@ -375,7 +371,7 @@ public class EventRegistryAutoConfigurationTest {
     public void eventRegistryWithJmsRabbitAndKafka() {
         contextRunner
             .withConfiguration(AutoConfigurations.of(
-                ArtemisAutoConfiguration.class,
+                ActiveMQAutoConfiguration.class,
                 JmsAutoConfiguration.class,
                 RabbitAutoConfiguration.class,
                 KafkaAutoConfiguration.class
@@ -392,8 +388,8 @@ public class EventRegistryAutoConfigurationTest {
                 assertThat(eventRegistryEngine).as("Event registry engine").isNotNull();
 
                 EventRegistryEngineConfiguration eventRegistryEngineConfiguration = eventRegistryEngine.getEventRegistryEngineConfiguration();
-                AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                    channelModelProcessorAssert = assertThat(eventRegistryEngineConfiguration.getChannelModelProcessors());
+                IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                    eventRegistryEngineConfiguration.getChannelModelProcessors());
                 channelModelProcessorAssert
                     .hasSize(7)
                     .contains(
@@ -424,7 +420,7 @@ public class EventRegistryAutoConfigurationTest {
     public void eventRegistryWithCustomDefinitionProcessors() {
         contextRunner
             .withConfiguration(AutoConfigurations.of(
-                ArtemisAutoConfiguration.class,
+                ActiveMQAutoConfiguration.class,
                 JmsAutoConfiguration.class,
                 RabbitAutoConfiguration.class,
                 KafkaAutoConfiguration.class
@@ -443,8 +439,8 @@ public class EventRegistryAutoConfigurationTest {
                 assertThat(eventRegistryEngine).as("Event registry engine").isNotNull();
 
                 EventRegistryEngineConfiguration eventRegistryEngineConfiguration = eventRegistryEngine.getEventRegistryEngineConfiguration();
-                AbstractCollectionAssert<?, Collection<? extends ChannelModelProcessor>, ChannelModelProcessor, ObjectAssert<ChannelModelProcessor>>
-                    channelModelProcessorAssert = assertThat(eventRegistryEngineConfiguration.getChannelModelProcessors());
+                IterableAssert<ChannelModelProcessor> channelModelProcessorAssert = assertThat(
+                    eventRegistryEngineConfiguration.getChannelModelProcessors());
                 channelModelProcessorAssert
                     .hasSize(8);
 
@@ -460,7 +456,7 @@ public class EventRegistryAutoConfigurationTest {
                     .element(2)
                     .isEqualTo(context.getBean("jmsChannelDefinitionProcessor", ChannelModelProcessor.class));
 
-               channelModelProcessorAssert
+            channelModelProcessorAssert
                     .element(3)
                     .isEqualTo(context.getBean("kafkaChannelDefinitionProcessor", ChannelModelProcessor.class));
 

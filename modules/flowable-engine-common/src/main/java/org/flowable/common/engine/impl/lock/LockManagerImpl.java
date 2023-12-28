@@ -16,7 +16,6 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Duration;
 import java.util.function.Supplier;
 
-import org.apache.commons.lang3.StringUtils;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableOptimisticLockingException;
 import org.flowable.common.engine.impl.cfg.TransactionPropagation;
@@ -35,7 +34,6 @@ import org.slf4j.LoggerFactory;
 public class LockManagerImpl implements LockManager {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(LockManagerImpl.class);
-    protected static final int LOCK_NAME_MAX_LENGTH = 64;
 
     protected CommandExecutor commandExecutor;
     protected String lockName;
@@ -43,25 +41,13 @@ public class LockManagerImpl implements LockManager {
     protected String engineType;
     protected CommandConfig lockCommandConfig;
     protected boolean hasAcquiredLock;
-    protected Duration lockForceAcquireAfter;
 
     public LockManagerImpl(CommandExecutor commandExecutor, String lockName, Duration lockPollRate, String engineType) {
-        this(commandExecutor, lockName, lockPollRate, null, engineType);
-    }
-
-    public LockManagerImpl(CommandExecutor commandExecutor, String lockName, Duration lockPollRate, Duration forceAcquireAfter, String engineType) {
         this.commandExecutor = commandExecutor;
-        if (lockName.length() > 64) {
-            this.lockName = StringUtils.substring(lockName, 0, LOCK_NAME_MAX_LENGTH);
-            LOGGER.info("Lock name {} was longer than {} characters. Using abbreviated lock name {}", lockName, LOCK_NAME_MAX_LENGTH, this.lockName);
-        } else {
-
-            this.lockName = lockName;
-        }
+        this.lockName = lockName;
         this.lockPollRate = lockPollRate;
         this.engineType = engineType;
         this.lockCommandConfig = new CommandConfig(false, TransactionPropagation.REQUIRES_NEW);
-        this.lockForceAcquireAfter = forceAcquireAfter;
     }
 
     @Override
@@ -87,27 +73,22 @@ public class LockManagerImpl implements LockManager {
 
     @Override
     public boolean acquireLock() {
-        return acquireLock(lockForceAcquireAfter);
-    }
-
-    @Override
-    public boolean acquireLock(Duration lockForceAcquireAfter) {
         if (hasAcquiredLock) {
             return true;
         }
 
         try {
-            hasAcquiredLock = executeCommand(new LockCmd(lockName, lockForceAcquireAfter, engineType));
+            hasAcquiredLock = executeCommand(new LockCmd(lockName, engineType));
             if (hasAcquiredLock) {
-                LOGGER.debug("Successfully acquired lock {}", lockName);
+                LOGGER.info("successfully acquired lock {}", lockName);
             }
         } catch (FlowableOptimisticLockingException ex) {
-            LOGGER.debug("Failed to acquire lock {} due to optimistic locking", lockName, ex);
+            LOGGER.info("failed to acquire lock {} due to optimistic locking", lockName, ex);
             hasAcquiredLock = false;
         } catch (FlowableException ex) {
             if (ex.getClass().equals(FlowableException.class)) {
                 // If it is a FlowableException then log a warning and wait to try again
-                LOGGER.warn("Failed to acquire lock {} due to unknown exception", lockName, ex);
+                LOGGER.warn("failed to acquire lock {} due to unknown exception", lockName, ex);
                 hasAcquiredLock = false;
             } else {
                 // Re-throw any other Flowable specific exception
@@ -116,9 +97,9 @@ public class LockManagerImpl implements LockManager {
         } catch (RuntimeException ex) {
             if (ex.getCause() instanceof SQLIntegrityConstraintViolationException) {
                 // This can happen if 2 nodes try to acquire a lock in the exact same time
-                LOGGER.debug("Failed to acquire lock {} due to constraint violation", lockName, ex);
+                LOGGER.info("failed to acquire lock {} due to constraint violation", lockName, ex);
             } else {
-                LOGGER.info("Failed to acquire lock {} due to unknown exception", lockName, ex);
+                LOGGER.info("failed to acquire lock {} due to unknown exception", lockName, ex);
             }
             hasAcquiredLock = false;
         }
@@ -127,15 +108,8 @@ public class LockManagerImpl implements LockManager {
 
     @Override
     public void releaseLock() {
-        executeCommand(new ReleaseLockCmd(lockName, engineType, false));
-        LOGGER.debug("successfully released lock {}", lockName);
-        hasAcquiredLock = false;
-    }
-
-    @Override
-    public void releaseAndDeleteLock() {
-        executeCommand(new ReleaseLockCmd(lockName, engineType, true));
-        LOGGER.debug("successfully released and deleted lock {}", lockName);
+        executeCommand(new ReleaseLockCmd(lockName, engineType));
+        LOGGER.info("successfully released lock {}", lockName);
         hasAcquiredLock = false;
     }
 

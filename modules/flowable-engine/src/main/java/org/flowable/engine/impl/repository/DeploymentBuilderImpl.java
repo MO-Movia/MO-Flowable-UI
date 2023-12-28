@@ -12,9 +12,9 @@
  */
 package org.flowable.engine.impl.repository;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,6 +43,7 @@ import org.flowable.engine.repository.DeploymentBuilder;
 public class DeploymentBuilderImpl implements DeploymentBuilder, Serializable {
 
     private static final long serialVersionUID = 1L;
+    protected static final String DEFAULT_ENCODING = "UTF-8";
 
     protected transient RepositoryServiceImpl repositoryService;
     protected transient ResourceEntityManager resourceEntityManager;
@@ -75,16 +76,11 @@ public class DeploymentBuilderImpl implements DeploymentBuilder, Serializable {
 
     @Override
     public DeploymentBuilder addClasspathResource(String resource) {
-        try (final InputStream inputStream = ReflectUtil.getResourceAsStream(resource)) {
-	        if (inputStream == null) {
-	            throw new FlowableIllegalArgumentException("resource '" + resource + "' not found");
-	        }
-	        return addInputStream(resource, inputStream);
-	        
-        } catch (IOException ex) {
-            throw new FlowableException("Failed to read resource " + resource, ex);
+        InputStream inputStream = ReflectUtil.getResourceAsStream(resource);
+        if (inputStream == null) {
+            throw new FlowableIllegalArgumentException("resource '" + resource + "' not found");
         }
-
+        return addInputStream(resource, inputStream);
     }
 
     @Override
@@ -94,7 +90,11 @@ public class DeploymentBuilderImpl implements DeploymentBuilder, Serializable {
         }
         ResourceEntity resource = resourceEntityManager.create();
         resource.setName(resourceName);
-        resource.setBytes(text.getBytes(StandardCharsets.UTF_8));
+        try {
+            resource.setBytes(text.getBytes(DEFAULT_ENCODING));
+        } catch (UnsupportedEncodingException e) {
+            throw new FlowableException("Unable to get process bytes.", e);
+        }
         deployment.addResource(resource);
         return this;
     }

@@ -36,20 +36,14 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
     protected String caseDefinitionKeyLike;
     protected String caseDefinitionKeyLikeIgnoreCase;
     protected Collection<String> caseDefinitionKeys;
-    protected String planItemInstanceId;
     protected String propagatedStageInstanceId;
-    protected Boolean withoutScopeId;
     protected String taskName;
     protected String taskNameLike;
-    protected String taskNameLikeIgnoreCase;
     protected String taskDescription;
     protected String taskDescriptionLike;
     protected String taskDefinitionKey;
     protected String taskDefinitionKeyLike;
     protected String taskCategory;
-    protected List<String> taskCategoryIn;
-    protected List<String> taskCategoryNotIn;
-    protected Boolean taskWithoutCategory;
     protected String taskDeleteReason;
     protected String taskDeleteReasonLike;
     protected String taskAssignee;
@@ -74,16 +68,12 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
     protected Date taskCompletedBefore;
     protected Date taskCompletedAfter;
     protected Boolean includeTaskLocalVariables;
-    protected Boolean includeProcessVariables;
     protected List<QueryVariable> taskVariables;
     protected String tenantId;
     protected String tenantIdLike;
     protected Boolean withoutTenantId;
-    protected Boolean withoutProcessInstanceId;
     protected String taskCandidateGroup;
     protected boolean ignoreTaskAssignee;
-    protected String rootScopeId;
-    protected String parentScopeId;
 
     public String getTaskId() {
         return taskId;
@@ -157,14 +147,6 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
         this.propagatedStageInstanceId = propagatedStageInstanceId;
     }
 
-    public Boolean getWithoutScopeId() {
-        return withoutScopeId;
-    }
-
-    public void setWithoutScopeId(Boolean withoutScopeId) {
-        this.withoutScopeId = withoutScopeId;
-    }
-
     public String getTaskName() {
         return taskName;
     }
@@ -179,14 +161,6 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
 
     public void setTaskNameLike(String taskNameLike) {
         this.taskNameLike = taskNameLike;
-    }
-
-    public String getTaskNameLikeIgnoreCase() {
-        return taskNameLikeIgnoreCase;
-    }
-
-    public void setTaskNameLikeIgnoreCase(String taskNameLikeIgnoreCase) {
-        this.taskNameLikeIgnoreCase = taskNameLikeIgnoreCase;
     }
 
     public String getTaskDescription() {
@@ -227,30 +201,6 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
 
     public void setTaskCategory(String taskCategory) {
         this.taskCategory = taskCategory;
-    }
-
-    public void setTaskCategoryIn(List<String> taskCategoryIn) {
-        this.taskCategoryIn = taskCategoryIn;
-    }
-
-    public List<String> getTaskCategoryIn() {
-        return taskCategoryIn;
-    }
-
-    public void setTaskCategoryNotIn(List<String> taskCategoryNotIn) {
-        this.taskCategoryNotIn = taskCategoryNotIn;
-    }
-
-    public List<String> getTaskCategoryNotIn() {
-        return taskCategoryNotIn;
-    }
-
-    public void setTaskWithoutCategory(Boolean taskWithoutCategory) {
-        this.taskWithoutCategory = taskWithoutCategory;
-    }
-
-    public Boolean getTaskWithoutCategory() {
-        return taskWithoutCategory;
     }
 
     public String getTaskDeleteReason() {
@@ -445,14 +395,6 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
         this.includeTaskLocalVariables = includeTaskLocalVariables;
     }
 
-    public Boolean getIncludeProcessVariables() {
-        return includeProcessVariables;
-    }
-
-    public void setIncludeProcessVariables(Boolean includeProcessVariables) {
-        this.includeProcessVariables = includeProcessVariables;
-    }
-
     @JsonTypeInfo(use = Id.CLASS, defaultImpl = QueryVariable.class)
     public List<QueryVariable> getTaskVariables() {
         return taskVariables;
@@ -486,14 +428,6 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
         this.withoutTenantId = withoutTenantId;
     }
 
-    public Boolean getWithoutProcessInstanceId() {
-        return withoutProcessInstanceId;
-    }
-
-    public void setWithoutProcessInstanceId(Boolean withoutProcessInstanceId) {
-        this.withoutProcessInstanceId = withoutProcessInstanceId;
-    }
-
     public String getTaskCandidateGroup() {
         return taskCandidateGroup;
     }
@@ -510,27 +444,4 @@ public class HistoricTaskInstanceQueryRequest extends PaginateRequest {
         this.ignoreTaskAssignee = ignoreTaskAssignee;
     }
 
-    public String getPlanItemInstanceId() {
-        return planItemInstanceId;
-    }
-
-    public void setPlanItemInstanceId(String planItemInstanceId) {
-        this.planItemInstanceId = planItemInstanceId;
-    }
-
-    public String getRootScopeId() {
-        return rootScopeId;
-    }
-
-    public void setRootScopeId(String rootScopeId) {
-        this.rootScopeId = rootScopeId;
-    }
-
-    public String getParentScopeId() {
-        return parentScopeId;
-    }
-
-    public void setParentScopeId(String parentScopeId) {
-        this.parentScopeId = parentScopeId;
-    }
 }

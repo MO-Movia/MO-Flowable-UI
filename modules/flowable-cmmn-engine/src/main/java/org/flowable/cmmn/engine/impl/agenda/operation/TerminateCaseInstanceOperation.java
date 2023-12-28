@@ -14,25 +14,15 @@ package org.flowable.cmmn.engine.impl.agenda.operation;
 
 import static org.flowable.cmmn.model.Criterion.EXIT_EVENT_TYPE_COMPLETE;
 import static org.flowable.cmmn.model.Criterion.EXIT_EVENT_TYPE_FORCE_COMPLETE;
-import static org.flowable.cmmn.model.PlanItemTransition.EXIT;
-import static org.flowable.cmmn.model.PlanItemTransition.TERMINATE;
-
-import java.util.HashMap;
 
 import org.flowable.cmmn.api.runtime.CaseInstanceState;
-import org.flowable.cmmn.engine.impl.behavior.OnParentEndDependantActivityBehavior;
-import org.flowable.cmmn.engine.impl.callback.CallbackConstants;
-import org.flowable.cmmn.engine.impl.event.FlowableCmmnEventBuilder;
 import org.flowable.cmmn.engine.impl.persistence.entity.CaseInstanceEntity;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
 import org.flowable.cmmn.engine.impl.util.CompletionEvaluationResult;
 import org.flowable.cmmn.engine.impl.util.PlanItemInstanceContainerUtil;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
-import org.flowable.common.engine.api.FlowableObjectNotFoundException;
-import org.flowable.common.engine.impl.callback.CallbackData;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 
 /**
  * @author Joram Barrez
@@ -58,10 +48,11 @@ public class TerminateCaseInstanceOperation extends AbstractDeleteCaseInstanceOp
      * Overridden to check, if the optional exit event type is set to 'complete' and if so, throw an exception, if the case is not yet completable.
      */
     @Override
-    public void preRunCheck() {
+    public void run() {
         if (EXIT_EVENT_TYPE_COMPLETE.equals(exitEventType)) {
             checkCaseToBeCompletable();
         }
+        super.run();
     }
 
     /**
@@ -96,36 +87,14 @@ public class TerminateCaseInstanceOperation extends AbstractDeleteCaseInstanceOp
     }
     
     @Override
-    public void changeStateForChildPlanItemInstance(PlanItemInstanceEntity planItemInstanceEntity) {
-        // if the plan item implements the specific behavior interface for ending, invoke it, otherwise use the default one which is terminate, regardless,
-        // if the case got completed or terminated
-        Object behavior = planItemInstanceEntity.getPlanItem().getBehavior();
-        if (behavior instanceof OnParentEndDependantActivityBehavior) {
-            // if the specific behavior is implemented, invoke it
-            ((OnParentEndDependantActivityBehavior) behavior).onParentEnd(commandContext, planItemInstanceEntity, manualTermination ? TERMINATE : EXIT, exitEventType);
+    protected void changeStateForChildPlanItemInstance(PlanItemInstanceEntity planItemInstanceEntity) {
+        // we don't propagate the exit and exit event type to the children, they will always be terminated / exited the same way, regardless of its case being
+        // completed or terminated
+        if (manualTermination) {
+            CommandContextUtil.getAgenda(commandContext).planTerminatePlanItemInstanceOperation(planItemInstanceEntity, null, null);
         } else {
-            // use default behavior, if the interface is not implemented
-
-            // we don't propagate the exit and exit event type to the children, they will always be terminated / exited the same way, regardless of its case being
-            // completed or terminated
-            if (manualTermination) {
-                CommandContextUtil.getAgenda(commandContext).planTerminatePlanItemInstanceOperation(planItemInstanceEntity, null, null);
-            } else {
-                CommandContextUtil.getAgenda(commandContext).planExitPlanItemInstanceOperation(planItemInstanceEntity, exitCriterionId, null, null);
-            }
+            CommandContextUtil.getAgenda(commandContext).planExitPlanItemInstanceOperation(planItemInstanceEntity, exitCriterionId, null, null);
         }
-    }
-
-    /**
-     * Overwritten in order to send a case end / terminate event through the case engine dispatcher.
-     */
-    @Override
-    protected void invokePostLifecycleListeners() {
-        super.invokePostLifecycleListeners();
-
-        CommandContextUtil.getCmmnEngineConfiguration(commandContext).getEventDispatcher()
-            .dispatchEvent(FlowableCmmnEventBuilder.createCaseEndedEvent(caseInstanceEntity, CaseInstanceState.TERMINATED),
-                EngineConfigurationConstants.KEY_CMMN_ENGINE_CONFIG);
     }
     
     @Override
@@ -133,39 +102,15 @@ public class TerminateCaseInstanceOperation extends AbstractDeleteCaseInstanceOp
         return "cmmn-state-transition-terminate-case";
     }
 
-    @Override
-    public void addAdditionalCallbackData(CallbackData callbackData) {
-        if (callbackData.getAdditionalData() == null) {
-            callbackData.setAdditionalData(new HashMap<>());
-        }
-        callbackData.getAdditionalData().put(CallbackConstants.EXIT_TYPE, exitType);
-        callbackData.getAdditionalData().put(CallbackConstants.EXIT_EVENT_TYPE, exitEventType);
-        callbackData.getAdditionalData().put(CallbackConstants.MANUAL_TERMINATION, manualTermination);
-    }
-
-    @Override
-    public CaseInstanceEntity getCaseInstanceEntity() {
-        if (caseInstanceEntity == null) {
-            caseInstanceEntity = CommandContextUtil.getCaseInstanceEntityManager(commandContext).findById(caseInstanceEntityId);
-            if (caseInstanceEntity == null) {
-                throw new FlowableObjectNotFoundException("No case instance found for id " + caseInstanceEntityId);
-            }
-        }
-        return caseInstanceEntity;
-    }
-
     public boolean isManualTermination() {
         return manualTermination;
     }
-
     public void setManualTermination(boolean manualTermination) {
         this.manualTermination = manualTermination;
     }
-
     public String getExitCriterionId() {
         return exitCriterionId;
     }
-
     public void setExitCriterionId(String exitCriterionId) {
         this.exitCriterionId = exitCriterionId;
     }

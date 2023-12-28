@@ -53,7 +53,7 @@ public class PlanItemExport implements CmmnXmlConstants {
         
         if (planItem.getItemControl() != null) {
             PlanItemControl itemControl = planItem.getItemControl();
-            PlanItemControlExport.writeItemControl(model, itemControl, xtw);
+            PlanItemControlExport.writeItemControl(itemControl, xtw);
         }
         
         CriteriaExport.writeCriteriaElements(planItem, xtw);

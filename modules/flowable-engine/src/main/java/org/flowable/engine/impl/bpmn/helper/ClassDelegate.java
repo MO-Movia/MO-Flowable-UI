@@ -13,7 +13,6 @@
 
 package org.flowable.engine.impl.bpmn.helper;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -36,12 +35,12 @@ import org.flowable.engine.delegate.TransactionDependentTaskListener;
 import org.flowable.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ServiceTaskFutureJavaDelegateActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ServiceTaskJavaDelegateActivityBehavior;
-import org.flowable.engine.impl.bpmn.listener.DelegateExecutionListener;
 import org.flowable.engine.impl.bpmn.parser.FieldDeclaration;
 import org.flowable.engine.impl.context.BpmnOverrideContext;
 import org.flowable.engine.impl.delegate.ActivityBehavior;
 import org.flowable.engine.impl.delegate.SubProcessActivityBehavior;
 import org.flowable.engine.impl.delegate.TriggerableActivityBehavior;
+import org.flowable.engine.impl.delegate.invocation.ExecutionListenerInvocation;
 import org.flowable.engine.impl.delegate.invocation.TaskListenerInvocation;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.util.CommandContextUtil;
@@ -59,7 +58,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author Falko Menge
  * @author Saeid Mirzaei
  * @author Yvo Swillens
- * @author martin.grofcik
  */
 public class ClassDelegate extends AbstractClassDelegate implements TaskListener, ExecutionListener, TransactionDependentExecutionListener, TransactionDependentTaskListener, SubProcessActivityBehavior, CustomPropertiesResolver {
 
@@ -67,7 +65,7 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
 
     protected ActivityBehavior activityBehaviorInstance;
     protected Expression skipExpression;
-    protected List<MapExceptionEntry> mapExceptions = Collections.emptyList();
+    protected List<MapExceptionEntry> mapExceptions;
     protected CustomPropertiesResolver customPropertiesResolverInstance;
     protected boolean triggerable;
 
@@ -99,7 +97,8 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
     // Execution listener
     @Override
     public void notify(DelegateExecution execution) {
-        getExecutionListenerInstance().notify(execution);
+        ExecutionListener executionListenerInstance = getExecutionListenerInstance();
+        CommandContextUtil.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(new ExecutionListenerInvocation(executionListenerInstance, execution));
     }
 
     // Transaction Dependent execution listener
@@ -124,7 +123,11 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
     public void notify(DelegateTask delegateTask) {
         TaskListener taskListenerInstance = getTaskListenerInstance();
 
-        CommandContextUtil.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(new TaskListenerInvocation(taskListenerInstance, delegateTask));
+        try {
+            CommandContextUtil.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(new TaskListenerInvocation(taskListenerInstance, delegateTask));
+        } catch (Exception e) {
+            throw new FlowableException("Exception while invoking TaskListener: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -134,7 +137,14 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
     }
 
     protected ExecutionListener getExecutionListenerInstance() {
-        return new DelegateExecutionListener(instantiateDelegate(className, fieldDeclarations));
+        Object delegateInstance = instantiateDelegate(className, fieldDeclarations);
+        if (delegateInstance instanceof ExecutionListener) {
+            return (ExecutionListener) delegateInstance;
+        } else if (delegateInstance instanceof JavaDelegate) {
+            return new ServiceTaskJavaDelegateActivityBehavior((JavaDelegate) delegateInstance, triggerable, skipExpression);
+        } else {
+            throw new FlowableIllegalArgumentException(delegateInstance.getClass().getName() + " doesn't implement " + ExecutionListener.class + " nor " + JavaDelegate.class);
+        }
     }
 
     protected TransactionDependentExecutionListener getTransactionDependentExecutionListenerInstance() {
@@ -208,21 +218,14 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
         if (activityBehaviorInstance == null) {
             activityBehaviorInstance = getActivityBehaviorInstance();
         }
+
         if (activityBehaviorInstance instanceof TriggerableActivityBehavior) {
-            try {
-                ((TriggerableActivityBehavior) activityBehaviorInstance).trigger(execution, signalName, signalData);
-                if (triggerable) {
-                    leave(execution);
-                }
-            } catch (BpmnError error) {
-                ErrorPropagation.propagateError(error, execution);
-            } catch (RuntimeException e) {
-                if (!ErrorPropagation.mapException(e, (ExecutionEntity) execution, mapExceptions)) {
-                    throw e;
-                }
+            ((TriggerableActivityBehavior) activityBehaviorInstance).trigger(execution, signalName, signalData);
+            if (triggerable) {
+                leave(execution);
             }
         } else {
-            throw new FlowableException("signal() can only be called on a " + TriggerableActivityBehavior.class.getName() + " instance for " + execution);
+            throw new FlowableException("signal() can only be called on a " + TriggerableActivityBehavior.class.getName() + " instance");
         }
     }
 
@@ -237,7 +240,7 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
         if (activityBehaviorInstance instanceof SubProcessActivityBehavior) {
             ((SubProcessActivityBehavior) activityBehaviorInstance).completing(execution, subProcessInstance);
         } else {
-            throw new FlowableException("completing() can only be called on a " + SubProcessActivityBehavior.class.getName() + " instance for " + execution);
+            throw new FlowableException("completing() can only be called on a " + SubProcessActivityBehavior.class.getName() + " instance");
         }
     }
 
@@ -250,7 +253,7 @@ public class ClassDelegate extends AbstractClassDelegate implements TaskListener
         if (activityBehaviorInstance instanceof SubProcessActivityBehavior) {
             ((SubProcessActivityBehavior) activityBehaviorInstance).completed(execution);
         } else {
-            throw new FlowableException("completed() can only be called on a " + SubProcessActivityBehavior.class.getName() + " instance for " + execution);
+            throw new FlowableException("completed() can only be called on a " + SubProcessActivityBehavior.class.getName() + " instance");
         }
     }
 

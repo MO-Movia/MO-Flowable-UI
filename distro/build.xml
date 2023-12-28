@@ -4,7 +4,7 @@
 
 	<property file="${user.home}/.flowable/build.properties" />
 
-	<property name="flowable.version" value="7.1.0-SNAPSHOT" />
+	<property name="flowable.version" value="6.6.0.20" />
 	<property name="target.distro.root" value="target/zip/flowable-${flowable.version}" />
 	<property name="target.docs.root" value="${target.distro.root}/docs" />
 	<property name="target.newsite.root" value="target/website" />
@@ -37,6 +37,10 @@
 			<equals arg1="${nodocs}" arg2="true" />
 		</condition>
 		<exec executable="${mvn.executable}" dir=".." failonerror="true">
+			<env key="MAVEN_OPTS" value="-Xmx1024m -Xms512m" />
+			<arg line="-Pdistro${nodocs.profile} -DskipTests clean install" />
+		</exec>
+		<exec executable="${mvn.executable}" dir="../modules/flowable-ui" failonerror="true">
 			<env key="MAVEN_OPTS" value="-Xmx1024m -Xms512m" />
 			<arg line="-Pdistro${nodocs.profile} -DskipTests clean install" />
 		</exec>
@@ -131,12 +135,6 @@
 			<fileset dir="../modules/flowable-cmmn-api/target">
                 <include name="flowable-cmmn-api-*.jar" />
             </fileset>
-			<fileset dir="../modules/flowable-cmmn-cdi/target">
-                <include name="flowable-cmmn-cdi-*.jar" />
-            </fileset>
-			<fileset dir="../modules/flowable-case-validation/target">
-                <include name="flowable-case-validation-*.jar" />
-            </fileset>
 			<fileset dir="../modules/flowable-cmmn-converter/target">
                 <include name="flowable-cmmn-converter-*.jar" />
             </fileset>
@@ -148,6 +146,9 @@
             </fileset>
 			<fileset dir="../modules/flowable-cmmn-image-generator/target">
                 <include name="flowable-cmmn-image-generator-*.jar" />
+            </fileset>
+			<fileset dir="../modules/flowable-cmmn-json-converter/target">
+                <include name="flowable-cmmn-json-converter-*.jar" />
             </fileset>
 			<fileset dir="../modules/flowable-cmmn-model/target">
                 <include name="flowable-cmmn-model-*.jar" />
@@ -175,6 +176,9 @@
             </fileset>
 			<fileset dir="../modules/flowable-dmn-model/target">
 				<include name="flowable-dmn-model-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-dmn-json-converter/target">
+				<include name="flowable-dmn-json-converter-*.jar" />
 			</fileset>
 			<fileset dir="../modules/flowable-dmn-xml-converter/target">
 				<include name="flowable-dmn-xml-converter-*.jar" />
@@ -245,11 +249,44 @@
 			<fileset dir="../modules/flowable-form-model/target">
 				<include name="flowable-form-model-*.jar" />
 			</fileset>
+			<fileset dir="../modules/flowable-form-json-converter/target">
+				<include name="flowable-form-json-converter-*.jar" />
+			</fileset>
 			<fileset dir="../modules/flowable-form-api/target">
 				<include name="flowable-form-api-*.jar" />
 			</fileset>
+			<fileset dir="../modules/flowable-form-engine/target">
+				<include name="flowable-form-engine-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-form-engine-configurator/target">
+				<include name="flowable-form-engine-configurator-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-form-spring/target">
+				<include name="flowable-form-spring-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-form-spring-configurator/target">
+				<include name="flowable-form-spring-configurator-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-form-rest/target">
+				<include name="flowable-form-rest-*.jar" />
+			</fileset>
 			<fileset dir="../modules/flowable-content-api/target">
 				<include name="flowable-content-api-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-content-engine/target">
+				<include name="flowable-content-engine-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-content-engine-configurator/target">
+				<include name="flowable-content-engine-configurator-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-content-spring/target">
+				<include name="flowable-content-spring-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-content-spring-configurator/target">
+				<include name="flowable-content-spring-configurator-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-content-rest/target">
+				<include name="flowable-content-rest-*.jar" />
 			</fileset>
 			<fileset dir="../modules/flowable5-compatibility/target">
 				<include name="flowable5-compatibility-*.jar" />
@@ -269,6 +306,9 @@
 			<fileset dir="../modules/flowable-image-generator/target">
 				<include name="flowable-image-generator-*.jar" />
 			</fileset>
+			<fileset dir="../modules/flowable-json-converter/target">
+				<include name="flowable-json-converter-*.jar" />
+			</fileset>
 			<fileset dir="../modules/flowable-ldap/target">
 				<include name="flowable-ldap*.jar" />
 			</fileset>
@@ -287,8 +327,14 @@
 			<fileset dir="../modules/flowable-cdi/target">
 				<include name="flowable-cdi*.jar" />
 			</fileset>
+			<fileset dir="../modules/flowable-camel-cdi/target">
+                <include name="flowable-camel-cdi-*.jar" />
+            </fileset>
 			<fileset dir="../modules/flowable-cxf/target">
 				<include name="flowable-cxf-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-mule/target">
+				<include name="flowable-mule-*.jar" />
 			</fileset>
 			<fileset dir="../modules/flowable-http-common/target">
 				<include name="flowable-http-common-*.jar" />
@@ -296,17 +342,25 @@
 			<fileset dir="../modules/flowable-http/target">
 				<include name="flowable-http-*.jar" />
 			</fileset>
-			<fileset dir="../modules/flowable-mail/target">
-				<include name="flowable-mail-*.jar" />
-			</fileset>
 			<fileset dir="../modules/flowable-spring-boot/flowable-spring-boot-starters/">
 				<include name="**/flowable-spring-boot-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-ui/">
+				<include name="**/flowable-spring-boot-starter-ui-*.jar" />
+				<include name="**/flowable-ui-common-*.jar" />
+				<include name="**/flowable-ui-*-conf-*.jar" />
+				<include name="**/flowable-ui-*-frontend-*.jar" />
+				<include name="**/flowable-ui-*-logic-*.jar" />
+				<include name="**/flowable-ui-*-rest-*.jar" />
 			</fileset>
 			<fileset dir="../modules/flowable-osgi/target">
 				<include name="flowable-osgi-*.jar" />
 			</fileset>
 			<fileset dir="../modules/flowable-jmx/target">
 				<include name="flowable-jmx-*.jar" />
+			</fileset>
+			<fileset dir="../modules/flowable-jms-spring-executor/target">
+				<include name="flowable-jms-spring-executor-*.jar" />
 			</fileset>
 		</copy>
 
@@ -315,23 +369,19 @@
 	<target name="copy.webapps">
 		<mkdir dir="${target.distro.root}/wars" />
 		<copy todir="${target.distro.root}/wars">
+			<fileset dir="../modules/flowable-ui/flowable-ui-app/target">
+				<include name="flowable-ui.war" />
+			</fileset>
 			<fileset dir="../modules/flowable-app-rest/target">
 				<include name="flowable-rest*.war" />
 			</fileset>
 		</copy>
+		<move file="${target.distro.root}/wars/flowable-ui.war" tofile="${target.distro.root}/wars/flowable-ui.war"/>
 		<move file="${target.distro.root}/wars/flowable-rest.war" tofile="${target.distro.root}/wars/flowable-rest.war"/>
 	</target>
 
 	<target name="build.docs" unless="nodocs">
 		<!-- JAVADOCS -->
-		<exec executable="${mvn.executable}" dir="../modules/flowable-bpmn-model">
-			<arg line="javadoc:javadoc" />
-		</exec>
-		<mkdir dir="${target.docs.root}/bpmn-model-javadocs" />
-		<copy todir="${target.docs.root}/bpmn-model-javadocs">
-			<fileset dir="../modules/flowable-bpmn-model/target/site/apidocs" />
-		</copy>
-		
 		<exec executable="${mvn.executable}" dir="../modules/flowable-engine">
 			<arg line="-DexcludePackageNames=org.flowable.engine.impl* javadoc:javadoc" />
 		</exec>

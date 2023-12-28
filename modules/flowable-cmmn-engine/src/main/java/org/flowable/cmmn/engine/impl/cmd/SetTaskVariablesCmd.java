@@ -62,8 +62,8 @@ public class SetTaskVariablesCmd extends NeedsActiveTaskCmd<Object> {
     }
 
     @Override
-    protected String getSuspendedTaskExceptionPrefix() {
-        return "Cannot add variables to";
+    protected String getSuspendedTaskException() {
+        return "Cannot add variables to a suspended task";
     }
 
 }

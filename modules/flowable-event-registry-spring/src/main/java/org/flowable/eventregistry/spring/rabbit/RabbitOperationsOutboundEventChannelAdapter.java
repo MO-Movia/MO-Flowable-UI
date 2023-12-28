@@ -12,8 +12,6 @@
  */
 package org.flowable.eventregistry.spring.rabbit;
 
-import java.util.Map;
-
 import org.flowable.eventregistry.api.OutboundEventChannelAdapter;
 import org.springframework.amqp.rabbit.core.RabbitOperations;
 
@@ -33,21 +31,11 @@ public class RabbitOperationsOutboundEventChannelAdapter implements OutboundEven
     }
 
     @Override
-    public void sendEvent(String rawEvent, Map<String, Object> headerMap) {
+    public void sendEvent(String rawEvent) {
         if (exchange != null) {
-            rabbitOperations.convertAndSend(exchange, routingKey, rawEvent, m -> {
-                for (String headerKey : headerMap.keySet()) {
-                    m.getMessageProperties().getHeaders().put(headerKey, headerMap.get(headerKey));
-                }      
-                return m;
-            });
+            rabbitOperations.convertAndSend(exchange, routingKey, rawEvent);
         } else {
-            rabbitOperations.convertAndSend(routingKey, rawEvent, m -> {
-                for (String headerKey : headerMap.keySet()) {
-                    m.getMessageProperties().getHeaders().put(headerKey, headerMap.get(headerKey));
-                }      
-                return m;
-            });
+            rabbitOperations.convertAndSend(routingKey, rawEvent);
         }
     }
 

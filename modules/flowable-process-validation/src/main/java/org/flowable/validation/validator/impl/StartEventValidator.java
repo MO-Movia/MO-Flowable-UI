@@ -48,7 +48,6 @@ public class StartEventValidator extends ProcessLevelValidator {
                     
                     addError(errors, Problems.START_EVENT_INVALID_EVENT_DEFINITION,
                             process, startEvent,
-                            eventDefinition,
                             "Unsupported event definition on start event");
                 }
             }

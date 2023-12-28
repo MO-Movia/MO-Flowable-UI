@@ -17,7 +17,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.flowable.cmmn.api.CmmnHistoryService;
 import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
@@ -64,11 +65,11 @@ public class HistoricTaskInstanceVariableDataResource extends HistoricTaskInstan
     @GetMapping(value = "/cmmn-history/historic-task-instances/{taskId}/variables/{variableName}/data")
     @ResponseBody
     public byte[] getVariableData(@ApiParam(name = "taskId") @PathVariable("taskId") String taskId, @ApiParam(name = "variableName") @PathVariable("variableName") String variableName, @RequestParam(value = "scope", required = false) String scope,
-            HttpServletResponse response) {
+            HttpServletRequest request, HttpServletResponse response) {
 
         try {
             byte[] result = null;
-            RestVariable variable = getVariableFromRequest(true, taskId, variableName, scope);
+            RestVariable variable = getVariableFromRequest(true, taskId, variableName, scope, request);
             if (CmmnRestResponseFactory.BYTE_ARRAY_VARIABLE_TYPE.equals(variable.getType())) {
                 result = (byte[]) variable.getValue();
                 response.setContentType("application/octet-stream");
@@ -92,7 +93,7 @@ public class HistoricTaskInstanceVariableDataResource extends HistoricTaskInstan
         }
     }
 
-    public RestVariable getVariableFromRequest(boolean includeBinary, String taskId, String variableName, String scope) {
+    public RestVariable getVariableFromRequest(boolean includeBinary, String taskId, String variableName, String scope, HttpServletRequest request) {
         RestVariableScope variableScope = RestVariable.getScopeFromString(scope);
         HistoricTaskInstanceQuery taskQuery = historyService.createHistoricTaskInstanceQuery().taskId(taskId);
 

@@ -77,59 +77,11 @@ public class HistoricCaseInstanceBaseResource {
         if (queryRequest.getCaseDefinitionKey() != null) {
             query.caseDefinitionKey(queryRequest.getCaseDefinitionKey());
         }
-        if (queryRequest.getCaseDefinitionKeys() != null && !queryRequest.getCaseDefinitionKeys().isEmpty()) {
-            query.caseDefinitionKeys(queryRequest.getCaseDefinitionKeys());
-        }
         if (queryRequest.getCaseDefinitionId() != null) {
             query.caseDefinitionId(queryRequest.getCaseDefinitionId());
         }
-        if (queryRequest.getCaseDefinitionCategory() != null) {
-            query.caseDefinitionCategory(queryRequest.getCaseDefinitionCategory());
-        }
-        if (queryRequest.getCaseDefinitionName() != null) {
-            query.caseDefinitionName(queryRequest.getCaseDefinitionName());
-        }
         if (queryRequest.getCaseBusinessKey() != null) {
             query.caseInstanceBusinessKey(queryRequest.getCaseBusinessKey());
-        }
-        if (queryRequest.getCaseInstanceName() != null) {
-            query.caseInstanceName(queryRequest.getCaseInstanceName());
-        }
-        if (queryRequest.getCaseInstanceNameLike() != null) {
-            query.caseInstanceNameLike(queryRequest.getCaseInstanceNameLike());
-        }
-        if (queryRequest.getCaseInstanceNameLikeIgnoreCase() != null) {
-            query.caseInstanceNameLikeIgnoreCase(queryRequest.getCaseInstanceNameLikeIgnoreCase());
-        }
-        if (queryRequest.getCaseInstanceRootScopeId() != null) {
-            query.caseInstanceRootScopeId(queryRequest.getCaseInstanceRootScopeId());
-        }
-        if (queryRequest.getCaseInstanceParentScopeId() != null) {
-            query.caseInstanceParentScopeId(queryRequest.getCaseInstanceParentScopeId());
-        }
-        if (queryRequest.getCaseInstanceBusinessKey() != null) {
-            query.caseInstanceBusinessKey(queryRequest.getCaseInstanceBusinessKey());
-        }
-        if (queryRequest.getCaseInstanceBusinessStatus() != null) {
-            query.caseInstanceBusinessStatus(queryRequest.getCaseInstanceBusinessStatus());
-        }
-        if (queryRequest.getCaseInstanceParentId() != null) {
-            query.caseInstanceParentId(queryRequest.getCaseInstanceParentId());
-        }
-        if (queryRequest.getCaseInstanceState() != null) {
-            query.state(queryRequest.getCaseInstanceState());
-        }
-        if (queryRequest.getCaseInstanceCallbackId() != null) {
-            query.caseInstanceCallbackId(queryRequest.getCaseInstanceCallbackId());
-        }
-        if (queryRequest.getCaseInstanceCallbackType() != null) {
-            query.caseInstanceCallbackType(queryRequest.getCaseInstanceCallbackType());
-        }
-        if (queryRequest.getCaseInstanceReferenceId() != null) {
-            query.caseInstanceReferenceId(queryRequest.getCaseInstanceReferenceId());
-        }
-        if (queryRequest.getCaseInstanceReferenceType() != null) {
-            query.caseInstanceReferenceType(queryRequest.getCaseInstanceReferenceType());
         }
         if (queryRequest.getFinishedAfter() != null) {
             query.finishedAfter(queryRequest.getFinishedAfter());
@@ -145,15 +97,6 @@ public class HistoricCaseInstanceBaseResource {
         }
         if (queryRequest.getStartedBy() != null) {
             query.startedBy(queryRequest.getStartedBy());
-        }
-        if (queryRequest.getLastReactivatedAfter() != null) {
-            query.lastReactivatedAfter(queryRequest.getLastReactivatedAfter());
-        }
-        if (queryRequest.getLastReactivatedBefore() != null) {
-            query.lastReactivatedBefore(queryRequest.getLastReactivatedBefore());
-        }
-        if (queryRequest.getLastReactivatedBy() != null) {
-            query.lastReactivatedBy(queryRequest.getLastReactivatedBy());
         }
         if (queryRequest.getFinished() != null) {
             if (queryRequest.getFinished()) {
@@ -182,14 +125,6 @@ public class HistoricCaseInstanceBaseResource {
 
         if (Boolean.TRUE.equals(queryRequest.getWithoutTenantId())) {
             query.caseInstanceWithoutTenantId();
-        }
-        
-        if (Boolean.TRUE.equals(queryRequest.getWithoutCaseInstanceParentId())) {
-            query.withoutCaseInstanceParent();
-        }
-        
-        if (Boolean.TRUE.equals(queryRequest.getWithoutCaseInstanceCallbackId())) {
-            query.withoutCaseInstanceCallbackId();
         }
         
         if (restApiInterceptor != null) {
@@ -227,21 +162,15 @@ public class HistoricCaseInstanceBaseResource {
     }
     
     protected HistoricCaseInstance getHistoricCaseInstanceFromRequest(String caseInstanceId) {
-        HistoricCaseInstance caseInstance = getHistoricCaseInstanceFromRequestWithoutAccessCheck(caseInstanceId);
-
-        if (restApiInterceptor != null) {
-            restApiInterceptor.accessHistoryCaseInfoById(caseInstance);
-        }
-        
-        return caseInstance;
-    }
-
-    protected HistoricCaseInstance getHistoricCaseInstanceFromRequestWithoutAccessCheck(String caseInstanceId) {
         HistoricCaseInstance caseInstance = historyService.createHistoricCaseInstanceQuery().caseInstanceId(caseInstanceId).singleResult();
         if (caseInstance == null) {
             throw new FlowableObjectNotFoundException("Could not find a case instance with id '" + caseInstanceId + "'.", HistoricCaseInstance.class);
         }
-
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryCaseInfoById(caseInstance);
+        }
+        
         return caseInstance;
     }
 

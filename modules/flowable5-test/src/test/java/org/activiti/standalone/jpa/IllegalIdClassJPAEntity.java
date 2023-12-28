@@ -15,8 +15,8 @@ package org.activiti.standalone.jpa;
 
 import java.util.Calendar;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 /**
  * 

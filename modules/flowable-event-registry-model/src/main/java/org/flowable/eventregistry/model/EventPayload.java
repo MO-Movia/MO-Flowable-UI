@@ -14,7 +14,6 @@ package org.flowable.eventregistry.model;
 
 import java.util.Objects;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -25,11 +24,8 @@ public class EventPayload {
 
     protected String name;
     protected String type;
-    protected boolean header;
     protected boolean correlationParameter;
-    protected boolean isFullPayload;
-    protected boolean metaParameter;
-
+    
     public EventPayload() {}
 
     public EventPayload(String name, String type) {
@@ -52,28 +48,6 @@ public class EventPayload {
     public void setType(String type) {
         this.type = type;
     }
-    
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-    public boolean isHeader() {
-        return header;
-    }
-
-    public void setHeader(boolean header) {
-        this.header = header;
-    }
-    
-    public static EventPayload header(String name, String type) {
-        EventPayload payload = new EventPayload(name, type);
-        payload.setHeader(true);
-        return payload;
-    }
-    
-    public static EventPayload headerWithCorrelation(String name, String type) {
-        EventPayload payload = new EventPayload(name, type);
-        payload.setHeader(true);
-        payload.setCorrelationParameter(true);
-        return payload;
-    }
 
     @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     public boolean isCorrelationParameter() {
@@ -90,36 +64,6 @@ public class EventPayload {
         return payload;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-    public boolean isFullPayload() {
-        return isFullPayload;
-    }
-
-    public void setFullPayload(boolean isFullPayload) {
-        this.isFullPayload = isFullPayload;
-    }
-    
-    public static EventPayload fullPayload(String name) {
-        EventPayload payload = new EventPayload();
-        payload.name = name;
-        payload.setFullPayload(true);
-        return payload;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-    public boolean isMetaParameter() {
-        return metaParameter;
-    }
-
-    public void setMetaParameter(boolean metaParameter) {
-        this.metaParameter = metaParameter;
-    }
-
-    @JsonIgnore
-    public boolean isNotForBody() {
-        return header || isFullPayload || metaParameter;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -129,8 +73,7 @@ public class EventPayload {
             return false;
         }
         EventPayload that = (EventPayload) o;
-        return Objects.equals(name, that.name) && Objects.equals(type, that.type) && correlationParameter == that.correlationParameter
-                && header == that.header && isFullPayload == that.isFullPayload && metaParameter == that.metaParameter;
+        return Objects.equals(name, that.name) && Objects.equals(type, that.type) && correlationParameter == that.correlationParameter;
     }
 
     @Override

@@ -18,7 +18,6 @@ import static org.flowable.test.spring.boot.util.DeploymentCleanerUtil.deleteDep
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManagerFactory;
 
 import org.flowable.app.api.AppRepositoryService;
 import org.flowable.app.api.repository.AppDefinition;
@@ -34,25 +33,20 @@ import org.flowable.app.api.repository.AppDeployment;
 import org.flowable.app.engine.AppEngine;
 import org.flowable.app.engine.AppEngineConfiguration;
 import org.flowable.app.spring.SpringAppEngineConfiguration;
-import org.flowable.common.engine.api.async.AsyncTaskExecutor;
-import org.flowable.common.engine.impl.async.DefaultAsyncTaskExecutor;
 import org.flowable.common.engine.impl.cfg.IdGenerator;
 import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.common.engine.impl.persistence.StrongUuidGenerator;
 import org.flowable.common.spring.AutoDeploymentStrategy;
-import org.flowable.common.spring.async.SpringAsyncTaskExecutor;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.cfg.HttpClientConfig;
-import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.db.DbIdGenerator;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.http.common.api.client.FlowableAsyncHttpClient;
 import org.flowable.http.common.api.client.FlowableHttpClient;
 import org.flowable.idm.spring.SpringIdmEngineConfiguration;
-import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
@@ -65,15 +59,11 @@ import org.flowable.spring.boot.process.Process;
 import org.flowable.spring.configurator.DefaultAutoDeploymentStrategy;
 import org.flowable.spring.configurator.ResourceParentFolderAutoDeploymentStrategy;
 import org.flowable.spring.configurator.SingleResourceAutoDeploymentStrategy;
-import org.flowable.spring.job.service.SpringAsyncExecutor;
-import org.flowable.spring.job.service.SpringAsyncHistoryExecutor;
 import org.flowable.test.spring.boot.util.CustomUserEngineConfigurerConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -82,9 +72,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
-import org.springframework.core.task.TaskExecutor;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Filip Hrisafov
@@ -125,44 +112,6 @@ public class ProcessEngineAutoConfigurationTest {
             assertThat(httpClientConfig.getHttpClient()).isNull();
 
             deleteDeployments(processEngine);
-        });
-    }
-
-    @Test
-    public void historyCleaningProperties() {
-        contextRunner.withPropertyValues(
-            "flowable.history-cleaning-cycle=0 2 * * * ?",
-            "flowable.history-cleaning-after=P90D",
-            "flowable.history-cleaning-batch-size=500",
-            "flowable.history-cleaning-sequential=true"
-        ).run(context -> {
-            ProcessEngine engine = context.getBean(ProcessEngine.class);
-            ProcessEngineConfiguration engineConfiguration = engine.getProcessEngineConfiguration();
-
-            assertThat(engineConfiguration.getHistoryCleaningTimeCycleConfig()).isEqualTo("0 2 * * * ?");
-            assertThat(engineConfiguration.getCleanInstancesEndedAfter()).isEqualTo(Duration.ofDays(90));
-            assertThat(engineConfiguration.getCleanInstancesBatchSize()).isEqualTo(500);
-
-            deleteDeployments(engine);
-        });
-    }
-
-    @Test
-    public void historyCleaningPropertiesBackwardsCompatible() {
-        contextRunner.withPropertyValues(
-            "flowable.history-cleaning-cycle=0 2 * * * ?",
-            "flowable.history-cleaning-after-days=90",
-            "flowable.history-cleaning-batch-size=500",
-            "flowable.history-cleaning-sequential=true"
-        ).run(context -> {
-            ProcessEngine engine = context.getBean(ProcessEngine.class);
-            ProcessEngineConfiguration engineConfiguration = engine.getProcessEngineConfiguration();
-
-            assertThat(engineConfiguration.getHistoryCleaningTimeCycleConfig()).isEqualTo("0 2 * * * ?");
-            assertThat(engineConfiguration.getCleanInstancesEndedAfter()).isEqualTo(Duration.ofDays(90));
-            assertThat(engineConfiguration.getCleanInstancesBatchSize()).isEqualTo(500);
-
-            deleteDeployments(engine);
         });
     }
 
@@ -220,29 +169,8 @@ public class ProcessEngineAutoConfigurationTest {
                     assertThat(strategy.getLockName()).isNull();
                 });
 
-            assertThat(springProcessEngineConfiguration.getHistoryCleaningTimeCycleConfig()).isEqualTo("0 0 1 * * ?");
-            assertThat(springProcessEngineConfiguration.getCleanInstancesEndedAfter()).isEqualTo(Duration.ofDays(365));
-            assertThat(springProcessEngineConfiguration.getCleanInstancesBatchSize()).isEqualTo(100);
-
             deleteDeployments(processEngine);
         });
-    }
-
-    @Test
-    public void standaloneProcessEngineWithJackson() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class))
-                .run(context -> {
-                    assertThat(context).as("Process engine")
-                            .hasSingleBean(ProcessEngine.class)
-                            .hasSingleBean(ObjectMapper.class);
-
-                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
-
-                    assertThat(processEngine.getProcessEngineConfiguration().getObjectMapper()).isEqualTo(context.getBean(ObjectMapper.class));
-
-                    deleteDeployments(processEngine);
-                });
     }
     
     @Test
@@ -404,34 +332,6 @@ public class ProcessEngineAutoConfigurationTest {
     }
 
     @Test
-    public void processEngineWithBasicDataSourceAndAppEngineWithJackson() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(
-                        AppEngineServicesAutoConfiguration.class,
-                        AppEngineAutoConfiguration.class,
-                        IdmEngineAutoConfiguration.class,
-                        IdmEngineServicesAutoConfiguration.class,
-
-                        JacksonAutoConfiguration.class
-                ))
-                .run(context -> {
-                    assertThat(context).as("Process engine")
-                            .hasSingleBean(ProcessEngine.class)
-                            .hasSingleBean(AppEngine.class)
-                            .hasSingleBean(ObjectMapper.class);
-
-                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
-                    AppEngine appEngine = context.getBean(AppEngine.class);
-
-                    assertThat(processEngine.getProcessEngineConfiguration().getObjectMapper()).isEqualTo(context.getBean(ObjectMapper.class));
-                    assertThat(processEngine.getProcessEngineConfiguration().getObjectMapper()).isEqualTo(appEngine.getAppEngineConfiguration().getObjectMapper());
-
-                    deleteDeployments(appEngine);
-                    deleteDeployments(processEngine);
-                });
-    }
-
-    @Test
     public void processEngineWithCustomIdGenerator() {
         contextRunner.withUserConfiguration(CustomIdGeneratorConfiguration.class)
             .run(context -> {
@@ -575,299 +475,6 @@ public class ProcessEngineAutoConfigurationTest {
                 });
     }
 
-    @Test
-    void processEngineShouldUseSpringTaskExecutor() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(TaskExecutionAutoConfiguration.class))
-                .run(context -> {
-                    assertThat(context)
-                            .hasSingleBean(ProcessEngineConfigurationImpl.class)
-                            .hasSingleBean(TaskExecutor.class)
-                            .hasBean("flowableAsyncTaskInvokerTaskExecutor");
-
-                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
-
-                    AsyncExecutor asyncExecutor = configuration.getAsyncExecutor();
-                    assertThat(asyncExecutor).isInstanceOf(SpringAsyncExecutor.class);
-
-                    AsyncTaskExecutor asyncTaskExecutor = configuration.getAsyncTaskExecutor();
-                    assertThat(asyncTaskExecutor).isInstanceOf(SpringAsyncTaskExecutor.class);
-                    assertThat(asyncExecutor.getTaskExecutor()).isEqualTo(asyncTaskExecutor);
-                    assertThat(configuration.getAsyncHistoryTaskExecutor()).isEqualTo(asyncTaskExecutor);
-                    assertThat(((SpringAsyncTaskExecutor) asyncTaskExecutor).getAsyncTaskExecutor())
-                            .isEqualTo(context.getBean(TaskExecutor.class));
-
-                    AsyncTaskExecutor taskInvokerTaskExecutor = context.getBean("flowableAsyncTaskInvokerTaskExecutor", AsyncTaskExecutor.class);
-                    assertThat(configuration.getAsyncTaskInvokerTaskExecutor())
-                            .isNotEqualTo(asyncTaskExecutor)
-                            .isEqualTo(taskInvokerTaskExecutor)
-                            .isInstanceOfSatisfying(DefaultAsyncTaskExecutor.class, taskExecutor -> {
-                                assertThat(taskExecutor.getCorePoolSize()).isEqualTo(8);
-                                assertThat(taskExecutor.getMaxPoolSize()).isEqualTo(8);
-                                assertThat(taskExecutor.getQueueSize()).isEqualTo(100);
-                                assertThat(taskExecutor.getThreadPoolNamingPattern()).isEqualTo("flowable-async-task-invoker-%d");
-                            });
-                });
-    }
-
-    @Test
-    void processEngineDefaultMailProperties(){
-        contextRunner
-                .run(context -> {
-                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
-                    ProcessEngineConfiguration engineConfiguration = processEngine.getProcessEngineConfiguration();
-
-                    assertThat(engineConfiguration).isNotNull();
-                    assertThat(engineConfiguration.getMailServerDefaultCharset()).isEqualTo(StandardCharsets.UTF_8);
-                    assertThat(engineConfiguration.getMailServerDefaultFrom()).isEqualTo("flowable@localhost");
-                    assertThat(engineConfiguration.getMailServerHost()).isEqualTo("localhost");
-                    assertThat(engineConfiguration.getMailServerUsername()).isNull();
-                    assertThat(engineConfiguration.getMailServerPassword()).isNull();
-                    assertThat(engineConfiguration.getMailServerPort()).isEqualTo(1025);
-                    assertThat(engineConfiguration.getMailServerSSLPort()).isEqualTo(1465);
-                    assertThat(engineConfiguration.getMailServerUseSSL()).isFalse();
-                    assertThat(engineConfiguration.getMailServerUseTLS()).isFalse();
-                });
-    }
-
-    @Test
-    void processEngineMailProperties(){
-        contextRunner
-                .withPropertyValues(
-                        "flowable.mail.server.host=my-server",
-                        "flowable.mail.server.port=4040",
-                        "flowable.mail.server.sslPort=5050",
-                        "flowable.mail.server.username=username",
-                        "flowable.mail.server.password=password",
-                        "flowable.mail.server.defaultFrom=customfrom@localhost",
-                        "flowable.mail.server.forceTo=internal@localhost",
-                        "flowable.mail.server.defaultCharset=utf-16",
-                        "flowable.mail.server.useSsl=true",
-                        "flowable.mail.server.useTls=true"
-                )
-                .run(context -> {
-                    ProcessEngine processEngine = context.getBean(ProcessEngine.class);
-                    ProcessEngineConfiguration engineConfiguration = processEngine.getProcessEngineConfiguration();
-
-                    assertThat(engineConfiguration).isNotNull();
-                    assertThat(engineConfiguration.getMailServerHost()).isEqualTo("my-server");
-                    assertThat(engineConfiguration.getMailServerPort()).isEqualTo(4040);
-                    assertThat(engineConfiguration.getMailServerSSLPort()).isEqualTo(5050);
-                    assertThat(engineConfiguration.getMailServerUsername()).isEqualTo("username");
-                    assertThat(engineConfiguration.getMailServerPassword()).isEqualTo("password");
-                    assertThat(engineConfiguration.getMailServerDefaultFrom()).isEqualTo("customfrom@localhost");
-                    assertThat(engineConfiguration.getMailServerForceTo()).isEqualTo("internal@localhost");
-                    assertThat(engineConfiguration.getMailServerDefaultCharset()).isEqualTo(StandardCharsets.UTF_16);
-                    assertThat(engineConfiguration.getMailServerUseSSL()).isTrue();
-                    assertThat(engineConfiguration.getMailServerUseTLS()).isTrue();
-                });
-    }
-
-    @Test
-    void customAsyncExecutorProperties() {
-        contextRunner
-                .withPropertyValues(
-                        "flowable.check-process-definitions=false",
-                        "flowable.process.async.executor.move-timer-executor-pool-size=10",
-                        "flowable.process.async.executor.max-timer-jobs-per-acquisition=1024",
-                        "flowable.process.async.executor.max-async-jobs-due-per-acquisition=2048",
-                        "flowable.process.async.executor.default-timer-job-acquire-wait-time-in-millis=20000",
-                        "flowable.process.async.executor.default-async-job-acquire-wait-time-in-millis=30000",
-                        "flowable.process.async.executor.default-queue-size-full-wait-time-in-millis=15000",
-                        "flowable.process.async.executor.lock-owner=test-lock-owner",
-                        "flowable.process.async.executor.timer-lock-time-in-millis=7200000",
-                        "flowable.process.async.executor.async-job-lock-time-in-millis=10800000",
-                        "flowable.process.async.executor.async-jobs-global-lock-wait-time=PT2M",
-                        "flowable.process.async.executor.async-jobs-global-lock-poll-rate=PT1S",
-                        "flowable.process.async.executor.timer-lock-wait-time=PT3M",
-                        "flowable.process.async.executor.timer-lock-poll-rate=PT2S",
-                        "flowable.process.async.executor.reset-expired-jobs-interval=300000",
-                        "flowable.process.async.executor.reset-expired-jobs-page-size=5"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasBean("processAsyncExecutor")
-                            .hasSingleBean(ProcessEngineConfigurationImpl.class);
-
-                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
-                    SpringAsyncExecutor executor = context.getBean("processAsyncExecutor", SpringAsyncExecutor.class);
-
-                    assertThat(configuration.getAsyncExecutor()).isEqualTo(executor);
-
-                    assertThat(executor.getMoveTimerExecutorPoolSize()).isEqualTo(10);
-                    assertThat(executor.getMaxTimerJobsPerAcquisition()).isEqualTo(1024);
-                    assertThat(executor.getMaxAsyncJobsDuePerAcquisition()).isEqualTo(2048);
-                    assertThat(executor.getDefaultTimerJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(20).toMillis());
-                    assertThat(executor.getDefaultAsyncJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(30).toMillis());
-                    assertThat(executor.getDefaultQueueSizeFullWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(15).toMillis());
-                    assertThat(executor.getLockOwner()).isEqualTo("test-lock-owner");
-                    assertThat(executor.getTimerLockTimeInMillis()).isEqualTo(Duration.ofHours(2).toMillis());
-                    assertThat(executor.getAsyncJobLockTimeInMillis()).isEqualTo(Duration.ofHours(3).toMillis());
-                    assertThat(executor.getAsyncJobsGlobalLockWaitTime()).isEqualTo(Duration.ofMinutes(2));
-                    assertThat(executor.getAsyncJobsGlobalLockPollRate()).isEqualTo(Duration.ofSeconds(1));
-                    assertThat(executor.getTimerLockWaitTime()).isEqualTo(Duration.ofMinutes(3));
-                    assertThat(executor.getTimerLockPollRate()).isEqualTo(Duration.ofSeconds(2));
-                    assertThat(executor.getResetExpiredJobsInterval()).isEqualTo(Duration.ofMinutes(5).toMillis());
-                    assertThat(executor.getResetExpiredJobsPageSize()).isEqualTo(5);
-                });
-    }
-
-    @Test
-    void customAsyncExecutorPropertiesWithNewPropertiesWithDuration() {
-        contextRunner
-                .withPropertyValues(
-                        "flowable.check-process-definitions=false",
-                        "flowable.process.async.executor.move-timer-executor-pool-size=10",
-                        "flowable.process.async.executor.max-timer-jobs-per-acquisition=1024",
-                        "flowable.process.async.executor.max-async-jobs-due-per-acquisition=2048",
-                        "flowable.process.async.executor.default-timer-job-acquire-wait-time=PT20S",
-                        "flowable.process.async.executor.default-async-job-acquire-wait-time=PT30S",
-                        "flowable.process.async.executor.default-queue-size-full-wait-time=PT15S",
-                        "flowable.process.async.executor.lock-owner=test-lock-owner",
-                        "flowable.process.async.executor.timer-lock-time=PT2H",
-                        "flowable.process.async.executor.async-job-lock-time=PT3H",
-                        "flowable.process.async.executor.async-jobs-global-lock-wait-time=PT2M",
-                        "flowable.process.async.executor.async-jobs-global-lock-poll-rate=PT1S",
-                        "flowable.process.async.executor.timer-lock-wait-time=PT3M",
-                        "flowable.process.async.executor.timer-lock-poll-rate=PT2S",
-                        "flowable.process.async.executor.reset-expired-jobs-interval=PT5M",
-                        "flowable.process.async.executor.reset-expired-jobs-page-size=5"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasBean("processAsyncExecutor")
-                            .hasSingleBean(ProcessEngineConfigurationImpl.class);
-
-                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
-                    SpringAsyncExecutor executor = context.getBean("processAsyncExecutor", SpringAsyncExecutor.class);
-
-                    assertThat(configuration.getAsyncExecutor()).isEqualTo(executor);
-
-                    assertThat(executor.getMoveTimerExecutorPoolSize()).isEqualTo(10);
-                    assertThat(executor.getMaxTimerJobsPerAcquisition()).isEqualTo(1024);
-                    assertThat(executor.getMaxAsyncJobsDuePerAcquisition()).isEqualTo(2048);
-                    assertThat(executor.getDefaultTimerJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(20).toMillis());
-                    assertThat(executor.getDefaultAsyncJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(30).toMillis());
-                    assertThat(executor.getDefaultQueueSizeFullWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(15).toMillis());
-                    assertThat(executor.getLockOwner()).isEqualTo("test-lock-owner");
-                    assertThat(executor.getTimerLockTimeInMillis()).isEqualTo(Duration.ofHours(2).toMillis());
-                    assertThat(executor.getAsyncJobLockTimeInMillis()).isEqualTo(Duration.ofHours(3).toMillis());
-                    assertThat(executor.getAsyncJobsGlobalLockWaitTime()).isEqualTo(Duration.ofMinutes(2));
-                    assertThat(executor.getAsyncJobsGlobalLockPollRate()).isEqualTo(Duration.ofSeconds(1));
-                    assertThat(executor.getTimerLockWaitTime()).isEqualTo(Duration.ofMinutes(3));
-                    assertThat(executor.getTimerLockPollRate()).isEqualTo(Duration.ofSeconds(2));
-                    assertThat(executor.getResetExpiredJobsInterval()).isEqualTo(Duration.ofMinutes(5).toMillis());
-                    assertThat(executor.getResetExpiredJobsPageSize()).isEqualTo(5);
-                });
-    }
-
-    @Test
-    void customAsyncHistoryExecutorProperties() {
-        contextRunner
-                .withPropertyValues(
-                        "flowable.check-process-definitions=false",
-                        "flowable.process.async-history.enable=true",
-                        "flowable.process.async-history.executor.max-async-jobs-due-per-acquisition=2048",
-                        "flowable.process.async-history.executor.default-async-job-acquire-wait-time-in-millis=30000",
-                        "flowable.process.async-history.executor.default-queue-size-full-wait-time-in-millis=15000",
-                        "flowable.process.async-history.executor.lock-owner=test-lock-owner",
-                        "flowable.process.async-history.executor.async-job-lock-time-in-millis=10800000",
-                        "flowable.process.async-history.executor.async-jobs-global-lock-wait-time=PT2M",
-                        "flowable.process.async-history.executor.async-jobs-global-lock-poll-rate=PT1S",
-                        "flowable.process.async-history.executor.reset-expired-jobs-interval=300000",
-                        "flowable.process.async-history.executor.reset-expired-jobs-page-size=5"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasBean("asyncHistoryExecutor")
-                            .hasSingleBean(ProcessEngineConfigurationImpl.class);
-
-                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
-                    SpringAsyncHistoryExecutor executor = context.getBean("asyncHistoryExecutor", SpringAsyncHistoryExecutor.class);
-
-                    assertThat(configuration.getAsyncHistoryExecutor()).isEqualTo(executor);
-
-                    assertThat(executor.isTimerRunnableNeeded()).isFalse();
-                    assertThat(executor.getMaxAsyncJobsDuePerAcquisition()).isEqualTo(2048);
-                    assertThat(executor.getDefaultAsyncJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(30).toMillis());
-                    assertThat(executor.getDefaultQueueSizeFullWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(15).toMillis());
-                    assertThat(executor.getLockOwner()).isEqualTo("test-lock-owner");
-                    assertThat(executor.getAsyncJobLockTimeInMillis()).isEqualTo(Duration.ofHours(3).toMillis());
-                    assertThat(executor.getAsyncJobsGlobalLockWaitTime()).isEqualTo(Duration.ofMinutes(2));
-                    assertThat(executor.getAsyncJobsGlobalLockPollRate()).isEqualTo(Duration.ofSeconds(1));
-                    assertThat(executor.getResetExpiredJobsInterval()).isEqualTo(Duration.ofMinutes(5).toMillis());
-                    assertThat(executor.getResetExpiredJobsPageSize()).isEqualTo(5);
-                });
-    }
-
-    @Test
-    void customAsyncHistoryExecutorPropertiesWithNewPropertiesWithDuration() {
-        contextRunner
-                .withPropertyValues(
-                        "flowable.check-process-definitions=false",
-                        "flowable.process.async-history.enable=true",
-                        "flowable.process.async-history.executor.max-async-jobs-due-per-acquisition=2048",
-                        "flowable.process.async-history.executor.default-async-job-acquire-wait-time=PT30S",
-                        "flowable.process.async-history.executor.default-queue-size-full-wait-time=PT15S",
-                        "flowable.process.async-history.executor.lock-owner=test-lock-owner",
-                        "flowable.process.async-history.executor.async-job-lock-time=PT3H",
-                        "flowable.process.async-history.executor.async-jobs-global-lock-wait-time=PT2M",
-                        "flowable.process.async-history.executor.async-jobs-global-lock-poll-rate=PT1S",
-                        "flowable.process.async-history.executor.reset-expired-jobs-interval=PT5M",
-                        "flowable.process.async-history.executor.reset-expired-jobs-page-size=5"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasBean("asyncHistoryExecutor")
-                            .hasSingleBean(ProcessEngineConfigurationImpl.class);
-
-                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
-                    SpringAsyncHistoryExecutor executor = context.getBean("asyncHistoryExecutor", SpringAsyncHistoryExecutor.class);
-
-                    assertThat(configuration.getAsyncHistoryExecutor()).isEqualTo(executor);
-
-                    assertThat(executor.isTimerRunnableNeeded()).isFalse();
-                    assertThat(executor.getMaxAsyncJobsDuePerAcquisition()).isEqualTo(2048);
-                    assertThat(executor.getDefaultAsyncJobAcquireWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(30).toMillis());
-                    assertThat(executor.getDefaultQueueSizeFullWaitTimeInMillis()).isEqualTo(Duration.ofSeconds(15).toMillis());
-                    assertThat(executor.getLockOwner()).isEqualTo("test-lock-owner");
-                    assertThat(executor.getAsyncJobLockTimeInMillis()).isEqualTo(Duration.ofHours(3).toMillis());
-                    assertThat(executor.getAsyncJobsGlobalLockWaitTime()).isEqualTo(Duration.ofMinutes(2));
-                    assertThat(executor.getAsyncJobsGlobalLockPollRate()).isEqualTo(Duration.ofSeconds(1));
-                    assertThat(executor.getResetExpiredJobsInterval()).isEqualTo(Duration.ofMinutes(5).toMillis());
-                    assertThat(executor.getResetExpiredJobsPageSize()).isEqualTo(5);
-                });
-    }
-
-    @Test
-    void taskInvokerWithCustomProperties() {
-        contextRunner
-                .withConfiguration(AutoConfigurations.of(TaskExecutionAutoConfiguration.class))
-                .withPropertyValues(
-                        "flowable.task-invoker.core-pool-size=2",
-                        "flowable.task-invoker.max-pool-size=3",
-                        "flowable.task-invoker.queue-size=15",
-                        "flowable.task-invoker.thread-name-prefix=test-"
-                )
-                .run(context -> {
-                    assertThat(context)
-                            .hasSingleBean(ProcessEngineConfigurationImpl.class)
-                            .hasSingleBean(TaskExecutor.class)
-                            .hasBean("flowableAsyncTaskInvokerTaskExecutor");
-
-                    ProcessEngineConfigurationImpl configuration = context.getBean(ProcessEngineConfigurationImpl.class);
-
-                    AsyncTaskExecutor taskInvokerTaskExecutor = context.getBean("flowableAsyncTaskInvokerTaskExecutor", AsyncTaskExecutor.class);
-                    assertThat(configuration.getAsyncTaskInvokerTaskExecutor())
-                            .isEqualTo(taskInvokerTaskExecutor)
-                            .isInstanceOfSatisfying(DefaultAsyncTaskExecutor.class, taskExecutor -> {
-                                assertThat(taskExecutor.getCorePoolSize()).isEqualTo(2);
-                                assertThat(taskExecutor.getMaxPoolSize()).isEqualTo(3);
-                                assertThat(taskExecutor.getQueueSize()).isEqualTo(15);
-                                assertThat(taskExecutor.getThreadPoolNamingPattern()).isEqualTo("test-%d");
-                            });
-                });
-    }
 
     private void assertAllServicesPresent(ApplicationContext context, ProcessEngine processEngine) {
         List<Method> methods = Stream.of(ProcessEngine.class.getDeclaredMethods())

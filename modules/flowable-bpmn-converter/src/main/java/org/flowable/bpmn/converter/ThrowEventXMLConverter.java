@@ -48,13 +48,9 @@ public class ThrowEventXMLConverter extends BaseBpmnXMLConverter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     protected BaseElement convertXMLToElement(XMLStreamReader xtr, BpmnModel model) throws Exception {
         ThrowEvent throwEvent = new ThrowEvent();
         BpmnXMLUtil.addXMLLocation(throwEvent, xtr);
-        
-        BpmnXMLUtil.addCustomAttributes(xtr, throwEvent, defaultElementAttributes, defaultActivityAttributes);
-        
         parseChildElements(getXMLElementName(), throwEvent, childParserMap, model, xtr);
         return throwEvent;
     }

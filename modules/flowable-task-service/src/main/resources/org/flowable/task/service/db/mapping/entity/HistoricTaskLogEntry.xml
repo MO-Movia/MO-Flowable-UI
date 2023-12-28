@@ -117,11 +117,11 @@
   
   <!-- SELECTS -->
   <select id="selectHistoricTaskLogEntriesByQueryCriteria" parameterType="org.flowable.task.service.impl.HistoricTaskLogEntryQueryImpl" resultMap="HistoricTaskLogEntryResultMap">
-    <if test="needsPaging">${limitBefore}</if>
-    SELECT RES.* <if test="needsPaging">${limitBetween}</if>
+    <if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+    select RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
     <include refid="selectHistoricTaskLogEntriesByQueryCriteriaSql"/>
     ${orderBy}
-    <if test="needsPaging">${limitAfter}</if>
+    <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
 
   <select id="selectHistoricTaskLogEntriesCountByQueryCriteria" parameterType="org.flowable.task.service.impl.HistoricTaskLogEntryQueryImpl" resultType="long">
@@ -130,7 +130,7 @@
   </select>
 
   <select id="selectHistoricTaskLogEntriesByNativeQueryCriteria" parameterType="java.util.Map" resultMap="HistoricTaskLogEntryResultMap">
-    <include refid="org.flowable.common.engine.db.selectByNativeQuery"/>
+    <include refid="org.flowable.task.service.db.common.selectByNativeQuery"/>
   </select>
 
   <select id="selectHistoricTaskLogEntriesCountByNativeQueryCriteria" parameterType="java.util.Map" resultType="long">
@@ -204,19 +204,6 @@
 
   <delete id="deleteHistoricTaskLogEntriesByTaskId" parameterType="string">
     delete from ${prefix}ACT_HI_TSK_LOG where TASK_ID_ = #{taskId}
-  </delete>
-  
-  <delete id="bulkDeleteHistoricTaskLogEntriesForTaskIds" parameterType="string">
-    delete from ${prefix}ACT_HI_TSK_LOG where 
-    <foreach item="listItem" index="listIndex" collection="collection">
-        <if test="listIndex &gt; 0">
-        or
-        </if>
-        TASK_ID_ in 
-        <foreach item="item" index="index" collection="listItem" open="(" separator="," close=")">
-          #{item}
-        </foreach>
-    </foreach>
   </delete>
   
   <delete id="bulkDeleteHistoricTaskLogEntriesForNonExistingProcessInstances" parameterType="java.util.Map">

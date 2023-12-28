@@ -17,8 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.common.engine.impl.context.Context;
 import org.flowable.variable.service.impl.persistence.entity.HistoricVariableInitializingList;
@@ -30,7 +28,6 @@ import org.flowable.variable.service.impl.persistence.entity.HistoricVariableIns
 public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity implements HistoricCaseInstanceEntity {
     
     protected String businessKey;
-    protected String businessStatus;
     protected String name;
     protected String parentId;
     protected String caseDefinitionId;
@@ -38,16 +35,12 @@ public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity imp
     protected Date startTime;
     protected Date endTime;
     protected String startUserId;
-    protected Date lastReactivationTime;
-    protected String lastReactivationUserId;
     protected String callbackId;
     protected String callbackType;
     protected String referenceId;
     protected String referenceType;
     protected String tenantId = CmmnEngineConfiguration.NO_TENANT_ID;
     protected List<HistoricVariableInstanceEntity> queryVariables;
-
-    protected String localizedName;
     
     // non persisted
     protected String caseDefinitionKey;
@@ -55,39 +48,10 @@ public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity imp
     protected Integer caseDefinitionVersion;
     protected String caseDefinitionDeploymentId;
 
-    public HistoricCaseInstanceEntityImpl() {
-
-    }
-
-    public HistoricCaseInstanceEntityImpl(CaseInstance caseInstance) {
-        this.id = caseInstance.getId();
-        this.businessKey = caseInstance.getBusinessKey();
-        this.businessStatus = caseInstance.getBusinessStatus();
-        this.name = caseInstance.getName();
-        this.parentId = caseInstance.getParentId();
-        this.caseDefinitionId = caseInstance.getCaseDefinitionId();
-        this.caseDefinitionKey = caseInstance.getCaseDefinitionKey();
-        this.caseDefinitionName = caseInstance.getCaseDefinitionName();
-        this.caseDefinitionVersion = caseInstance.getCaseDefinitionVersion();
-        this.caseDefinitionDeploymentId = caseInstance.getCaseDefinitionDeploymentId();
-        this.state = caseInstance.getState();
-        this.startTime = caseInstance.getStartTime();
-        this.startUserId = caseInstance.getStartUserId();
-        this.callbackId = caseInstance.getCallbackId();
-        this.callbackType = caseInstance.getCallbackType();
-        this.referenceId = caseInstance.getReferenceId();
-        this.referenceType = caseInstance.getReferenceType();
-
-        if (caseInstance.getTenantId() != null) {
-            this.tenantId = caseInstance.getTenantId();
-        }
-    }
-
     @Override
     public Object getPersistentState() {
         Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("businessKey", businessKey);
-        persistentState.put("businessStatus", businessStatus);
         persistentState.put("name", name);
         persistentState.put("parentId", parentId);
         persistentState.put("caseDefinitionId", caseDefinitionId);
@@ -112,18 +76,7 @@ public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity imp
         this.businessKey = businessKey;
     }
     @Override
-    public String getBusinessStatus() {
-        return businessStatus;
-    }
-    @Override
-    public void setBusinessStatus(String businessStatus) {
-        this.businessStatus = businessStatus;
-    }
-    @Override
     public String getName() {
-        if (StringUtils.isNotBlank(localizedName)) {
-            return localizedName;
-        }
         return name;
     }
     @Override
@@ -177,22 +130,6 @@ public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity imp
     @Override
     public void setStartUserId(String startUserId) {
         this.startUserId = startUserId;
-    }
-    @Override
-    public Date getLastReactivationTime() {
-        return lastReactivationTime;
-    }
-    @Override
-    public void setLastReactivationTime(Date lastReactivationTime) {
-        this.lastReactivationTime = lastReactivationTime;
-    }
-    @Override
-    public String getLastReactivationUserId() {
-        return lastReactivationUserId;
-    }
-    @Override
-    public void setLastReactivationUserId(String lastReactivationUserId) {
-        this.lastReactivationUserId = lastReactivationUserId;
     }
     @Override
     public String getCallbackId() {
@@ -260,15 +197,6 @@ public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity imp
         this.queryVariables = queryVariables;
     }
 
-    public String getLocalizedName() {
-        return localizedName;
-    }
-
-    @Override
-    public void setLocalizedName(String localizedName) {
-        this.localizedName = localizedName;
-    }
-  
     @Override
     public String getCaseDefinitionKey() {
         return caseDefinitionKey;
@@ -307,18 +235,5 @@ public class HistoricCaseInstanceEntityImpl extends AbstractCmmnEngineEntity imp
     @Override
     public void setCaseDefinitionDeploymentId(String caseDefinitionDeploymentId) {
         this.caseDefinitionDeploymentId = caseDefinitionDeploymentId;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("HistoricCaseInstance[id=").append(id)
-                .append(", caseDefinitionId=").append(caseDefinitionId);
-
-        if (StringUtils.isNotEmpty(tenantId)) {
-            sb.append(", tenantId=").append(tenantId);
-        }
-
-        return sb.toString();
     }
 }

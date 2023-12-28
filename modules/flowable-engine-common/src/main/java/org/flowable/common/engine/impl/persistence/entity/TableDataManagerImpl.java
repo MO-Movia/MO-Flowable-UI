@@ -85,13 +85,12 @@ public class TableDataManagerImpl implements TableDataManager {
     }
 
     protected String getTableNameFilter(DatabaseMetaData databaseMetaData, String databaseTablePrefix, String flowableTablePrefix) throws SQLException {
-        // We are using the search string escape for the filter since the underscore character (_) means match any character when used in LIKE.
-        // However, we want to get the tables that do have that charactery literally
-        String tableNameFilter;
+        String tableNameFilter = databaseTablePrefix + flowableTablePrefix + "_%";
         if ("postgres".equals(getDbSqlSession().getDbSqlSessionFactory().getDatabaseType())
                 || "cockroachdb".equals(getDbSqlSession().getDbSqlSessionFactory().getDatabaseType())) {
-            tableNameFilter = databaseTablePrefix + flowableTablePrefix.toLowerCase(Locale.ROOT) + databaseMetaData.getSearchStringEscape() + "_%";
-        } else {
+            tableNameFilter = databaseTablePrefix + flowableTablePrefix.toLowerCase(Locale.ROOT) + "_%";
+        }
+        if ("oracle".equals(getDbSqlSession().getDbSqlSessionFactory().getDatabaseType())) {
             tableNameFilter = databaseTablePrefix + flowableTablePrefix + databaseMetaData.getSearchStringEscape() + "_%";
         }
 

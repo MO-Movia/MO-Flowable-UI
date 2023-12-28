@@ -16,23 +16,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
 import org.flowable.common.engine.api.async.AsyncTaskExecutor;
-import org.springframework.aop.framework.AopProxyUtils;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.core.task.AsyncListenableTaskExecutor;
 
 /**
  * @author Filip Hrisafov
- * @author Joram Barrez
  */
 public class SpringAsyncTaskExecutor implements AsyncTaskExecutor {
 
-    protected final org.springframework.core.task.AsyncTaskExecutor asyncTaskExecutor;
+    protected final AsyncListenableTaskExecutor asyncTaskExecutor;
 
-    protected final boolean isAsyncTaskExecutorAopProxied;
-
-    public SpringAsyncTaskExecutor(org.springframework.core.task.AsyncTaskExecutor asyncTaskExecutor) {
+    public SpringAsyncTaskExecutor(AsyncListenableTaskExecutor asyncTaskExecutor) {
         this.asyncTaskExecutor = asyncTaskExecutor;
-        this.isAsyncTaskExecutorAopProxied = AopUtils.isAopProxy(asyncTaskExecutor); // no need to repeat this every time, done once in constructor
     }
 
     @Override
@@ -42,12 +36,12 @@ public class SpringAsyncTaskExecutor implements AsyncTaskExecutor {
 
     @Override
     public CompletableFuture<?> submit(Runnable task) {
-        return asyncTaskExecutor.submitCompletable(task);
+        return asyncTaskExecutor.submitListenable(task).completable();
     }
 
     @Override
     public <T> CompletableFuture<T> submit(Callable<T> task) {
-        return asyncTaskExecutor.submitCompletable(task);
+        return asyncTaskExecutor.submitListenable(task).completable();
     }
 
     @Override
@@ -55,20 +49,7 @@ public class SpringAsyncTaskExecutor implements AsyncTaskExecutor {
         // This uses spring resources passed in the constructor, therefore there is nothing to shutdown here
     }
 
-    public org.springframework.core.task.AsyncTaskExecutor getAsyncTaskExecutor() {
+    public AsyncListenableTaskExecutor getAsyncTaskExecutor() {
         return asyncTaskExecutor;
-    }
-
-    @Override
-    public int getRemainingCapacity() {
-        Object executor = asyncTaskExecutor;
-        if (isAsyncTaskExecutorAopProxied) {
-            executor = AopProxyUtils.getSingletonTarget(asyncTaskExecutor);
-        }
-        if (executor instanceof ThreadPoolTaskExecutor) {
-            return ((ThreadPoolTaskExecutor) executor).getThreadPoolExecutor().getQueue().remainingCapacity();
-        } else {
-            return Integer.MAX_VALUE;
-        }
     }
 }

@@ -44,11 +44,6 @@ public class ByteArrayEntityManagerImpl
     }
 
     @Override
-    public void bulkDeleteByteArraysById(List<String> byteArrayEntityIds) {
-        dataManager.bulkDeleteByteArraysNoRevisionCheck(byteArrayEntityIds);
-    }
-
-    @Override
     protected FlowableEventDispatcher getEventDispatcher() {
         return eventDispatcherSupplier.get();
     }

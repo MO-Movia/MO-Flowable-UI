@@ -25,13 +25,11 @@ import org.flowable.cmmn.engine.impl.IdentityLinkQueryObject;
 import org.flowable.cmmn.engine.impl.cmd.DeleteHistoricCaseInstancesCmd;
 import org.flowable.cmmn.engine.impl.cmd.DeleteRelatedDataOfRemovedHistoricCaseInstancesCmd;
 import org.flowable.cmmn.engine.impl.cmd.DeleteTaskAndPlanItemInstanceDataOfRemovedHistoricCaseInstancesCmd;
-import org.flowable.cmmn.engine.impl.delete.DeleteHistoricCaseInstancesUsingBatchesCmd;
 import org.flowable.cmmn.engine.impl.persistence.entity.HistoricCaseInstanceEntity;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.query.CacheAwareQuery;
 import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.common.engine.impl.AbstractEngineConfiguration;
 import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.CommandConfig;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
@@ -60,15 +58,9 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     protected Integer caseDefinitionVersion;
     protected String caseInstanceId;
     protected Set<String> caseInstanceIds;
-    protected String caseInstanceName;
-    protected String caseInstanceNameLike;
     protected String caseInstanceNameLikeIgnoreCase;
-    protected String rootScopeId;
-    protected String parentScopeId;
     protected String businessKey;
-    protected String businessStatus;
     protected String caseInstanceParentId;
-    protected boolean withoutCaseInstanceParentId;
     protected String deploymentId;
     protected List<String> deploymentIds;
     protected boolean finished;
@@ -78,30 +70,23 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     protected Date finishedBefore;
     protected Date finishedAfter;
     protected String startedBy;
-    protected String state;
-    protected Date lastReactivatedBefore;
-    protected Date lastReactivatedAfter;
-    protected String lastReactivatedBy;
     protected String callbackId;
     protected String callbackType;
-    protected boolean withoutCallbackId;
     protected String referenceId;
     protected String referenceType;
     protected String tenantId;
     protected boolean withoutTenantId;
     protected boolean includeCaseVariables;
+    protected Integer caseVariablesLimit;
     protected String activePlanItemDefinitionId;
     protected Set<String> activePlanItemDefinitionIds;
     protected String involvedUser;
     protected IdentityLinkQueryObject involvedUserIdentityLink;
     protected Set<String> involvedGroups;
-    private List<List<String>> safeInvolvedGroups;
     protected IdentityLinkQueryObject involvedGroupIdentityLink;
     protected List<HistoricCaseInstanceQueryImpl> orQueryObjects = new ArrayList<>();
     protected HistoricCaseInstanceQueryImpl currentOrQueryObject;
     protected boolean inOrStatement;
-    protected String locale;
-    protected boolean withLocalizationFallback;
 
     public HistoricCaseInstanceQueryImpl() {
     }
@@ -134,19 +119,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
             this.currentOrQueryObject.caseDefinitionId = caseDefinitionId;
         } else {
             this.caseDefinitionId = caseDefinitionId;
-        }
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQuery caseDefinitionIds(Set<String> caseDefinitionIds) {
-        if (caseDefinitionIds == null) {
-            throw new FlowableIllegalArgumentException("Case definition ids is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.caseDefinitionIds = caseDefinitionIds;
-        } else {
-            this.caseDefinitionIds = caseDefinitionIds;
         }
         return this;
     }
@@ -228,36 +200,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         }
         return this;
     }
-    
-    @Override
-    public HistoricCaseInstanceQueryImpl caseInstanceName(String name) {
-        if (inOrStatement) {
-            this.currentOrQueryObject.caseInstanceName = name;
-        } else {
-            this.caseInstanceName = name;
-        }
-        return this;
-    }
-    
-    @Override
-    public HistoricCaseInstanceQueryImpl caseInstanceNameLike(String nameLike) {
-        if (inOrStatement) {
-            this.currentOrQueryObject.caseInstanceNameLike = nameLike;
-        } else {
-            this.caseInstanceNameLike = nameLike;
-        }
-        return this;
-    }
-    
-    @Override
-    public HistoricCaseInstanceQueryImpl caseInstanceNameLikeIgnoreCase(String nameLikeIgnoreCase) {
-        if (inOrStatement) {
-            this.currentOrQueryObject.caseInstanceNameLikeIgnoreCase = nameLikeIgnoreCase;
-        } else {
-            this.caseInstanceNameLikeIgnoreCase = nameLikeIgnoreCase;
-        }
-        return this;
-    }
 
     @Override
     public HistoricCaseInstanceQueryImpl caseInstanceBusinessKey(String businessKey) {
@@ -268,46 +210,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
             this.currentOrQueryObject.businessKey = businessKey;
         } else {
             this.businessKey = businessKey;
-        }
-        return this;
-    }
-    
-    @Override
-    public HistoricCaseInstanceQueryImpl caseInstanceRootScopeId(String rootScopeId) {
-        if (rootScopeId == null) {
-            throw new FlowableIllegalArgumentException("rootScopeId is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.rootScopeId = rootScopeId;
-        } else {
-            this.rootScopeId = rootScopeId;
-        }
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQueryImpl caseInstanceParentScopeId(String parentScopeId) {
-        if (parentScopeId == null) {
-            throw new FlowableIllegalArgumentException("parentScopeId is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.parentScopeId = parentScopeId;
-        } else {
-            this.parentScopeId = parentScopeId;
-        }
-        return this;
-    }
-
-
-    @Override
-    public HistoricCaseInstanceQueryImpl caseInstanceBusinessStatus(String businessStatus) {
-        if (businessStatus == null) {
-            throw new FlowableIllegalArgumentException("Business status is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.businessStatus = businessStatus;
-        } else {
-            this.businessStatus = businessStatus;
         }
         return this;
     }
@@ -338,16 +240,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         return this;
     }
     
-    @Override
-    public HistoricCaseInstanceQuery withoutCaseInstanceParent() {
-        if (inOrStatement) {
-            this.currentOrQueryObject.withoutCaseInstanceParentId = true;
-        } else {
-            this.withoutCaseInstanceParentId = true;
-        }
-        return this;
-    }
-
     @Override
     public HistoricCaseInstanceQueryImpl deploymentId(String deploymentId) {
         if (deploymentId == null) {
@@ -462,61 +354,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
     
     @Override
-    public HistoricCaseInstanceQueryImpl state(String state) {
-        if (state == null) {
-            throw new FlowableIllegalArgumentException("state is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.state = state;
-        } else {
-            this.state = state;
-        }
-
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQuery lastReactivatedBefore(Date beforeTime) {
-        if (beforeTime == null) {
-            throw new FlowableIllegalArgumentException("before time is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.lastReactivatedBefore = beforeTime;
-        } else {
-            this.lastReactivatedBefore = beforeTime;
-        }
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQuery lastReactivatedAfter(Date afterTime) {
-        if (afterTime == null) {
-            throw new FlowableIllegalArgumentException("after time is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.lastReactivatedAfter = afterTime;
-        } else {
-            this.lastReactivatedAfter = afterTime;
-        }
-
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQuery lastReactivatedBy(String userId) {
-        if (userId == null) {
-            throw new FlowableIllegalArgumentException("user id is null");
-        }
-        if (inOrStatement) {
-            this.currentOrQueryObject.lastReactivatedBy = userId;
-        } else {
-            this.lastReactivatedBy = userId;
-        }
-
-        return this;
-    }
-
-    @Override
     public HistoricCaseInstanceQuery caseInstanceCallbackId(String callbackId) {
         if (callbackId == null) {
             throw new FlowableIllegalArgumentException("callback id is null");
@@ -538,16 +375,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
             this.currentOrQueryObject.callbackType = callbackType;
         } else {
             this.callbackType = callbackType;
-        }
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQuery withoutCaseInstanceCallbackId() {
-        if (inOrStatement) {
-            this.currentOrQueryObject.withoutCallbackId = true;
-        } else {
-            this.withoutCallbackId = true;
         }
         return this;
     }
@@ -668,12 +495,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
             results = cmmnEngineConfiguration.getHistoricCaseInstanceEntityManager().findByCriteria(this);
         }
 
-        if (cmmnEngineConfiguration.getCaseLocalizationManager() != null) {
-            for (HistoricCaseInstance historicCaseInstance : results) {
-                cmmnEngineConfiguration.getCaseLocalizationManager().localize(historicCaseInstance, locale, withLocalizationFallback);
-            }
-        }
-
         return results;
     }
 
@@ -724,7 +545,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
 
     @Override
-    @Deprecated
     public void deleteWithRelatedData() {
         if (commandExecutor != null) {
             CommandConfig config = new CommandConfig().transactionRequiresNew();
@@ -737,21 +557,17 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
 
     @Override
-    public String deleteInParallelUsingBatch(int batchSize, String batchName) {
-        return commandExecutor.execute(new DeleteHistoricCaseInstancesUsingBatchesCmd(this, batchSize, batchName, false));
-    }
-
-    @Override
-    public String deleteSequentiallyUsingBatch(int batchSize, String batchName) {
-        return commandExecutor.execute(new DeleteHistoricCaseInstancesUsingBatchesCmd(this, batchSize, batchName, true));
-    }
-
-    @Override
     public HistoricCaseInstanceQuery includeCaseVariables() {
         this.includeCaseVariables = true;
         return this;
     }
 
+    @Override
+    public HistoricCaseInstanceQuery limitCaseVariables(Integer historicCaseVariablesLimit) {
+        this.caseVariablesLimit = historicCaseVariablesLimit;
+        return this;
+    }
+    
     @Override
     public HistoricCaseInstanceQuery activePlanItemDefinitionId(String planItemDefinitionId) {
         if (planItemDefinitionId == null) {
@@ -927,6 +743,17 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
 
     @Override
+    public HistoricCaseInstanceQueryImpl caseInstanceNameLikeIgnoreCase(String nameLikeIgnoreCase) {
+        if (inOrStatement) {
+            this.currentOrQueryObject.caseInstanceNameLikeIgnoreCase = nameLikeIgnoreCase;
+        } else {
+            this.caseInstanceNameLikeIgnoreCase = nameLikeIgnoreCase;
+        }
+        return this;
+    }
+
+
+    @Override
     public HistoricCaseInstanceQuery variableValueGreaterThan(String name, Object value) {
         if (inOrStatement) {
             currentOrQueryObject.variableValueGreaterThan(name, value, false);
@@ -996,18 +823,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         }
     }
 
-    @Override
-    public HistoricCaseInstanceQuery locale(String locale) {
-        this.locale = locale;
-        return this;
-    }
-
-    @Override
-    public HistoricCaseInstanceQuery withLocalizationFallback() {
-        this.withLocalizationFallback = true;
-        return this;
-    }
-
     public String getCaseDefinitionId() {
         return caseDefinitionId;
     }
@@ -1045,14 +860,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         return caseInstanceId;
     }
 
-    public String getCaseInstanceName() {
-        return caseInstanceName;
-    }
-
-    public String getCaseInstanceNameLike() {
-        return caseInstanceNameLike;
-    }
-
     public String getCaseInstanceNameLikeIgnoreCase() {
         return caseInstanceNameLikeIgnoreCase;
     }
@@ -1060,17 +867,9 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     public String getBusinessKey() {
         return businessKey;
     }
-    
-    public String getBusinessStatus() {
-        return businessStatus;
-    }
 
     public String getCaseInstanceParentId() {
         return caseInstanceParentId;
-    }
-
-    public boolean isWithoutCaseInstanceParentId() {
-        return withoutCaseInstanceParentId;
     }
 
     public boolean isFinished() {
@@ -1101,32 +900,12 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         return startedBy;
     }
     
-    public String getState() {
-        return state;
-    }
-
-    public Date getLastReactivatedBefore() {
-        return lastReactivatedBefore;
-    }
-
-    public Date getLastReactivatedAfter() {
-        return lastReactivatedAfter;
-    }
-
-    public String getLastReactivatedBy() {
-        return lastReactivatedBy;
-    }
-
     public String getCallbackId() {
         return callbackId;
     }
 
     public String getCallbackType() {
         return callbackType;
-    }
-
-    public boolean isWithoutCallbackId() {
-        return withoutCallbackId;
     }
 
     public String getReferenceId() {
@@ -1173,6 +952,10 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         return includeCaseVariables;
     }
 
+    public Integer getCaseVariablesLimit() {
+        return caseVariablesLimit;
+    }
+
     public List<HistoricCaseInstanceQueryImpl> getOrQueryObjects() {
         return orQueryObjects;
     }
@@ -1189,34 +972,12 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
         return caseInstanceIds;
     }
 
-    public boolean isNeedsCaseDefinitionOuterJoin() {
-        if (isNeedsPaging()) {
-            if (AbstractEngineConfiguration.DATABASE_TYPE_ORACLE.equals(databaseType)
-                    || AbstractEngineConfiguration.DATABASE_TYPE_DB2.equals(databaseType)
-                    || AbstractEngineConfiguration.DATABASE_TYPE_MSSQL.equals(databaseType)) {
-                // When using oracle, db2 or mssql we don't need outer join for the process definition join.
-                // It is not needed because the outer join order by is done by the row number instead
-                return false;
-            }
+    public String getMssqlOrDB2OrderBy() {
+        String specialOrderBy = super.getOrderByColumns();
+        if (specialOrderBy != null && specialOrderBy.length() > 0) {
+            specialOrderBy = specialOrderBy.replace("RES.", "TEMPRES_");
         }
-
-        return hasOrderByForColumn(HistoricCaseInstanceQueryProperty.CASE_DEFINITION_KEY.getName());
-    }
-
-    public List<List<String>> getSafeInvolvedGroups() {
-        return safeInvolvedGroups;
-    }
-
-    public void setSafeInvolvedGroups(List<List<String>> safeInvolvedGroups) {
-        this.safeInvolvedGroups = safeInvolvedGroups;
-    }
-
-    public String getRootScopeId() {
-        return rootScopeId;
-    }
-
-    public String getParentScopeId() {
-        return parentScopeId;
+        return specialOrderBy;
     }
 
 }

@@ -21,10 +21,8 @@ public class InboundChannelModel extends ChannelModel {
 
     protected String deserializerType;
 
-    protected String contextExtractorDelegateExpression;
     protected String deserializerDelegateExpression;
     protected String payloadExtractorDelegateExpression;
-    protected String headerExtractorDelegateExpression;
     protected String eventTransformerDelegateExpression;
     protected String pipelineDelegateExpression;
     protected ChannelEventKeyDetection channelEventKeyDetection;
@@ -48,14 +46,6 @@ public class InboundChannelModel extends ChannelModel {
         this.deserializerType = deserializerType;
     }
 
-    public String getContextExtractorDelegateExpression() {
-        return contextExtractorDelegateExpression;
-    }
-
-    public void setContextExtractorDelegateExpression(String contextExtractorDelegateExpression) {
-        this.contextExtractorDelegateExpression = contextExtractorDelegateExpression;
-    }
-
     public String getDeserializerDelegateExpression() {
         return deserializerDelegateExpression;
     }
@@ -70,14 +60,6 @@ public class InboundChannelModel extends ChannelModel {
 
     public void setPayloadExtractorDelegateExpression(String payloadExtractorDelegateExpression) {
         this.payloadExtractorDelegateExpression = payloadExtractorDelegateExpression;
-    }
-    
-    public String getHeaderExtractorDelegateExpression() {
-        return headerExtractorDelegateExpression;
-    }
-
-    public void setHeaderExtractorDelegateExpression(String headerExtractorDelegateExpression) {
-        this.headerExtractorDelegateExpression = headerExtractorDelegateExpression;
     }
 
     public String getEventTransformerDelegateExpression() {

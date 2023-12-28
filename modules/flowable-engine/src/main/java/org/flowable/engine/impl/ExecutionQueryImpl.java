@@ -84,7 +84,6 @@ public class ExecutionQueryImpl extends AbstractVariableQueryImpl<ExecutionQuery
     protected boolean isActive;
     protected String involvedUser;
     protected Set<String> involvedGroups;
-    private List<List<String>> safeInvolvedGroups;
     protected Set<String> processDefinitionKeys;
     protected Set<String> processDefinitionIds;
 
@@ -961,14 +960,6 @@ public class ExecutionQueryImpl extends AbstractVariableQueryImpl<ExecutionQuery
     public String getBusinessKeyLike() {
         return businessKeyLike;
     }
-    
-    public String getBusinessStatus() {
-        return null;
-    }
-    
-    public String getBusinessStatusLike() {
-        return null;
-    }
 
     public String getExecutionId() {
         return executionId;
@@ -1161,42 +1152,6 @@ public class ExecutionQueryImpl extends AbstractVariableQueryImpl<ExecutionQuery
 
     public void setStartedBy(String startedBy) {
         this.startedBy = startedBy;
-    }
-
-    public String getLocale() {
-        return locale;
-    }
-
-    public boolean isWithLocalizationFallback() {
-        return withLocalizationFallback;
-    }
-
-    public String getCallbackId() {
-        return callbackId;
-    }
-
-    public String getCallbackType() {
-        return callbackType;
-    }
-    
-    public List<ExecutionQueryImpl> getOrQueryObjects() {
-        return orQueryObjects;
-    }
-
-    public List<List<String>> getSafeInvolvedGroups() {
-        return safeInvolvedGroups;
-    }
-
-    public void setSafeInvolvedGroups(List<List<String>> safeInvolvedGroups) {
-        this.safeInvolvedGroups = safeInvolvedGroups;
-    }
-
-    public String getRootScopeId() {
-        return null;
-    }
-
-    public String getParentScopeId() {
-        return null;
     }
 
 }

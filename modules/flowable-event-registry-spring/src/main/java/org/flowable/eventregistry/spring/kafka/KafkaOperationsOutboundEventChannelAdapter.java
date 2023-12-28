@@ -12,65 +12,33 @@
  */
 package org.flowable.eventregistry.spring.kafka;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeader;
 import org.flowable.common.engine.api.FlowableException;
-import org.flowable.eventregistry.api.OutboundEvent;
 import org.flowable.eventregistry.api.OutboundEventChannelAdapter;
 import org.springframework.kafka.core.KafkaOperations;
 
 /**
  * @author Filip Hrisafov
  */
-public class KafkaOperationsOutboundEventChannelAdapter implements OutboundEventChannelAdapter<Object> {
+public class KafkaOperationsOutboundEventChannelAdapter implements OutboundEventChannelAdapter<String> {
 
     protected KafkaOperations<Object, Object> kafkaOperations;
-    protected KafkaPartitionProvider partitionProvider;
-    protected KafkaMessageKeyProvider<?> messageKeyProvider;
     protected String topic;
+    protected String key;
 
-    // backwards compatibility
-    public KafkaOperationsOutboundEventChannelAdapter(KafkaOperations<Object, Object> kafkaOperations, KafkaPartitionProvider partitionProvider, String topic, String key) {
-        this(kafkaOperations, partitionProvider, topic, (ignore) -> StringUtils.defaultIfEmpty(key, null));
-    }
-
-    public KafkaOperationsOutboundEventChannelAdapter(KafkaOperations<Object, Object> kafkaOperations, KafkaPartitionProvider partitionProvider, String topic, KafkaMessageKeyProvider<?> messageKeyProvider) {
+    public KafkaOperationsOutboundEventChannelAdapter(KafkaOperations<Object, Object> kafkaOperations, String topic, String key) {
         this.kafkaOperations = kafkaOperations;
-        this.partitionProvider = partitionProvider;
-        this.messageKeyProvider = messageKeyProvider;
         this.topic = topic;
+        this.key = key;
     }
 
     @Override
-    public void sendEvent(OutboundEvent<Object> event) {
+    public void sendEvent(String rawEvent) {
         try {
-            Object rawEvent = event.getBody();
-            Map<String, Object> headerMap = event.getHeaders();
-            List<Header> headers = new ArrayList<>();
-            for (String headerKey : headerMap.keySet()) {
-                Object headerValue = headerMap.get(headerKey);
-                if (headerValue != null) {
-                    headers.add(new RecordHeader(headerKey, headerValue.toString().getBytes(StandardCharsets.UTF_8)));
-                }
-            }
-
-            Integer partition = partitionProvider == null ? null : partitionProvider.determinePartition(event);
-            Object key = messageKeyProvider == null ? null : messageKeyProvider.determineMessageKey(event);
-
-            ProducerRecord<Object, Object> producerRecord = new ProducerRecord<>(topic, partition, key, rawEvent, headers);
-            kafkaOperations.send(producerRecord).get();
-            
+            kafkaOperations.send(topic, key, rawEvent).get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new FlowableException("Sending the event was interrupted", e);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof RuntimeException) {
                 throw (RuntimeException) e.getCause();
@@ -80,8 +48,4 @@ public class KafkaOperationsOutboundEventChannelAdapter implements OutboundEvent
         }
     }
 
-    @Override
-    public void sendEvent(Object rawEvent, Map<String, Object> headerMap) {
-        throw new UnsupportedOperationException("Outbound processor should never call this");
-    }
 }

@@ -13,25 +13,19 @@
 package org.flowable.engine.impl;
 
 import java.sql.Connection;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.flowable.batch.api.Batch;
 import org.flowable.batch.api.BatchBuilder;
 import org.flowable.batch.api.BatchPart;
-import org.flowable.batch.api.BatchPartBuilder;
-import org.flowable.batch.api.BatchPartQuery;
 import org.flowable.batch.api.BatchQuery;
-import org.flowable.batch.service.BatchPartBuilderImpl;
 import org.flowable.batch.service.impl.BatchBuilderImpl;
-import org.flowable.batch.service.impl.BatchPartQueryImpl;
 import org.flowable.batch.service.impl.BatchQueryImpl;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.management.TableMetaData;
 import org.flowable.common.engine.api.management.TablePageQuery;
-import org.flowable.common.engine.api.tenant.ChangeTenantIdBuilder;
 import org.flowable.common.engine.impl.cmd.CustomSqlExecution;
 import org.flowable.common.engine.impl.cmd.GetPropertiesCmd;
 import org.flowable.common.engine.impl.cmd.GetTableCountCmd;
@@ -45,7 +39,6 @@ import org.flowable.common.engine.impl.lock.LockManager;
 import org.flowable.common.engine.impl.lock.LockManagerImpl;
 import org.flowable.common.engine.impl.persistence.entity.TablePageQueryImpl;
 import org.flowable.common.engine.impl.service.CommonEngineServiceImpl;
-import org.flowable.common.engine.impl.tenant.ChangeTenantIdBuilderImpl;
 import org.flowable.engine.ManagementService;
 import org.flowable.engine.event.EventLogEntry;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -83,8 +76,6 @@ import org.flowable.job.service.impl.HistoryJobQueryImpl;
 import org.flowable.job.service.impl.JobQueryImpl;
 import org.flowable.job.service.impl.SuspendedJobQueryImpl;
 import org.flowable.job.service.impl.TimerJobQueryImpl;
-import org.flowable.job.service.impl.cmd.BulkMoveDeadLetterJobsCmd;
-import org.flowable.job.service.impl.cmd.BulkMoveDeadLetterJobsToHistoryJobsCmd;
 import org.flowable.job.service.impl.cmd.DeleteDeadLetterJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteExternalWorkerJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteHistoryJobCmd;
@@ -104,8 +95,6 @@ import org.flowable.job.service.impl.cmd.MoveSuspendedJobToExecutableJobCmd;
 import org.flowable.job.service.impl.cmd.MoveTimerToExecutableJobCmd;
 import org.flowable.job.service.impl.cmd.SetJobRetriesCmd;
 import org.flowable.job.service.impl.cmd.SetTimerJobRetriesCmd;
-import org.flowable.job.service.impl.cmd.UnacquireAllExternalWorkerJobsForWorkerCmd;
-import org.flowable.job.service.impl.cmd.UnacquireExternalWorkerJobCmd;
 
 /**
  * @author Tom Baeyens
@@ -181,16 +170,6 @@ public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngine
     @Override
     public HistoryJob moveDeadLetterJobToHistoryJob(String jobId, int retries) {
         return commandExecutor.execute(new MoveDeadLetterJobToHistoryJobCmd(jobId, retries, configuration.getJobServiceConfiguration()));
-    }
-
-    @Override
-    public void bulkMoveDeadLetterJobs(Collection<String> jobIds, int retries) {
-        commandExecutor.execute(new BulkMoveDeadLetterJobsCmd(jobIds, retries, configuration.getJobServiceConfiguration()));
-    }
-
-    @Override
-    public void bulkMoveDeadLetterJobsToHistoryJobs(Collection<String> jobIds, int retries) {
-        commandExecutor.execute(new BulkMoveDeadLetterJobsToHistoryJobsCmd(jobIds, retries, configuration.getJobServiceConfiguration()));
     }
 
     @Override
@@ -374,16 +353,6 @@ public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngine
     }
     
     @Override
-    public BatchPartQuery createBatchPartQuery() {
-        return new BatchPartQueryImpl(commandExecutor, configuration.getBatchServiceConfiguration());
-    }
-
-    @Override
-    public BatchPartBuilder createBatchPartBuilder(Batch batch) {
-        return new BatchPartBuilderImpl(batch, configuration.getBatchServiceConfiguration(), commandExecutor);
-    }
-
-    @Override
     public void deleteBatch(String batchId) {
         commandExecutor.execute(new DeleteBatchCmd(batchId));
     }
@@ -465,26 +434,6 @@ public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngine
     @Override
     public ExternalWorkerCompletionBuilder createExternalWorkerCompletionBuilder(String externalJobId, String workerId) {
         return new ExternalWorkerCompletionBuilderImpl(commandExecutor, externalJobId, workerId, configuration.getJobServiceConfiguration());
-    }
-    
-    @Override
-    public void unacquireExternalWorkerJob(String jobId, String workerId) {
-        commandExecutor.execute(new UnacquireExternalWorkerJobCmd(jobId, workerId, configuration.getJobServiceConfiguration()));
-    }
-    
-    @Override
-    public void unacquireAllExternalWorkerJobsForWorker(String workerId) {
-        commandExecutor.execute(new UnacquireAllExternalWorkerJobsForWorkerCmd(workerId, null, configuration.getJobServiceConfiguration()));
-    }
-    
-    @Override
-    public void unacquireAllExternalWorkerJobsForWorker(String workerId, String tenantId) {
-        commandExecutor.execute(new UnacquireAllExternalWorkerJobsForWorkerCmd(workerId, tenantId, configuration.getJobServiceConfiguration()));
-    }
-
-    @Override
-    public ChangeTenantIdBuilder createChangeTenantIdBuilder(String fromTenantId, String toTenantId) {
-        return new ChangeTenantIdBuilderImpl(fromTenantId, toTenantId, configuration.getChangeTenantIdManager());
     }
 
 }

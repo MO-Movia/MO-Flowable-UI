@@ -32,7 +32,6 @@ import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceContaine
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.model.ParentCompletionRule;
 import org.flowable.cmmn.model.Stage;
-import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 
 /**
@@ -89,11 +88,6 @@ public class PlanItemInstanceContainerUtil {
 
                     // if the plan item is active and not to be ignored, we can directly stop to look any further as it prevents the parent from being completed
                     if (ACTIVE_STATES.contains(planItemInstance.getState())) {
-                        // if the plan item is active, but was already completed and should be ignored after first completion, we can skip it for further investigation
-                        alreadyCompleted = isPlanItemAlreadyCompleted(commandContext, planItemInstance);
-                        if (shouldIgnorePlanItemForCompletion(commandContext, planItemInstance, alreadyCompleted)) {
-                            continue;
-                        }
                         return new CompletionEvaluationResult(false, false, planItemInstance);
                     }
 
@@ -217,10 +211,6 @@ public class PlanItemInstanceContainerUtil {
      * @return true, if there is a parent completion mode set on the plan item equal to the given one
      */
     public static boolean isParentCompletionRuleForPlanItemEqualToType(PlanItemInstanceEntity planItemInstance, String parentCompletionRuleType) {
-        if (planItemInstance.getPlanItem() == null) {
-            throw new FlowableException("Plan item could not be found for " + planItemInstance);
-        }
-        
         if (planItemInstance.getPlanItem().getItemControl() != null && planItemInstance.getPlanItem().getItemControl().getParentCompletionRule() != null) {
             ParentCompletionRule parentCompletionRule = planItemInstance.getPlanItem().getItemControl().getParentCompletionRule();
             if (parentCompletionRuleType.equals(parentCompletionRule.getType())) {
