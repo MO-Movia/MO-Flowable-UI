@@ -536,6 +536,42 @@
 		<module>modules/flowable-spring-security</module>
         <module>modules/flowable-http-common</module>
         <module>modules/flowable-mail</module>
+		<!-- UI module Dependencies -->
+		<module>modules/flowable-ui/flowable-ui-common</module>
+		<module>modules/flowable-common-rest</module>
+		<module>modules/flowable-cmmn-rest</module>
+		<module>modules/flowable-dmn-rest</module>
+		<module>modules/flowable-event-registry-rest</module>
+		<module>modules/flowable-external-job-rest</module>
+		<module>modules/flowable-app-engine-rest</module>
+		<module>modules/flowable-idm-rest</module>
+		<module>modules/flowable-http</module>
+		<module>modules/flowable-ldap</module>
+		<module>modules/flowable-rest</module>
+		<module>modules/flowable-groovy-script-static-engine</module>
+		<module>modules/flowable-ui/flowable-ui-task-conf</module>
+		<module>modules/flowable-ui/flowable-ui-task-frontend</module>
+		<module>modules/flowable-ui/flowable-ui-task-logic</module>
+		<module>modules/flowable-ui/flowable-ui-task-rest</module>
+		<module>modules/flowable-spring</module>
+		<module>modules/flowable-spring-common</module>
+		<module>modules/flowable-spring-configurator</module>
+		<module>modules/flowable-dmn-spring</module>
+		<module>modules/flowable-dmn-spring-configurator</module>
+		<module>modules/flowable-cmmn-spring</module>
+		<module>modules/flowable-cmmn-spring-configurator</module>
+		<module>modules/flowable-idm-spring</module>
+		<module>modules/flowable-idm-spring-configurator</module>
+		<module>modules/flowable-event-registry-spring</module>
+		<module>modules/flowable-event-registry-spring-configurator</module>
+		<module>modules/flowable-app-engine-spring</module>
+		<module>modules/flowable-engine-configurator</module>
+		<module>modules/flowable-spring-boot/flowable-spring-boot-starters</module>
+		<module>modules/flowable-ui/flowable-spring-boot-starter-ui-task</module>
+		<module>modules/flowable-ui/flowable-spring-boot-starter-ui-admin</module>
+		<module>modules/flowable-ui/flowable-spring-boot-starter-ui-idm</module>
+		<module>modules/flowable-ui/flowable-spring-boot-starter-ui-modeler</module>
+		<module>modules/flowable-ui/flowable-ui-app</module>
     </modules>
 
 	<build>
