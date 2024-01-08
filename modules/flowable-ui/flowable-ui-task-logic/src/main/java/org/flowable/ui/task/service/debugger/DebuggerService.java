@@ -26,6 +26,7 @@ import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.scripting.ScriptEngineRequest;
 import org.flowable.common.engine.impl.scripting.ScriptingEngines;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.ManagementService;
@@ -180,7 +181,12 @@ public class DebuggerService implements ProcessDebugger, ApplicationContextAware
                 (Command<Void>) commandContext -> {
                     ScriptingEngines scriptingEngines = Context.getProcessEngineConfiguration().getScriptingEngines();
                     Execution execution = Context.getProcessEngineConfiguration().getExecutionEntityManager().findById(executionId);
-                    scriptingEngines.evaluate(script, scriptLanguage, (ExecutionEntityImpl) execution, false);
+                    ScriptEngineRequest scriptEngineRequest = ScriptEngineRequest.builder()
+                            .script(script)
+                            .language(scriptLanguage)
+                            .build();
+                    //scriptingEngines.evaluate(script, scriptLanguage, (ExecutionEntityImpl) execution, false);
+                    scriptingEngines.evaluate(scriptEngineRequest);
                     return null;
                 }
         );

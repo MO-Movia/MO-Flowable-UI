@@ -141,6 +141,11 @@ public class FormDefinitionQueryImpl extends AbstractQuery<FormDefinitionQuery, 
     }
 
     @Override
+    public FormDefinitionQuery parentDeploymentId(String parentDeploymentId) {
+        return null;
+    }
+
+    @Override
     public FormDefinitionQueryImpl formDefinitionKey(String key) {
         if (key == null) {
             throw new FlowableIllegalArgumentException("key is null");

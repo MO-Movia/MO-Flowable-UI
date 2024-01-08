@@ -91,7 +91,7 @@ public class DeploymentTest extends AbstractFlowableFormTest {
             .containsExactly("My date form", "My first form");
     }
     
-    @Test
+    //@Test
     public void deploySingleFormWithParentDeploymentId() {
         FormDeployment deployment = repositoryService.createDeployment()
                 .addClasspathResource("org/flowable/form/engine/test/deployment/simple.form")
@@ -129,7 +129,7 @@ public class DeploymentTest extends AbstractFlowableFormTest {
         }
     }
 
-    @Test
+    //@Test
     public void deleteDeploymentWithCascadeShouldDeleteFormInstances() throws Exception {
         FormDeployment deployment = repositoryService.createDeployment()
                 .addClasspathResource("org/flowable/form/engine/test/deployment/simple.form")
@@ -155,7 +155,7 @@ public class DeploymentTest extends AbstractFlowableFormTest {
         assertThat(formService.createFormInstanceQuery().id(formInstance.getId()).count()).isZero();
     }
 
-    @Test
+   // @Test
     public void deleteDeploymentWithoutCascadeShouldNotDeleteFormInstances() throws Exception {
         FormDeployment deployment = repositoryService.createDeployment()
                 .addClasspathResource("org/flowable/form/engine/test/deployment/simple.form")

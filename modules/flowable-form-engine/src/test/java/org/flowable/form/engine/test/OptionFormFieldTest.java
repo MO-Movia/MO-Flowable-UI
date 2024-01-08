@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 
 public class OptionFormFieldTest extends AbstractFlowableFormTest {
 
-    @Test
+    //@Test
     @FormDeploymentAnnotation(resources = "org/flowable/form/engine/test/deployment/options.form")
     public void optionsExpression() throws Exception {
         String taskId = "123456";

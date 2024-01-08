@@ -43,7 +43,8 @@ public interface FormService {
      */
     Map<String, Object> getVariablesFromFormSubmission(String elementId, String elementType, String scopeId, 
             String scopeDefinitionId, String scopeType, FormInfo formInfo, Map<String, Object> values, String outcome);
-
+    Map<String, Object> getVariablesFromFormSubmission(FormInfo formInfo, Map<String, Object> valuesMap, String aDefault);
+    Map<String, Object> getVariablesFromFormSubmission(FormInfo formInfo, Map<String, Object> values);
     /**
      * Store the submitted form values.
      * 

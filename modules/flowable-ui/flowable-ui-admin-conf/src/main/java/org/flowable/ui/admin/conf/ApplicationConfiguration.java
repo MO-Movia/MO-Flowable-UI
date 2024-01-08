@@ -12,8 +12,9 @@
  */
 package org.flowable.ui.admin.conf;
 
-import javax.servlet.MultipartConfigElement;
 
+
+import jakarta.servlet.MultipartConfigElement;
 import org.flowable.ui.admin.properties.FlowableAdminAppProperties;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;

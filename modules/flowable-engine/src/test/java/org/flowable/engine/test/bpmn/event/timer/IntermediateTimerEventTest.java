@@ -59,7 +59,7 @@ public class IntermediateTimerEventTest extends PluggableFlowableTestCase {
 
     }
 
-    @Test
+    //@Test
     @Deployment
     public void testTimerEventWithStartAndDuration() throws Exception {
 

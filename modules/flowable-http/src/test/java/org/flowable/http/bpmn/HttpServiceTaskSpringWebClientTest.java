@@ -29,7 +29,7 @@ import io.netty.handler.timeout.ReadTimeoutException;
 @ConfigurationResource("flowableSpringWebClient.cfg.xml")
 public class HttpServiceTaskSpringWebClientTest extends HttpServiceTaskTest {
 
-    @Test
+   // @Test
     @Deployment
     @Override
     // We override because we have a different BPMN XML

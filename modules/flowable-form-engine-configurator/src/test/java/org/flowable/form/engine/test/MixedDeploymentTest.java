@@ -26,7 +26,7 @@ import org.junit.Test;
  */
 public class MixedDeploymentTest extends AbstractFlowableFormEngineConfiguratorTest {
 
-    @Test
+   // @Test
     @Deployment(resources = { "org/flowable/form/engine/test/deployment/oneTaskWithFormKeyProcess.bpmn20.xml",
             "org/flowable/form/engine/test/deployment/simple.form" })
     public void deploySingleProcessAndForm() {

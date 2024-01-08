@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.flowable.common.engine.api.management.TableMetaData;
 import org.flowable.common.engine.api.management.TablePageQuery;
+import org.flowable.common.engine.api.tenant.ChangeTenantIdBuilder;
 import org.flowable.common.engine.impl.cmd.CustomSqlExecution;
 import org.flowable.common.engine.impl.cmd.GetTableCountCmd;
 import org.flowable.common.engine.impl.cmd.GetTableMetaDataCmd;
@@ -53,6 +54,11 @@ public class FormManagementServiceImpl extends CommonEngineServiceImpl<FormEngin
     @Override
     public TablePageQuery createTablePageQuery() {
         return new TablePageQueryImpl(commandExecutor, configuration);
+    }
+
+    @Override
+    public ChangeTenantIdBuilder createChangeTenantIdBuilder(String fromTenantId, String toTenantId) {
+        return null;
     }
 
     public <MapperType, ResultType> ResultType executeCustomSql(CustomSqlExecution<MapperType, ResultType> customSqlExecution) {

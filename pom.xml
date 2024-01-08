@@ -549,10 +549,34 @@
 		<module>modules/flowable-ldap</module>
 		<module>modules/flowable-rest</module>
 		<module>modules/flowable-groovy-script-static-engine</module>
+		<module>modules/flowable-json-converter</module>
+		<module>modules/flowable-form-engine</module>
+		<module>modules/flowable-form-spring-configurator</module>
+		<module>modules/flowable-form-spring</module>
+		<module>modules/flowable-form-engine-configurator</module>
+		<module>modules/flowable-form-json-converter</module>
+		<module>modules/flowable-form-rest</module>
+		<module>modules/flowable-content-engine</module>
+		<module>modules/flowable-content-engine-configurator</module>
+		<module>modules/flowable-content-spring</module>
+		<module>modules/flowable-content-spring-configurator</module>
+		<module>modules/flowable-content-rest</module>
 		<module>modules/flowable-ui/flowable-ui-task-conf</module>
 		<module>modules/flowable-ui/flowable-ui-task-frontend</module>
 		<module>modules/flowable-ui/flowable-ui-task-logic</module>
 		<module>modules/flowable-ui/flowable-ui-task-rest</module>
+		<module>modules/flowable-ui/flowable-ui-admin-conf</module>
+		<module>modules/flowable-ui/flowable-ui-admin-frontend</module>
+		<module>modules/flowable-ui/flowable-ui-admin-logic</module>
+		<module>modules/flowable-ui/flowable-ui-admin-rest</module>
+		<module>modules/flowable-ui/flowable-ui-idm-conf</module>
+		<module>modules/flowable-ui/flowable-ui-idm-frontend</module>
+		<module>modules/flowable-ui/flowable-ui-idm-logic</module>
+		<module>modules/flowable-ui/flowable-ui-idm-rest</module>
+		<module>modules/flowable-ui/flowable-ui-modeler-conf</module>
+		<module>modules/flowable-ui/flowable-ui-modeler-frontend</module>
+		<module>modules/flowable-ui/flowable-ui-modeler-logic</module>
+		<module>modules/flowable-ui/flowable-ui-modeler-rest</module>
 		<module>modules/flowable-spring</module>
 		<module>modules/flowable-spring-common</module>
 		<module>modules/flowable-spring-configurator</module>

@@ -135,6 +135,6 @@ public class FlowableUiCustomFormLoginConfigurer<H extends HttpSecurityBuilder<H
             authenticationFilter.setRememberMeServices(rememberMeServices);
         }
 
-        builder.addFilter(postProcess(authenticationFilter));
+        //builder.addFilter(postProcess(authenticationFilter));
     }
 }

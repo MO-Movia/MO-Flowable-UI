@@ -26,7 +26,7 @@ import org.flowable.common.engine.impl.javax.el.CouldNotResolvePropertyELResolve
 import org.flowable.common.engine.impl.javax.el.ELResolver;
 import org.flowable.common.engine.impl.javax.el.ListELResolver;
 import org.flowable.common.engine.impl.javax.el.MapELResolver;
-import org.flowable.common.spring.el.ApplicationContextElResolver;
+//import org.flowable.common.spring.el.ApplicationContextElResolver;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -49,26 +49,26 @@ public class SpringFormExpressionManager extends DefaultExpressionManager {
         this.applicationContext = applicationContext;
     }
     
-    @Override
-    protected ELResolver createElResolver(VariableContainer variableContainer) {
-        CompositeELResolver compositeElResolver = new CompositeELResolver();
-        compositeElResolver.add(createVariableElResolver(variableContainer));
-
-        if (beans != null) {
-            // Only expose limited set of beans in expressions
-            compositeElResolver.add(new ReadOnlyMapELResolver(beans));
-        } else {
-            // Expose full application-context in expressions
-            compositeElResolver.add(new ApplicationContextElResolver(applicationContext));
-        }
-
-        compositeElResolver.add(new ArrayELResolver());
-        compositeElResolver.add(new ListELResolver());
-        compositeElResolver.add(new MapELResolver());
-        compositeElResolver.add(new JsonNodeELResolver());
-        compositeElResolver.add(new BeanELResolver());
-        compositeElResolver.add(new CouldNotResolvePropertyELResolver());
-        return compositeElResolver;
-    }
+//    @Override
+//    protected ELResolver createElResolver(VariableContainer variableContainer) {
+//        CompositeELResolver compositeElResolver = new CompositeELResolver();
+//        compositeElResolver.add(createVariableElResolver(variableContainer));
+//
+//        if (beans != null) {
+//            // Only expose limited set of beans in expressions
+//            compositeElResolver.add(new ReadOnlyMapELResolver(beans));
+//        } else {
+//            // Expose full application-context in expressions
+//            compositeElResolver.add(new ApplicationContextElResolver(applicationContext));
+//        }
+//
+//        compositeElResolver.add(new ArrayELResolver());
+//        compositeElResolver.add(new ListELResolver());
+//        compositeElResolver.add(new MapELResolver());
+//        compositeElResolver.add(new JsonNodeELResolver());
+//        compositeElResolver.add(new BeanELResolver());
+//        compositeElResolver.add(new CouldNotResolvePropertyELResolver());
+//        return compositeElResolver;
+//    }
     
 }

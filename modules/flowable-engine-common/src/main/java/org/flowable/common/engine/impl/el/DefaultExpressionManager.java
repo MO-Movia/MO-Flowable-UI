@@ -63,6 +63,8 @@ public class DefaultExpressionManager implements ExpressionManager {
 
     protected ELResolver staticElResolver;
 
+    public DefaultExpressionManager(){}
+
     public DefaultExpressionManager(Map<Object, Object> beans) {
         this.expressionFactory = ExpressionFactoryResolver.resolveExpressionFactory();
         this.beans = beans;

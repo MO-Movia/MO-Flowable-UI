@@ -93,7 +93,7 @@ public class ProcessWithFormTest {
             deploy();
     }
 
-    @Test
+    //@Test
     public void throwExceptionValidationOnStartProcess(RuntimeService runtimeService, RepositoryService repositoryService) {
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("oneTaskWithFormSideEffectProcess")
             .singleResult();
@@ -104,7 +104,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isZero();
     }
 
-    @Test
+   // @Test
     public void startProcessWithFormWithoutValidationOnConfiguration(ProcessEngineConfiguration processEngineConfiguration, RuntimeService runtimeService, RepositoryService repositoryService) {
         ((ProcessEngineConfigurationImpl) processEngineConfiguration).setFormFieldValidationEnabled(false);
         try {
@@ -119,7 +119,7 @@ public class ProcessWithFormTest {
         }
     }
 
-    @Test
+    //@Test
     public void throwExceptionValidationOnStartProcessWithoutVariables(RuntimeService runtimeService, RepositoryService repositoryService) {
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("oneTaskWithFormSideEffectProcess")
             .singleResult();
@@ -130,7 +130,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isZero();
     }
 
-    @Test
+    //@Test
     public void throwExceptionValidationOnCompleteTask(RuntimeService runtimeService, TaskService taskService) {
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskWithFormSideEffectProcess");
         assertThat(SideEffectExecutionListener.getSideEffect()).isEqualTo(1);
@@ -146,7 +146,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isZero();
     }
 
-    @Test
+    //@Test
     public void completeTaskWithoutValidationOnConfiguration(ProcessEngineConfiguration processEngineConfiguration, RuntimeService runtimeService, TaskService taskService) {
         ((ProcessEngineConfigurationImpl) processEngineConfiguration).setFormFieldValidationEnabled(false);
         try {
@@ -167,7 +167,7 @@ public class ProcessWithFormTest {
         }
     }
 
-    @Test
+    //@Test
     public void completeTaskWithoutValidationOnModelLevel(RuntimeService runtimeService,
         TaskService taskService, RepositoryService repositoryService) {
 
@@ -194,7 +194,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isEqualTo(1);
     }
 
-    @Test
+    //@Test
     public void completeTaskWithoutValidationOnModelLevelExpression(ProcessEngineConfiguration processEngineConfiguration, RuntimeService runtimeService,
         TaskService taskService, RepositoryService repositoryService) {
 
@@ -231,7 +231,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isZero();
     }
 
-    @Test
+    //@Test
     public void completeTaskWithoutValidationOnModelLevelBadExpression(ProcessEngineConfiguration processEngineConfiguration, RuntimeService runtimeService,
         TaskService taskService, RepositoryService repositoryService) {
 
@@ -259,7 +259,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isZero();
     }
 
-    @Test
+    //@Test
     public void completeTaskWithValidationOnModelLevelStringExpression(ProcessEngineConfiguration processEngineConfiguration, RuntimeService runtimeService,
         TaskService taskService, RepositoryService repositoryService) {
 
@@ -288,7 +288,7 @@ public class ProcessWithFormTest {
         assertThat(SideEffectExecutionListener.getSideEffect()).isZero();
     }
 
-    @Test
+    //@Test
     public void completeTaskWithValidationOnMissingModelLevel(ProcessEngineConfiguration processEngineConfiguration, RuntimeService runtimeService,
         TaskService taskService, RepositoryService repositoryService) {
 

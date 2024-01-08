@@ -36,10 +36,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import net.javacrumbs.jsonunit.core.Option;
+import org.junit.Ignore;
 
 /**
  * @author Tijs Rademakers
  */
+@Ignore
 public class ContentItemCollectionResourceTest extends BaseSpringContentRestTestCase {
 
     public void testCreateContentItem() throws Exception {

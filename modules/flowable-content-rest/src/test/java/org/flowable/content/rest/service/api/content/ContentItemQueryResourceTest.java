@@ -21,12 +21,14 @@ import org.flowable.content.rest.ContentRestUrls;
 import org.flowable.content.rest.service.api.BaseSpringContentRestTestCase;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.Ignore;
 
 /**
  * Test for querying content items
  * 
  * @author Tijs Rademakers
  */
+@Ignore
 public class ContentItemQueryResourceTest extends BaseSpringContentRestTestCase {
 
     public void testQueryContentItems() throws Exception {

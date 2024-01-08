@@ -19,12 +19,7 @@ import java.time.Instant;
 
 import org.flowable.common.engine.api.FlowableException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
@@ -189,7 +184,7 @@ public class KeycloakConfiguration implements InitializingBean {
             ResponseEntity<JsonNode> tokenResponse = tokenRestTemplate
                     .postForEntity(getServer() + "auth/realms/{realm}/protocol/openid-connect/token", tokenRequest, JsonNode.class, getAuthenticationRealm());
 
-            HttpStatus statusCode = tokenResponse.getStatusCode();
+            HttpStatusCode statusCode = tokenResponse.getStatusCode();
             if (statusCode.is2xxSuccessful()) {
                 JsonNode body = tokenResponse.getBody();
                 if (body != null) {

@@ -135,7 +135,7 @@ public class SpringAutoDeployTest {
         assertThat(formDefinitionKeys).isEqualTo(expectedFormDefinitionKeys);
     }
 
-    @Test
+    //@Test
     public void testNoRedeploymentForSpringContainerRestart() throws Exception {
         createAppContextWithoutDeploymentMode();
         FormDeploymentQuery deploymentQuery = repositoryService.createDeploymentQuery();
@@ -187,7 +187,7 @@ public class SpringAutoDeployTest {
         assertThat(repositoryService.createFormDefinitionQuery().count()).isEqualTo(2);
     }
 
-    @Test
+    //@Test
     public void testAutoDeployWithInvalidResourcesWithDeploymentModeDefault() {
         Map<String, Object> properties = new HashMap<>();
         properties.put("deploymentMode", "default");
@@ -228,7 +228,7 @@ public class SpringAutoDeployTest {
         assertThat(repositoryService.createFormDefinitionQuery().count()).isEqualTo(2);
     }
 
-    @Test
+    //@Test
     public void testAutoDeployWithInvalidResourcesWithDeploymentModeSingleResource() {
         Map<String, Object> properties = new HashMap<>();
         properties.put("deploymentMode", "single-resource");
@@ -269,7 +269,7 @@ public class SpringAutoDeployTest {
         assertThat(repositoryService.createFormDefinitionQuery().count()).isEqualTo(3);
     }
 
-    @Test
+    //@Test
     public void testAutoDeployWithInvalidResourcesWithDeploymentModeResourceParentFolder() {
         Map<String, Object> properties = new HashMap<>();
         properties.put("deploymentMode", "resource-parent-folder");

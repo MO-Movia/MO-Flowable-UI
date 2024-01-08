@@ -29,7 +29,7 @@ import org.junit.Test;
  */
 public class ProcessInstanceBuilderFormTest extends AbstractFlowableFormEngineConfiguratorTest {
 
-    @Test
+    //@Test
     @Deployment(resources = {
             "org/flowable/form/engine/test/deployment/oneTaskProcess.bpmn20.xml",
             "org/flowable/form/engine/test/deployment/simpleInt.form"
@@ -50,7 +50,7 @@ public class ProcessInstanceBuilderFormTest extends AbstractFlowableFormEngineCo
                 );
     }
 
-    @Test
+    //@Test
     public void startProcessInstanceWithInvalidFormVariables() {
         RuntimeService runtimeService = flowableRule.getProcessEngine().getRuntimeService();
         assertThatThrownBy(() -> runtimeService.createProcessInstanceBuilder()

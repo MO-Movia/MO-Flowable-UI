@@ -14,8 +14,8 @@ package org.flowable.ui.common.security;
 
 import java.util.function.Supplier;
 
-import javax.servlet.http.HttpServletRequest;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
 import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletPath;
@@ -48,7 +48,7 @@ public class ActuatorRequestMatcher extends ApplicationContextRequestMatcher<Web
 
     @Override
     protected final boolean matches(HttpServletRequest request,
-        Supplier<WebApplicationContext> context) {
+                                    Supplier<WebApplicationContext> context) {
         return this.delegate.matches(request);
     }
 
