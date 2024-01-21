@@ -23,7 +23,7 @@
 		<jackson.version>2.11.2</jackson.version>
 		<jakarta-jms.version>2.0.3</jakarta-jms.version>
 		<mule.version>3.8.0</mule.version>
-    <camel.version>2.25.0</camel.version>
+    	<camel.version>2.25.0</camel.version>
 		<cxf.version>3.4.0</cxf.version>
 		<slf4j.version>1.7.30</slf4j.version>
 		<groovy.version>3.0.6</groovy.version>
