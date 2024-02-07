@@ -59,82 +59,66 @@ flowableApp.service('RuntimeAppDefinitionService', ['$http', '$q', '$location', 
                 for (var i = 0; i < response.data.length; i++) {
 
                     var app = response.data[i];
+                    //show and hide apps
                     if (app.defaultAppId !== undefined && app.defaultAppId !== null) {
 
-                     if (app.defaultAppId === 'modeler') {
+                        if (app.defaultAppId === 'tasks') {
 
+                            defaultApps.push(
+                                {
+                                    id: 'tasks',
+                                    titleKey: 'APP.TASKS.TITLE',
+                                    descriptionKey: 'APP.TASKS.DESCRIPTION',
+                                    defaultAppId : app.defaultAppId,
+                                    theme: 'theme-8',
+                                    icon: 'glyphicon glyphicon-list-alt',
+                                    fixedBaseUrl: baseUrl + '/workflow/' + '/#/',
+                                    fixedUrl: baseUrl + '/workflow/',
+                                    pages: ['tasks', 'processes']
+                                });
+                        } else if (app.defaultAppId === 'admin') {
 
-                        defaultApps.push(
-                        {
-                            id: 'modeler',
-                            titleKey: 'APP.MODELER.TITLE',
-                            descriptionKey: 'APP.MODELER.DESCRIPTION',
-                            defaultAppId : app.defaultAppId,
-                            theme: 'theme-5',
-                            icon: 'icon icon-bpmn-stencil',
-                            fixedBaseUrl: baseUrl + '/modeler/' + '/#/',
-                            fixedUrl: baseUrl + '/modeler/',
-                            pages: []
-                        });
-                    }
+                            defaultApps.push(
+                                {
+                                    id: 'admin',
+                                    titleKey: 'APP.ADMIN.TITLE',
+                                    descriptionKey: 'APP.ADMIN.DESCRIPTION',
+                                    defaultAppId : app.defaultAppId,
+                                    theme: 'theme-2',
+                                    icon: 'glyphicon glyphicon-wrench',
+                                    fixedBaseUrl: baseUrl + '/admin/' + '/#/',
+                                    fixedUrl: baseUrl + '/admin/',
+                                    pages: []
+                                });
+                        } else if (app.defaultAppId === 'idm') {
 
-//                        if (app.defaultAppId === 'tasks') {
-//
-//                            defaultApps.push(
-//                                {
-//                                    id: 'tasks',
-//                                    titleKey: 'APP.TASKS.TITLE',
-//                                    descriptionKey: 'APP.TASKS.DESCRIPTION',
-//                                    defaultAppId : app.defaultAppId,
-//                                    theme: 'theme-8',
-//                                    icon: 'glyphicon glyphicon-list-alt',
-//                                    fixedBaseUrl: baseUrl + '/workflow/' + '/#/',
-//                                    fixedUrl: baseUrl + '/workflow/',
-//                                    pages: ['tasks', 'processes']
-//                                });
-//                        } else if (app.defaultAppId === 'admin') {
-//
-//                            defaultApps.push(
-//                                {
-//                                    id: 'admin',
-//                                    titleKey: 'APP.ADMIN.TITLE',
-//                                    descriptionKey: 'APP.ADMIN.DESCRIPTION',
-//                                    defaultAppId : app.defaultAppId,
-//                                    theme: 'theme-2',
-//                                    icon: 'glyphicon glyphicon-wrench',
-//                                    fixedBaseUrl: baseUrl + '/admin/' + '/#/',
-//                                    fixedUrl: baseUrl + '/admin/',
-//                                    pages: []
-//                                });
-//                        } else if (app.defaultAppId === 'idm') {
-//
-//                            defaultApps.push(
-//                                {
-//                                    id: 'idm',
-//                                    titleKey: 'APP.IDM.TITLE',
-//                                    descriptionKey: 'APP.IDM.DESCRIPTION',
-//                                    defaultAppId : app.defaultAppId,
-//                                    theme: 'theme-3',
-//                                    icon: 'icon icon-user',
-//                                    fixedBaseUrl: baseUrl + '/idm/' + '/#/',
-//                                    fixedUrl: baseUrl + '/idm/',
-//                                    pages: []
-//                                });
-//                        } else if (app.defaultAppId === 'modeler') {
-//
-//                            defaultApps.push(
-//                                {
-//                                    id: 'modeler',
-//                                    titleKey: 'APP.MODELER.TITLE',
-//                                    descriptionKey: 'APP.MODELER.DESCRIPTION',
-//                                    defaultAppId : app.defaultAppId,
-//                                    theme: 'theme-5',
-//                                    icon: 'icon icon-bpmn-stencil',
-//                                    fixedBaseUrl: baseUrl + '/modeler/' + '/#/',
-//                                    fixedUrl: baseUrl + '/modeler/',
-//                                    pages: []
-//                                });
-//                        }
+                            defaultApps.push(
+                                {
+                                    id: 'idm',
+                                    titleKey: 'APP.IDM.TITLE',
+                                    descriptionKey: 'APP.IDM.DESCRIPTION',
+                                    defaultAppId : app.defaultAppId,
+                                    theme: 'theme-3',
+                                    icon: 'icon icon-user',
+                                    fixedBaseUrl: baseUrl + '/idm/' + '/#/',
+                                    fixedUrl: baseUrl + '/idm/',
+                                    pages: []
+                                });
+                        } else if (app.defaultAppId === 'modeler') {
+
+                            defaultApps.push(
+                                {
+                                    id: 'modeler',
+                                    titleKey: 'APP.MODELER.TITLE',
+                                    descriptionKey: 'APP.MODELER.DESCRIPTION',
+                                    defaultAppId : app.defaultAppId,
+                                    theme: 'theme-5',
+                                    icon: 'icon icon-bpmn-stencil',
+                                    fixedBaseUrl: baseUrl + '/modeler/' + '/#/',
+                                    fixedUrl: baseUrl + '/modeler/',
+                                    pages: []
+                                });
+                        }
 
                     } else {
 

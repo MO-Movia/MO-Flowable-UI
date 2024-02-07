@@ -225,27 +225,27 @@ flowableModeler
                     'id': 'processes',
                     'title': 'GENERAL.NAVIGATION.PROCESSES',
                     'path': '/processes'
+                },
+                {
+                    'id': 'casemodels',
+                    'title': 'GENERAL.NAVIGATION.CASEMODELS',
+                    'path': '/casemodels'
+                },
+                {
+                    'id': 'forms',
+                    'title': 'GENERAL.NAVIGATION.FORMS',
+                    'path': '/forms'
+                },
+                {
+                    'id': 'decisions',
+                    'title': 'GENERAL.NAVIGATION.DECISIONS',
+                    'path': '/decisions'
+                },
+                {
+                    'id': 'apps',
+                    'title': 'GENERAL.NAVIGATION.APPS',
+                    'path': '/apps'
                 }
-//                {
-//                    'id': 'casemodels',
-//                    'title': 'GENERAL.NAVIGATION.CASEMODELS',
-//                    'path': '/casemodels'
-//                },
-//                {
-//                    'id': 'forms',
-//                    'title': 'GENERAL.NAVIGATION.FORMS',
-//                    'path': '/forms'
-//                },
-//                {
-//                    'id': 'decisions',
-//                    'title': 'GENERAL.NAVIGATION.DECISIONS',
-//                    'path': '/decisions'
-//                },
-//                {
-//                    'id': 'apps',
-//                    'title': 'GENERAL.NAVIGATION.APPS',
-//                    'path': '/apps'
-//                }
             ];
 
             $rootScope.config = FLOWABLE.CONFIG;
