@@ -234,6 +234,13 @@ if (modelType == 'runtime') {
     modelUrl = FLOWABLE.APP_URL.getProcessDefinitionModelJsonUrl(processDefinitionId);
 }
 
+///local storage start
+var data = {
+
+}
+
+///local storage end
+
 var request = jQuery.ajax({
     type: 'get',
     url: modelUrl + '?nocaching=' + new Date().getTime()

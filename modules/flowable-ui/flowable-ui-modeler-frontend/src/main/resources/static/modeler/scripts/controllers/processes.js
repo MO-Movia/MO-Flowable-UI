@@ -76,15 +76,31 @@ angular.module('flowableModeler')
 		    params.filterText = $scope.model.filterText;
 		  }
 
-		  $http({method: 'GET', url: FLOWABLE.APP_URL.getModelsUrl(), params: params}).
-		  	success(function(data, status, headers, config) {
-	    		$scope.model.processes = data;
-	    		$scope.model.loading = false;
-	        }).
-	        error(function(data, status, headers, config) {
-	           console.log('Something went wrong: ' + data);
-	           $scope.model.loading = false;
-	        });
+		  //local storage get all process
+		  var processData = window.localStorage.getItem("process-data");
+          if(processData) {
+              var processDataArr = JSON.parse(processData);
+              var processes = {
+                "size": processDataArr.length,
+                "total": processDataArr.length,
+                "start": 0,
+                "data": processDataArr
+              }
+              $scope.model.processes = processes;
+              $scope.model.loading = false;
+          }
+          //local storage get all process end
+
+//		  $http({method: 'GET', url: FLOWABLE.APP_URL.getModelsUrl(), params: params}).
+//		  	success(function(data, status, headers, config) {
+//		  	    console.log("get all process", data);//local storage
+//	    		$scope.model.processes = data;
+//	    		$scope.model.loading = false;
+//	        }).
+//	        error(function(data, status, headers, config) {
+//	           console.log('Something went wrong: ' + data);
+//	           $scope.model.loading = false;
+//	        });
 	  };
 
 	  var timeoutFilter = function() {
@@ -158,6 +174,15 @@ angular.module('flowableModeler')
         $scope.model.process.modelType = $scope.initialModelType;
     }
 
+    $scope.getRandomInt = function () {
+        var min = 0;
+        var max = 999999999999999;
+
+        min = Math.ceil(min);
+        max = Math.ceil(max);
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
     $scope.ok = function () {
 
         if (!$scope.model.process.name || $scope.model.process.name.length == 0 ||
@@ -168,18 +193,56 @@ angular.module('flowableModeler')
 
         $scope.model.loading = true;
 
-        $http({method: 'POST', url: FLOWABLE.APP_URL.getModelsUrl(), data: $scope.model.process}).
-            success(function(data) {
-                $scope.$hide();
+        //alert($scope.model.process);
+        //local storage saving single process
+        console.log("save single process", $scope.model.process);
+        var id = $scope.getRandomInt();
+        var singleProcess = {
+            "comment": "",
+            "createdBy": "admin",
+            "description": $scope.model.process.description,
+            "id": id,
+            "key": $scope.model.process.key,
+            "lastUpdated": 1706172320717,
+            "lastUpdatedBy": "admin",
+            "latestVersion": true,
+            "modelType": $scope.model.process.modelType,
+            "name": $scope.model.process.name,
+            "tenantId": "",
+            "version": 1
+        };
 
-                $scope.model.loading = false;
-                $rootScope.editorHistory = [];
-                $location.path("/editor/" + data.id);
-            }).
-            error(function(data, status, headers, config) {
-                $scope.model.loading = false;
-                $scope.model.errorMessage = data.message;
-            });
+        var processData = window.localStorage.getItem("process-data");
+        if(processData) {
+            var processDataArr = JSON.parse(processData);
+            processDataArr.push(singleProcess);
+            window.localStorage.setItem("process-data", JSON.stringify(processDataArr));
+        }
+        else {
+            var processDataArr = [];
+            processDataArr.push(singleProcess);
+            window.localStorage.setItem("process-data", JSON.stringify(processDataArr));
+        }
+
+        $scope.$hide();
+
+        $scope.model.loading = false;
+        $rootScope.editorHistory = [];
+        $location.path("/editor/" + id);
+        //local storage saving single process end
+
+//        $http({method: 'POST', url: FLOWABLE.APP_URL.getModelsUrl(), data: $scope.model.process}).
+//            success(function(data) {
+//                $scope.$hide();
+//
+//                $scope.model.loading = false;
+//                $rootScope.editorHistory = [];
+//                $location.path("/editor/" + data.id);
+//            }).
+//            error(function(data, status, headers, config) {
+//                $scope.model.loading = false;
+//                $scope.model.errorMessage = data.message;
+//            });
     };
 
     $scope.cancel = function () {

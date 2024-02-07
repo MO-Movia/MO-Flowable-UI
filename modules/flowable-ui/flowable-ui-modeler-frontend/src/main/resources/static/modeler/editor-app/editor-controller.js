@@ -394,34 +394,124 @@ angular.module('flowableModeler')
     
     var modelId = $routeParams.modelId;
 	editorManager.setModelId(modelId);
-	//we first initialize the stencilset used by the editor. The editorId is always the modelId.
-	$http.get(FLOWABLE.URL.getModel(modelId)).then(function (response) {
-	    editorManager.setModelData(response);
-	    return response;
-	}).then(function (modelData) {
-	    if(modelData.data.model.stencilset.namespace == 'http://b3mn.org/stencilset/cmmn1.1#') {
-	       return $http.get(FLOWABLE.URL.getCmmnStencilSet());
-	    } else if (modelData.data.model.stencilset.namespace == 'http://b3mn.org/stencilset/dmn1.2#') {
-	       return $http.get(FLOWABLE.URL.getDmnStencilSet());
-	    } else {
-            return $http.get(FLOWABLE.URL.getStencilSet());
-        }
-    }).then(function (response) {
- 		var baseUrl = "http://b3mn.org/stencilset/";
-		editorManager.setStencilData(response.data);
-		//the stencilset alters the data ref!
-		var stencilSet = new ORYX.Core.StencilSet.StencilSet(baseUrl, response.data);
-		ORYX.Core.StencilSet.loadStencilSet(baseUrl, stencilSet, modelId);
-		//after the stencilset is loaded we make sure the plugins.xml is loaded.
-		return $http.get(ORYX.CONFIG.PLUGINS_CONFIG);
-	}).then(function (response) {
-		ORYX._loadPlugins(response.data);
-		return response;
-	}).then(function (response) {
-		editorManager.bootEditor();
-	}).catch(function (error) {
-		console.log(error);
+
+    //local storage start
+	var promise = new Promise((resolve, reject) => {
+      var processData = window.localStorage.getItem("process-data");
+      if(processData) {
+          var processDataArr = JSON.parse(processData);
+          var process = processDataArr.find(process => process.id === parseInt(modelId));
+          resolve(
+              {
+                  "data": {
+                        "modelId": process.id,
+                        "name": process.name,
+                        "key": process.key,
+                        "description": process.description,
+                        "lastUpdated": process.lastUpdated,
+                        "lastUpdatedBy": process.lastUpdatedBy,
+                        "model": {
+                            "id": "canvas",
+                            "resourceId": "canvas",
+                            "stencilset": {
+                                "namespace": "http://b3mn.org/stencilset/bpmn2.0#"
+                            },
+                            "properties": {
+                                "process_id": process.key,
+                                "name": process.name,
+                                "documentation": process.name
+                            },
+                            "childShapes": [
+                                {
+                                    "bounds": {
+                                        "lowerRight": {
+                                            "x": 130,
+                                            "y": 193
+                                        },
+                                        "upperLeft": {
+                                            "x": 100,
+                                            "y": 163
+                                        }
+                                    },
+                                    "childShapes": [],
+                                    "dockers": [],
+                                    "outgoing": [],
+                                    "resourceId": "startEvent1",
+                                    "stencil": {
+                                        "id": "StartNoneEvent"
+                                    }
+                                }
+                            ],
+                            "modelType": "model"
+                        }
+                  }
+              }
+
+          );
+      }
+      else {
+        reject("Process data is not present in local storage");
+      }
 	});
+
+	promise.then(response => {
+	    editorManager.setModelData(response);
+        return response;
+	}).then(function (modelData) {
+        if(modelData.data.model.stencilset.namespace == 'http://b3mn.org/stencilset/cmmn1.1#') {
+           return $http.get(FLOWABLE.URL.getCmmnStencilSet());
+        } else if (modelData.data.model.stencilset.namespace == 'http://b3mn.org/stencilset/dmn1.2#') {
+           return $http.get(FLOWABLE.URL.getDmnStencilSet());
+        } else {
+              return $http.get(FLOWABLE.URL.getStencilSet());
+          }
+      }).then(function (response) {
+        var baseUrl = "http://b3mn.org/stencilset/";
+        editorManager.setStencilData(response.data);
+        //the stencilset alters the data ref!
+        var stencilSet = new ORYX.Core.StencilSet.StencilSet(baseUrl, response.data);
+        ORYX.Core.StencilSet.loadStencilSet(baseUrl, stencilSet, modelId);
+        //after the stencilset is loaded we make sure the plugins.xml is loaded.
+        return $http.get(ORYX.CONFIG.PLUGINS_CONFIG);
+    }).then(function (response) {
+        ORYX._loadPlugins(response.data);
+        return response;
+    }).then(function (response) {
+        editorManager.bootEditor();
+    }).catch(function (error) {
+        console.log(error);
+    });
+	//local storage end
+
+	//we first initialize the stencilset used by the editor. The editorId is always the modelId.
+//	$http.get(FLOWABLE.URL.getModel(modelId)).then(function (response) {
+//	    alert(1);
+//	    editorManager.setModelData(response);
+//	    return response;
+//	}).then(function (modelData) {
+//	    if(modelData.data.model.stencilset.namespace == 'http://b3mn.org/stencilset/cmmn1.1#') {
+//	       return $http.get(FLOWABLE.URL.getCmmnStencilSet());
+//	    } else if (modelData.data.model.stencilset.namespace == 'http://b3mn.org/stencilset/dmn1.2#') {
+//	       return $http.get(FLOWABLE.URL.getDmnStencilSet());
+//	    } else {
+//            return $http.get(FLOWABLE.URL.getStencilSet());
+//        }
+//    }).then(function (response) {
+// 		var baseUrl = "http://b3mn.org/stencilset/";
+//		editorManager.setStencilData(response.data);
+//		//the stencilset alters the data ref!
+//		var stencilSet = new ORYX.Core.StencilSet.StencilSet(baseUrl, response.data);
+//		ORYX.Core.StencilSet.loadStencilSet(baseUrl, stencilSet, modelId);
+//		//after the stencilset is loaded we make sure the plugins.xml is loaded.
+//		return $http.get(ORYX.CONFIG.PLUGINS_CONFIG);
+//	}).then(function (response) {
+//		ORYX._loadPlugins(response.data);
+//		return response;
+//	}).then(function (response) {
+//		editorManager.bootEditor();
+//	}).catch(function (error) {
+//		console.log(error);
+//	});
  
  	//minihack to make sure mousebind events are processed if the modeler is used in an iframe.
 	//selecting an element and pressing "del" could sometimes not trigger an event.
